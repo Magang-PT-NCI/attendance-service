@@ -43,6 +43,12 @@ const employees = [
   },
 ];
 
+const employeeCacheData = employees.map((employee) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { location, dateCount, ...employeeCache } = employee;
+  return employeeCache;
+});
+
 const checkInTimes = [
   '06:37',
   '07:02',
@@ -63,6 +69,8 @@ const checkOutTimes = [
 ];
 const overtimeCheckOutTimes = ['17:01', '16:22', '17:30', '16:03', '15:43'];
 const main = async () => {
+  await prisma.employeeCache.createMany({ data: employeeCacheData });
+
   for (const employee of employees) {
     for (let i = 0; i < dayCount - 1; i++) {
       const rand = Math.random();

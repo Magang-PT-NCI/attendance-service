@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Reason } from '@prisma/client';
 import { createLogbook } from './logbookSeedUtil';
 import { FILE_DESTINATION } from '../src/config/app.config';
 
@@ -79,20 +79,19 @@ export const createAttendance = async (
   }
 };
 
-type ReasonType = 'sick' | 'family_matters' | 'urgent_matters' | 'other';
-
 export const createPermit = async (employee) => {
-  const reasons: ReasonType[] = [
-    'sick',
-    'family_matters',
-    'urgent_matters',
-    'other',
+  const reasons: Reason[] = [
+    'sakit',
+    'urusan_mendadak',
+    'cuti',
+    'duka',
+    'melahirkan',
+    'lainnya',
   ];
   const date = getDate(nextDate(employee));
 
   const permit = await prisma.permit.create({
     data: {
-      nik: employee.nik,
       reason: reasons[Math.floor(Math.random() * reasons.length)],
       start_date: date,
       duration: 1,
