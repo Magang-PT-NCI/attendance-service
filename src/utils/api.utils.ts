@@ -5,6 +5,7 @@ import {
   ValidateTokenResData,
 } from '../interfaces/api-service.interfaces';
 import axios from 'axios';
+import { InternalServerErrorException } from '@nestjs/common';
 
 export class ApiUtils {
   public static async getEmployee(nik: string): Promise<EmployeeResData> {
@@ -21,6 +22,11 @@ export class ApiUtils {
       return response.data;
     } catch (error) {
       logger.error(logFormat(error.response?.data || error));
+
+      if (!error.response) {
+        throw new InternalServerErrorException();
+      }
+
       return null;
     }
   }
@@ -37,6 +43,11 @@ export class ApiUtils {
       return response.data;
     } catch (error) {
       logger.error(logFormat(error.response?.data || error));
+
+      if (!error.response) {
+        throw new InternalServerErrorException();
+      }
+
       return null;
     }
   }
