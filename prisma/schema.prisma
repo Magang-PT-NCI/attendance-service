@@ -13,17 +13,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Employee {
-  nik           String       @id @db.VarChar(20)
-  name          String       @db.VarChar(50)
-  password      String       @db.VarChar(255)
-  area          String       @db.VarChar(50)
-  role          String       @db.VarChar(50)
-  position      Position     @default(OnSite)
-  profile_photo String       @db.VarChar(255)
-  attendances   Attendance[] @relation("employee")
-}
-
 model Attendance {
   id           Int              @id @default(autoincrement())
   nik          String           @db.VarChar(20)
@@ -35,8 +24,14 @@ model Attendance {
   checkIn      Check?           @relation("CheckIn", fields: [check_in_id], references: [id])
   checkOut     Check?           @relation("CheckOut", fields: [check_out_id], references: [id])
   permit       Permit?          @relation("Permit", fields: [permit_id], references: [id])
-  employee     Employee         @relation("employee", fields: [nik], references: [nik])
+  employee     EmployeeCache    @relation("employee", fields: [nik], references: [nik])
   activities   Activity[]
+}
+
+model EmployeeCache {
+  nik         String       @id @db.VarChar(20)
+  name        String       @db.VarChar(50)
+  attendances Attendance[] @relation("employee")
 }
 
 model Check {
@@ -61,7 +56,6 @@ model Activity {
 
 model Permit {
   id                Int          @id @default(autoincrement())
-  nik               String       @db.VarChar(20)
   reason            Reason
   start_date        DateTime     @db.Date
   duration          Int
@@ -86,14 +80,11 @@ enum ActivityStatus {
   progress
 }
 
-enum Position {
-  OnSite
-  Koordinator
-}
-
 enum Reason {
-  sick
-  family_matters
-  urgent_matters
-  other
+  sakit
+  urusan_mendadak
+  cuti
+  duka
+  melahirkan
+  lainnya
 }
