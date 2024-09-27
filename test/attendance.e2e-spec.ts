@@ -5,15 +5,21 @@ import { AppModule } from '../src/app.module';
 import { AttendanceResBody } from '../src/dto/attendance.dto';
 import { APP_URL, FILE_DESTINATION } from '../src/config/app.config';
 import { Reason } from '@prisma/client';
+import { getToken } from './utils/token.e2e.utils';
 
 describe('Attendance Controller (e2e)', () => {
   let app: INestApplication;
+  let token: string;
 
   const date = '2024-09-02';
   const photo: string =
     FILE_DESTINATION === 'local'
       ? `${APP_URL}/default.png`
       : 'https://lh3.googleusercontent.com/d/17ZxcvViTexCuS_j_Vve2CKTyHG7iu0aY=s220';
+
+  beforeAll(async () => {
+    token = await getToken('001230045600701', 'adityawijaya123');
+  });
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -34,6 +40,7 @@ describe('Attendance Controller (e2e)', () => {
       const testAttendance = async (filter: string = '') => {
         const response = await request(app.getHttpServer())
           .get(`/attendance/001230045600701`)
+          .set('authorization', `bearer ${token}`)
           .query({ date: date, filter })
           .expect(200);
 
@@ -92,6 +99,7 @@ describe('Attendance Controller (e2e)', () => {
     it('should return 200 response code with permit attendance data', async () => {
       const response = await request(app.getHttpServer())
         .get(`/attendance/001230045600704`)
+        .set('authorization', `bearer ${token}`)
         .query({ date })
         .expect(200);
 
@@ -133,6 +141,7 @@ describe('Attendance Controller (e2e)', () => {
     it('should return 200 response code with absent attendance data', async () => {
       await request(app.getHttpServer())
         .get(`/attendance/001230045600703`)
+        .set('authorization', `bearer ${token}`)
         .query({ date })
         .expect(200)
         .expect({
@@ -152,12 +161,14 @@ describe('Attendance Controller (e2e)', () => {
     it('should return 204 response code with not existing attendance data', async () => {
       await request(app.getHttpServer())
         .get(`/attendance/001230045600701`)
+        .set('authorization', `bearer ${token}`)
         .expect(204);
     });
 
     it('should return 404 response code with not existing employee', async () => {
       await request(app.getHttpServer())
         .get(`/attendance/001230045600700`)
+        .set('authorization', `bearer ${token}`)
         .expect(404)
         .expect({
           message: 'karyawan tidak ditemukan',
@@ -169,6 +180,7 @@ describe('Attendance Controller (e2e)', () => {
     it('should return correct overtime data', async () => {
       const response = await request(app.getHttpServer())
         .get(`/attendance/001230045600702`)
+        .set('authorization', `bearer ${token}`)
         .query({ date: date })
         .expect(200);
 
@@ -180,6 +192,7 @@ describe('Attendance Controller (e2e)', () => {
     it('should return correct late data', async () => {
       const response = await request(app.getHttpServer())
         .get(`/attendance/001230045600705`)
+        .set('authorization', `bearer ${token}`)
         .query({ date: date })
         .expect(200);
 
