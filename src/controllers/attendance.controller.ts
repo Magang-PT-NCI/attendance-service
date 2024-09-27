@@ -7,7 +7,7 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AttendanceService } from '../services/attendance.service';
 import { ApiAttendance } from '../decorators/api-attendance.decorator';
 import { AttendanceQuery, AttendanceResBody } from '../dto/attendance.dto';
@@ -15,6 +15,7 @@ import { DateUtils } from '../utils/date.utils';
 import { AttendanceInterceptor } from '../interceptors/attendance.interceptor';
 
 @Controller('attendance')
+@ApiSecurity('jwt')
 @ApiTags('Attendance')
 export class AttendanceController {
   constructor(private readonly service: AttendanceService) {}

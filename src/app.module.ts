@@ -8,6 +8,7 @@ import { AttendanceService } from './services/attendance.service';
 import { LogbookService } from './services/logbook.service';
 import { PermitService } from './services/permit.service';
 import { MonitoringService } from './services/monitoring.service';
+import { TokenMiddleware } from './middlewares/token.middleware';
 
 @Module({
   imports: [],
@@ -26,6 +27,6 @@ import { MonitoringService } from './services/monitoring.service';
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(HttpMiddleware).forRoutes('*');
+    consumer.apply(HttpMiddleware, TokenMiddleware).forRoutes('*');
   }
 }

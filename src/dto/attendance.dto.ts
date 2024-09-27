@@ -1,10 +1,15 @@
-import { AttendanceStatus } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
 import { DateUtils } from '../utils/date.utils';
 import { Activity } from './logbook.dto';
 import { APP_URL, FILE_DESTINATION } from '../config/app.config';
 import { PermitResBody } from './permit.dto';
-import { Check, PrismaAttendance } from '../interfaces/attendance.interfaces';
+import {
+  Check,
+  PrismaAttendance,
+  PrismaCommonAttendance,
+} from '../interfaces/attendance.interfaces';
+import { AttendanceStatus } from '@prisma/client';
+import { CommonUtils } from '../utils/common.utils';
 
 export class AttendanceQuery {
   @ApiProperty({ example: 'done', required: false })
@@ -52,7 +57,7 @@ export class AttendanceCheck {
   }
 }
 
-export class AttendanceResBody {
+export class Attendance {
   @ApiProperty({ example: 10 })
   public readonly id: number;
 
@@ -62,6 +67,30 @@ export class AttendanceResBody {
   @ApiProperty({ example: 'presence' })
   public readonly status: AttendanceStatus;
 
+  @ApiProperty({ description: 'may be null', example: '2 jam 5 menit' })
+  public readonly overtime: string;
+
+  @ApiProperty({ description: 'may be null', example: '20 menit 3 detik' })
+  public readonly late: string;
+
+  @ApiProperty({ description: 'may be null', example: '7 jam 34 detik' })
+  public readonly working_hours: string;
+
+  public constructor(attendance: PrismaCommonAttendance) {
+    this.id = attendance.id;
+    this.date = DateUtils.setDate(attendance.date).getDateString();
+    this.status = attendance.status;
+
+    const checkIn = attendance.checkIn?.time;
+    const checkOut = attendance.checkOut?.time;
+
+    this.overtime = CommonUtils.getOvertime(checkOut);
+    this.late = CommonUtils.getLate(checkIn);
+    this.working_hours = CommonUtils.getWorkingHour(checkIn, checkOut);
+  }
+}
+
+export class AttendanceResBody extends Attendance {
   @ApiProperty({ description: 'may be null' })
   public readonly checkIn: AttendanceCheck;
 
@@ -75,9 +104,8 @@ export class AttendanceResBody {
   public readonly activities: Activity[];
 
   public constructor(attendance: PrismaAttendance) {
-    this.id = attendance.id;
-    this.date = DateUtils.setDate(attendance.date).getDateString();
-    this.status = attendance.status;
+    super(attendance);
+
     this.checkIn = attendance.checkIn
       ? new AttendanceCheck(attendance.checkIn)
       : null;

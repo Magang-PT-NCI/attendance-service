@@ -29,7 +29,7 @@ describe('Attendance Controller (e2e)', () => {
       const activityStatus = ['progress', 'done'];
       const timeRegex = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
       const location = { latitude: -6.914744, longitude: 107.60981 };
-      let data: AttendanceResBody = null;
+      let attendance: AttendanceResBody = null;
 
       const testAttendance = async (filter: string = '') => {
         const response = await request(app.getHttpServer())
@@ -37,32 +37,35 @@ describe('Attendance Controller (e2e)', () => {
           .query({ date: date, filter })
           .expect(200);
 
-        data = response.body as AttendanceResBody;
+        attendance = response.body as AttendanceResBody;
 
-        expect(data.id).toBe(1);
-        expect(data.date).toBe(date);
-        expect(data.status).toBe('presence');
-        expect(data.permit).toBeNull();
-        expect(data.checkIn).toEqual({
+        expect(attendance.id).toBe(1);
+        expect(attendance.date).toBe(date);
+        expect(attendance.status).toBe('presence');
+        expect(attendance.overtime).toBeNull();
+        expect(attendance.working_hours).toBe('7 jam 45 menit');
+        expect(attendance.late).toBeNull();
+        expect(attendance.permit).toBeNull();
+        expect(attendance.checkIn).toEqual({
           time: '06:20',
           photo,
           location: location,
         });
-        expect(data.checkOut).toEqual({
+        expect(attendance.checkOut).toEqual({
           time: '14:05',
           photo,
           location: location,
         });
 
-        return data;
+        return attendance;
       };
 
       const testActivities = (status: string = '') => {
         if (status === '' || status === 'all') {
-          expect(data.activities).toHaveLength(3);
+          expect(attendance.activities).toHaveLength(3);
         }
 
-        data.activities.forEach((activity) => {
+        attendance.activities.forEach((activity) => {
           expect(typeof activity.id).toBe('number');
           expect(typeof activity.description).toBe('string');
           expect(timeRegex.test(activity.start_time)).toBe(true);
@@ -77,13 +80,13 @@ describe('Attendance Controller (e2e)', () => {
       };
 
       await testAttendance();
-      await testActivities();
+      testActivities();
       await testAttendance('all');
-      await testActivities();
+      testActivities();
       await testAttendance('progress');
-      await testActivities('progress');
+      testActivities('progress');
       await testAttendance('done');
-      await testActivities('done');
+      testActivities('done');
     });
 
     it('should return 200 response code with permit attendance data', async () => {
@@ -92,11 +95,14 @@ describe('Attendance Controller (e2e)', () => {
         .query({ date })
         .expect(200);
 
-      const attendance = response.body;
+      const attendance = response.body as AttendanceResBody;
 
       expect(attendance.id).toBe(4);
       expect(attendance.date).toBe(date);
       expect(attendance.status).toBe('permit');
+      expect(attendance.overtime).toBeNull();
+      expect(attendance.working_hours).toBeNull();
+      expect(attendance.late).toBeNull();
       expect(attendance.checkIn).toBeNull();
       expect(attendance.checkOut).toBeNull();
       expect(attendance.activities).toHaveLength(0);
@@ -133,6 +139,9 @@ describe('Attendance Controller (e2e)', () => {
           id: 3,
           date,
           status: 'absent',
+          overtime: null,
+          working_hours: null,
+          late: null,
           checkIn: null,
           checkOut: null,
           permit: null,
@@ -155,6 +164,26 @@ describe('Attendance Controller (e2e)', () => {
           error: 'Not Found',
           statusCode: 404,
         });
+    });
+
+    it('should return correct overtime data', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/attendance/001230045600702`)
+        .query({ date: date })
+        .expect(200);
+
+      expect((response.body as AttendanceResBody).overtime).toBe(
+        '1 jam 2 menit',
+      );
+    });
+
+    it('should return correct late data', async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/attendance/001230045600705`)
+        .query({ date: date })
+        .expect(200);
+
+      expect((response.body as AttendanceResBody).late).toBe('20 menit');
     });
   });
 });
