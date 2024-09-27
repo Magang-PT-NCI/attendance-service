@@ -3,10 +3,11 @@ import { MonitoringService } from '../services/monitoring.service';
 import { ReportQuery, ReportResBody } from '../dto/monitoring.dto';
 import { logFormat, logger } from '../utils/logger.utils';
 import { DateUtils } from '../utils/date.utils';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ApiReport } from '../decorators/api-report.decorator';
 
 @Controller('monitoring')
+@ApiSecurity('jwt')
 @ApiTags('Monitoring')
 export class MonitoringController {
   constructor(private readonly service: MonitoringService) {}

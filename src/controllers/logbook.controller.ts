@@ -1,7 +1,9 @@
 import { Controller } from '@nestjs/common';
 import { LogbookService } from '../services/logbook.service';
+import { ApiSecurity } from '@nestjs/swagger';
 
 @Controller()
+@ApiSecurity('jwt')
 export class LogbookController {
   constructor(private readonly service: LogbookService) {}
 

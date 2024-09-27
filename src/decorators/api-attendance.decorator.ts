@@ -3,6 +3,7 @@ import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AttendanceResBody } from '../dto/attendance.dto';
 import { ApiNotFound } from './api-response.decorator';
 import { ServerErrorResBody } from '../dto/api-error.dto';
+import { ApiToken } from './api-token.decorator';
 
 export const ApiAttendance = (): MethodDecorator => {
   return applyDecorators(
@@ -10,6 +11,7 @@ export const ApiAttendance = (): MethodDecorator => {
       summary: 'get attendance',
       description: 'get attendance data for specific employee by nik',
     }),
+    ApiToken(),
     ApiResponse({
       status: 200,
       description: 'success get attendance data',
