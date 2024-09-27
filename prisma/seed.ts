@@ -72,7 +72,7 @@ const main = async () => {
   await prisma.employeeCache.createMany({ data: employeeCacheData });
 
   await createAttendance(employees[0], '06:20', '14:05');
-  await createAttendance(employees[1], '06:55', '14:02');
+  await createAttendance(employees[1], '06:55', '16:02');
   await createAttendance(employees[2]);
   await createPermit(employees[3]);
   await createAttendance(employees[4], '07:20', '14:10');
