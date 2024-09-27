@@ -12,17 +12,16 @@ export class TokenMiddleware implements NestMiddleware {
   async use(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.get('Authorization');
 
+    if (!authHeader) {
+      throw new BadRequestException('token is required');
+    }
+
     const tokenFormat = /bearer .+/i;
     if (!tokenFormat.test(authHeader)) {
       throw new BadRequestException('token format is invalid');
     }
 
     const token = authHeader.split(' ')[1];
-
-    if (!authHeader) {
-      throw new BadRequestException('token is required');
-    }
-
     const tokenValidity = await ApiUtils.verifyToken(token);
 
     if (!tokenValidity) {
