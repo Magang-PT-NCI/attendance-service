@@ -11,4 +11,4 @@ export const PORT: number = parseInt(process.env.PORT) || 3002;
 export const FILE_DESTINATION: string = validDestination.includes(destination)
   ? destination
   : 'local';
-export const URL: string = process.env.APP_URL || 'http://localhost:3002';
+export const APP_URL: string = process.env.APP_URL || 'http://localhost:3002';

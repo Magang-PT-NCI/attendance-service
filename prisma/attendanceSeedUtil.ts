@@ -97,7 +97,7 @@ export const createPermit = async (employee) => {
       duration: 1,
       permission_letter:
         FILE_DESTINATION === 'local'
-          ? 'default.png'
+          ? 'default.txt'
           : '1xsCxPCsNJfoG7FPgO6nYXH2KHCgTQ-B8',
       approved: true,
     },
