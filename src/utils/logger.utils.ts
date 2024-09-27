@@ -7,8 +7,7 @@ const types: string[] = ['string', 'number', 'boolean'];
 export const logFormat = (data: any) => {
   try {
     data = JSON.parse(data);
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  } catch (error) {}
+  } catch {}
 
   if (types.includes(typeof data)) {
     return data;

@@ -19,15 +19,26 @@ export class DateUtils {
     return DateUtils.INSTANCE;
   }
 
-  public static setDate(date?: string | Date): DateUtils {
-    if (date) {
-      const isDate: boolean = date instanceof Date;
+  public static isValidTime(time: string): boolean {
+    const timeValidation = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+    return timeValidation.test(time);
+  }
 
-      if (isDate && (date as Date).toISOString().startsWith('1970-01-01T')) {
-        const time: number = new Date(date).getTime() - 7 * DateUtils.HOUR;
-        DateUtils.date = new Date(time);
+  public static setDate(date?: string | Date): DateUtils {
+    const isDate: boolean = date instanceof Date;
+
+    if (typeof date === 'string') {
+      if (DateUtils.isValidTime(date)) {
+        DateUtils.date = new Date(`1970-01-01T${date}:00.000Z`);
+        DateUtils.date.setHours(DateUtils.date.getHours() - 7);
       } else {
         DateUtils.date = new Date(date);
+      }
+    } else if (isDate) {
+      DateUtils.date = new Date(date);
+
+      if (date.toISOString().startsWith('1970-01-01T')) {
+        DateUtils.date.setHours(DateUtils.date.getHours() - 7);
       }
     } else {
       DateUtils.date = new Date();

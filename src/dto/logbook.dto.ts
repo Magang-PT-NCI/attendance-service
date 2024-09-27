@@ -3,7 +3,24 @@ import { ActivityStatus } from '@prisma/client';
 import { DateUtils } from '../utils/date.utils';
 import { PrismaActivity } from '../interfaces/logbook.interfaces';
 
-export class Activity {
+export class LogbookReqBody {
+  @ApiProperty({ example: 5 })
+  public readonly attendance_id: number;
+
+  @ApiProperty({ example: 'meeting bersama client' })
+  public readonly description: string;
+
+  @ApiProperty({ example: 'done' })
+  public readonly status: ActivityStatus;
+
+  @ApiProperty({ example: '10:00' })
+  public readonly start_time: string;
+
+  @ApiProperty({ example: '11:30' })
+  public readonly end_time: string;
+}
+
+export class LogbookResBody {
   @ApiProperty({ example: 5 })
   public readonly id: number;
 
@@ -27,11 +44,13 @@ export class Activity {
     this.end_time = DateUtils.setDate(activity.end_time).getTimeString();
   }
 
-  public static getActivities(prismaActivities: PrismaActivity[]): Activity[] {
-    const activities: Activity[] = [];
+  public static getActivities(
+    prismaActivities: PrismaActivity[],
+  ): LogbookResBody[] {
+    const activities: LogbookResBody[] = [];
 
     prismaActivities.forEach((activity: PrismaActivity) => {
-      activities.push(new Activity(activity));
+      activities.push(new LogbookResBody(activity));
     });
 
     return activities;

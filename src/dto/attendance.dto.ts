@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { DateUtils } from '../utils/date.utils';
-import { Activity } from './logbook.dto';
+import { LogbookResBody } from './logbook.dto';
 import { APP_URL, FILE_DESTINATION } from '../config/app.config';
 import { PermitResBody } from './permit.dto';
 import {
@@ -100,8 +100,8 @@ export class AttendanceResBody extends Attendance {
   @ApiProperty({ description: 'may be null' })
   public readonly permit: PermitResBody;
 
-  @ApiProperty({ description: 'may be null', type: Activity, isArray: true })
-  public readonly activities: Activity[];
+  @ApiProperty({ description: 'may be null', type: LogbookResBody, isArray: true })
+  public readonly activities: LogbookResBody[];
 
   public constructor(attendance: PrismaAttendance) {
     super(attendance);
@@ -115,6 +115,6 @@ export class AttendanceResBody extends Attendance {
     this.permit = attendance.permit
       ? new PermitResBody(attendance.permit)
       : null;
-    this.activities = Activity.getActivities(attendance.activities);
+    this.activities = LogbookResBody.getActivities(attendance.activities);
   }
 }
