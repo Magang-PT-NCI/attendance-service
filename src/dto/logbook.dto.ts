@@ -20,6 +20,25 @@ export class LogbookReqBody {
   public readonly end_time: string;
 }
 
+export class UpdateLogbookParam {
+  @ApiProperty({ example: 5, description: 'activity id' })
+  public readonly activity_id: number;
+}
+
+export class UpdateLogbookReqBody {
+  @ApiProperty({ example: 'meeting bersama client', required: false })
+  public description?: string;
+
+  @ApiProperty({ example: 'done', required: false })
+  public status?: ActivityStatus;
+
+  @ApiProperty({ example: '10:00', required: false })
+  public start_time?: string;
+
+  @ApiProperty({ example: '11:30', required: false })
+  public end_time?: string;
+}
+
 export class LogbookResBody {
   @ApiProperty({ example: 5 })
   public readonly id: number;

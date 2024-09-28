@@ -100,7 +100,11 @@ export class AttendanceResBody extends Attendance {
   @ApiProperty({ description: 'may be null' })
   public readonly permit: PermitResBody;
 
-  @ApiProperty({ description: 'may be null', type: LogbookResBody, isArray: true })
+  @ApiProperty({
+    description: 'may be null',
+    type: LogbookResBody,
+    isArray: true,
+  })
   public readonly activities: LogbookResBody[];
 
   public constructor(attendance: PrismaAttendance) {
