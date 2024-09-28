@@ -35,7 +35,7 @@ describe('attendance controller test', () => {
       defaultValue: boolean = false,
     ) => {
       await expect(
-        controller.getAttendanceByNik(nik, {
+        controller.getAttendance(nik, {
           filter: query.filter,
           date: query.date,
         }),
@@ -66,7 +66,7 @@ describe('attendance controller test', () => {
   it('should be return attendance data', async () => {
     (service.handleGetAttendanceByNik as jest.Mock).mockReturnValue({ id: 1 });
 
-    const result = await controller.getAttendanceByNik(
+    const result = await controller.getAttendance(
       nik,
       {} as AttendanceQuery,
     );

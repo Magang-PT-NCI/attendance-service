@@ -23,7 +23,7 @@ export class AttendanceController {
   @Get(':nik')
   @ApiAttendance()
   @UseInterceptors(AttendanceInterceptor)
-  async getAttendanceByNik(
+  async getAttendance(
     @Param('nik') nik: string,
     @Query() query: AttendanceQuery,
   ): Promise<AttendanceResBody> {
@@ -52,11 +52,6 @@ export class AttendanceController {
     }
 
     return attendance;
-  }
-
-  @Get('')
-  async getAttendance() {
-    return this.service.handleGetAttendance();
   }
 
   @Post('')
