@@ -5,9 +5,13 @@ import {
   NotFoundException,
   NotImplementedException,
 } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import { $Enums, PrismaClient } from '@prisma/client';
 import { getPrismaClient } from '../utils/prisma.utils';
-import { LogbookResBody, LogbookReqBody } from '../dto/logbook.dto';
+import {
+  LogbookResBody,
+  LogbookReqBody,
+  UpdateLogbookReqBody,
+} from '../dto/logbook.dto';
 import { DateUtils } from '../utils/date.utils';
 import { PrismaActivity } from '../interfaces/logbook.interfaces';
 import { logFormat, logger } from '../utils/logger.utils';
@@ -79,7 +83,53 @@ export class LogbookService {
     throw new NotImplementedException();
   }
 
-  async handleUpdateLogbook() {
-    throw new NotImplementedException();
+  async handleUpdateLogbook(
+    activityId: number,
+    data: UpdateLogbookReqBody,
+  ): Promise<LogbookResBody> {
+    let activity: {
+      id: number;
+      attendance_id: number;
+      description: string;
+      status: $Enums.ActivityStatus;
+      start_time: Date;
+      end_time: Date;
+    };
+
+    try {
+      activity = await this.prisma.activity.findFirst({
+        where: { id: activityId },
+      });
+    } catch (error) {
+      console.log('error activity');
+      console.log(error);
+      logger.error(logFormat(error));
+      throw new InternalServerErrorException();
+    }
+
+    if (!activity) {
+      throw new NotFoundException('logbook tidak ditemukan');
+    }
+
+    try {
+      const result: PrismaActivity = await this.prisma.activity.update({
+        where: { id: activityId },
+        data,
+        select: {
+          id: true,
+          description: true,
+          status: true,
+          start_time: true,
+          end_time: true,
+        },
+      });
+
+      return new LogbookResBody(result);
+    } catch (error) {
+      console.log('error update');
+      console.log(error);
+      logger.error(logFormat(error));
+      throw new InternalServerErrorException();
+    }
   }
 }
