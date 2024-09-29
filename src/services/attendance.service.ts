@@ -120,7 +120,11 @@ export class AttendanceService {
     let filename: string = '';
 
     if (FILE_DESTINATION === 'cloud') {
-      UploadUtil.uploadToDrive();
+      filename = await UploadUtil.uploadToDrive(photo, nik, type, dateUtils);
+
+      if (!filename) {
+        throw new InternalServerErrorException();
+      }
     } else {
       filename = UploadUtil.uploadToLocal(photo, nik, type, dateUtils);
     }
@@ -190,19 +194,23 @@ export class AttendanceService {
     });
 
     // not checked in yet
-    if(!attendance?.checkIn) {
+    if (!attendance?.checkIn) {
       throw new ConflictException('tidak dapat check out sebelum check in');
     }
 
     // already checked out
-    if(attendance.check_out_id) {
+    if (attendance.check_out_id) {
       throw new ConflictException('check out telah dilakukan');
     }
 
     let filename: string = '';
 
     if (FILE_DESTINATION === 'cloud') {
-      UploadUtil.uploadToDrive();
+      filename = await UploadUtil.uploadToDrive(photo, nik, type, dateUtils);
+
+      if (!filename) {
+        throw new InternalServerErrorException();
+      }
     } else {
       filename = UploadUtil.uploadToLocal(photo, nik, type, dateUtils);
     }

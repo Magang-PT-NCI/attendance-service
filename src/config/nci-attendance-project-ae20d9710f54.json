@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "nci-attendance-project",
+  "private_key_id": "ae20d9710f546a676b5b2b6ceeca0e15660b65d6",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDH9jsRBRw6LyZT\nnUKuQ8h3U7o8qw8Awmxt+amZj764FtGSG1xvWETEgiMwpgqNKS6QS+N9umocVuun\nrMiMOIR+fQ1LlQkg1wQJVLnquZqGovxcK9mPHHYkMBESegtYE2P4UhowDi31fOWd\nYRJhhiq9EFSl+pEqDKGlJA3vONMka0XWx7kzYfDr0nXjdTfK1nh7ORxtCDEDfg0r\nlUhKH35KBsW9ZS8cpjOQb3yBfC9jvvB+NrkHcDm1/ZnzZqkylpiPDvxiydM1b0fp\nr/r93W33GNjOL0hwCdfX8ShNFAfKQPbXG5Z8lnI+7Rri7NXgLCOoGqrmmw5MniTY\nDzzxp//LAgMBAAECggEAWTK/LXv0mAXhWGotzRPCkGxChv6dbi7MdJBqtewX3QGc\n0cqvxKGA55HPxctDqK2GrmqT28l0vRiO/ZiHS3mIrO32qNEeJc6UZ98qIglSY52/\n6hPLdFnzX3grnWzgs5TOwv5I3Uft+3SP7tDXBLb3SKhIwlOQPswsrUB0kNJt6W/A\noc3AtBPnJguw9u938Xg1z5HSsGN/Hw6ZpJ53G1EkhIJZvWOZ9d9jtHynjNeuB85Z\nuvisup8v2A/jpJ1F9lJmzTCfEHMqYSsKDHxX5C9oKfYYGtCZ1/867hhIzYe9NKvO\n0xOTBitKoNxfGM717naNKUgQiq9eZ6FqiGl9edDKnQKBgQDvuprAP22p+tjilm/a\nNJgcjS4klqplg6omTMmqWrm0K1H+U0uFIP7iGTUyFmQL8oExolIuDwr0KNqdlrjb\nJzb7wbHsd4aKomEkTt0IlV9VZFy8TWlVUa3SY0WYGsuX2jGKV1clMzT7Qnmu37xa\nnmjNmkw7VGvuyDi0fJCyKMXGHwKBgQDViKfX1zaqJbSKj3xInoxM++UXwQQHc77u\nlmS1rlmfmZ8v29tHFG/DuamHGBUYuWOqnEesFNn6Wa4HSlspf9b+GRNGfZhmntIX\nisc1o1k/sNw4zAXWdg/zqvpSlvjusn7gMLUqWsg0mGVb4YKjzAu7UZqP7fS0s7cO\nFONhvBDY1QKBgQDvjLg2gytCP7eaNFlw4j1dynXheeyro/XSb8jUwfPvZZp5WSKN\n1Xrc0/OkKVuv1JPk1R7ph36anHhYINR3qaf3yoXQlV+MCNapQWT9vsWUvsUsJO6s\nowHeyfQxGhV3mEEIzF34fkLjEHonlMrSgpiXWyfx4Vo5MTn4oMC2RqfaYQKBgQCh\nATxFE+IE4w9BVrVIcDurpFb11TR7hfuWHFHtZ3vuSj/sLyMkcjVfZ/N6iF8H2Glc\n8B9ekg5VpR8CIj+gh+MMjs2o3fR2lBQnah2QxQz7aBh0vuk77qNSgD3k3i7ulCn0\nUuWW/QJuHeZ3JA+D/8tsvzgChFJ5mfRRqtBUFiDBzQKBgQC9+Qz5lZlLR6TCHgZD\n6QuEraDDndGKRE9lCnflxMxnMs9tTC6AiYnNyRc95UHUPZ/DC1OkSDR3myyA0MdV\nDpioZSUSIbTY4UCqVQvm/GVRdO/Lcb6pu3C/+kR9E4JN0kKj6avLOvq+NiR71DTl\nhPH+cuxOLlWhndV0hEyUHegLvQ==\n-----END PRIVATE KEY-----\n",
+  "client_email": "attendance-service@nci-attendance-project.iam.gserviceaccount.com",
+  "client_id": "102704173856462438954",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/attendance-service%40nci-attendance-project.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
