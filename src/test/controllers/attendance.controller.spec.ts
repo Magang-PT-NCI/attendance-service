@@ -28,7 +28,7 @@ describe('attendance controller test', () => {
   });
 
   it('should be call getAttendanceByNik with valid value', async () => {
-    (service.handleGetAttendanceByNik as jest.Mock).mockRejectedValue(null);
+    (service.handleGetAttendance as jest.Mock).mockRejectedValue(null);
 
     const testValueValidation = async (
       query: AttendanceQuery,
@@ -45,7 +45,7 @@ describe('attendance controller test', () => {
       const date = defaultValue
         ? DateUtils.setDate().getDateString()
         : query.date;
-      expect(service.handleGetAttendanceByNik).toHaveBeenCalledWith(
+      expect(service.handleGetAttendance).toHaveBeenCalledWith(
         nik,
         filter,
         date,
@@ -64,7 +64,7 @@ describe('attendance controller test', () => {
   });
 
   it('should be return attendance data', async () => {
-    (service.handleGetAttendanceByNik as jest.Mock).mockReturnValue({ id: 1 });
+    (service.handleGetAttendance as jest.Mock).mockReturnValue({ id: 1 });
 
     const result = await controller.getAttendance(
       nik,
@@ -72,7 +72,7 @@ describe('attendance controller test', () => {
     );
 
     expect(result).toEqual({ id: 1 });
-    expect(service.handleGetAttendanceByNik).toHaveBeenCalledWith(
+    expect(service.handleGetAttendance).toHaveBeenCalledWith(
       nik,
       'all',
       DateUtils.setDate().getDateString(),

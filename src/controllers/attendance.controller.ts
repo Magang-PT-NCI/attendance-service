@@ -24,7 +24,7 @@ import { AttendanceInterceptor } from '../interceptors/attendance.interceptor';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { RequestPostAttendance } from '../decorators/request-attendance.decorator';
 import { extname as pathExtname } from 'path';
-import sharp from 'sharp';
+import * as sharp from 'sharp';
 import { logFormat, logger } from '../utils/logger.utils';
 import { CommonUtils } from '../utils/common.utils';
 import { ApiUtils } from '../utils/api.utils';
@@ -56,7 +56,7 @@ export class AttendanceController {
       date = DateUtils.setDate().getDateString();
     }
 
-    const attendance = await this.service.handleGetAttendanceByNik(
+    const attendance = await this.service.handleGetAttendance(
       nik,
       filter,
       date,
@@ -81,7 +81,7 @@ export class AttendanceController {
 
     if (!mimetype || !extname) {
       throw new BadRequestException(
-        'photo harus berisi gambar yangg valid (png, jpg, jpeg)',
+        'photo harus berisi gambar yang valid (png, jpg, jpeg)',
       );
     }
 
@@ -96,6 +96,8 @@ export class AttendanceController {
       }
     } catch (error) {
       logger.error(logFormat(error));
+      console.log(error);
+      console.log('ini');
       throw new InternalServerErrorException();
     }
 

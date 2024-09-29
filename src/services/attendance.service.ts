@@ -4,7 +4,6 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
-  NotImplementedException,
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { getPrismaClient } from '../utils/prisma.utils';
@@ -12,13 +11,13 @@ import { EmployeeResData } from '../interfaces/api-service.interfaces';
 import { ApiUtils } from '../utils/api.utils';
 import { DateUtils } from '../utils/date.utils';
 import {
-  AttendancePostReqBody, AttendancePostResBody,
+  AttendancePostReqBody,
+  AttendancePostResBody,
   AttendanceResBody,
 } from '../dto/attendance.dto';
 import { PrismaAttendance } from '../interfaces/attendance.interfaces';
 import { FILE_DESTINATION } from '../config/app.config';
 import { UploadUtil } from '../utils/upload.utils';
-import path from 'path';
 
 @Injectable()
 export class AttendanceService {
@@ -28,7 +27,7 @@ export class AttendanceService {
     this.prisma = getPrismaClient();
   }
 
-  async handleGetAttendanceByNik(nik: string, filter: string, date: string) {
+  async handleGetAttendance(nik: string, filter: string, date: string) {
     const employee: EmployeeResData = await ApiUtils.getEmployee(nik);
 
     if (!employee) {
@@ -81,10 +80,6 @@ export class AttendanceService {
     );
 
     return attendance ? new AttendanceResBody(attendance) : null;
-  }
-
-  async handleGetAttendance() {
-    throw new NotImplementedException();
   }
 
   async handleCheckIn(data: AttendancePostReqBody) {
