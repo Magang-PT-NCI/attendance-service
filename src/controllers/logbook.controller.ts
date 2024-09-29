@@ -55,10 +55,6 @@ export class LogbookController {
     return this.service.handlePostLogbook(data);
   }
 
-  async getLogbook() {
-    return this.service.handleGetLogbook();
-  }
-
   @Patch(':activity_id')
   @ApiLogbookPatch()
   async updateLogbook(
