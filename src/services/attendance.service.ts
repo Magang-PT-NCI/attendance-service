@@ -18,6 +18,7 @@ import {
 import { PrismaAttendance } from '../interfaces/attendance.interfaces';
 import { FILE_DESTINATION } from '../config/app.config';
 import { UploadUtil } from '../utils/upload.utils';
+import path from 'path';
 
 @Injectable()
 export class AttendanceService {
@@ -179,8 +180,53 @@ export class AttendanceService {
     return new AttendancePostResBody(data, filename, dateUtils);
   }
 
-  async handleCheckOut(body: AttendancePostReqBody) {
-    return;
+  async handleCheckOut(data: AttendancePostReqBody) {
+    const { nik, location, type, photo } = data;
+
+    DateUtils.setDate();
+    const dateUtils = DateUtils.getInstance();
+
+    const attendance = await this.prisma.attendance.findFirst({
+      where: {
+        nik,
+        date: dateUtils.getDateIso(),
+      },
+      include: { checkIn: true },
+    });
+
+    // not checked in yet
+    if(!attendance?.checkIn) {
+      throw new ConflictException('tidak dapat check out sebelum check in');
+    }
+
+    // already checked out
+    if(attendance.check_out_id) {
+      throw new ConflictException('check out telah dilakukan');
+    }
+
+    let filename: string = '';
+
+    if (FILE_DESTINATION === 'cloud') {
+      UploadUtil.uploadToDrive();
+    } else {
+      filename = UploadUtil.uploadToLocal(photo, nik, type, dateUtils);
+    }
+
+    const checkOut = await this.prisma.check.create({
+      data: {
+        type: 'out',
+        time: dateUtils.getTimeIso(),
+        location,
+        photo: filename,
+      },
+    });
+
+    await this.prisma.attendance.update({
+      where: { id: attendance.id },
+      data: { check_out_id: checkOut.id },
+    });
+
+    return new AttendancePostResBody(data, filename, dateUtils);
   }
 
   private async updateEmployeeCache(nik: string) {
