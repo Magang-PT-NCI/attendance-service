@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Reason } from '@prisma/client';
 import { DateUtils } from '../utils/date.utils';
 import { Permit } from '../interfaces/permit.interfaces';
-import { APP_URL, FILE_DESTINATION } from '../config/app.config';
+import { CommonUtils } from '../utils/common.utils';
 
 export class PermitResBody {
   @ApiProperty({ example: 10 })
@@ -38,10 +38,11 @@ export class PermitResBody {
     permit.start_date.setDate(permit.start_date.getDate() + 2);
 
     this.end_date = DateUtils.setDate(permit.start_date).getDateString();
-    this.permission_letter =
-      FILE_DESTINATION === 'local'
-        ? `${APP_URL}/${permit.permission_letter}`
-        : `https://drive.google.com/file/d/${permit.permission_letter}/view`;
+    this.permission_letter = CommonUtils.getFileUrl(
+      permit.permission_letter,
+      'permit',
+      'file',
+    );
     this.approved = permit.approved;
   }
 }

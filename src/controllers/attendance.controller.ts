@@ -1,7 +1,7 @@
 import {
+  BadRequestException,
   Controller,
   Get,
-  NotImplementedException,
   Param,
   Post,
   Query,
@@ -9,10 +9,20 @@ import {
 } from '@nestjs/common';
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AttendanceService } from '../services/attendance.service';
-import { ApiAttendance } from '../decorators/api-attendance.decorator';
-import { AttendanceQuery, AttendanceResBody } from '../dto/attendance.dto';
+import {
+  ApiAttendance,
+  ApiPostAttendance,
+} from '../decorators/api-attendance.decorator';
+import {
+  AttendanceQuery,
+  AttendancePostReqBody,
+  AttendanceResBody,
+} from '../dto/attendance.dto';
 import { DateUtils } from '../utils/date.utils';
 import { AttendanceInterceptor } from '../interceptors/attendance.interceptor';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { RequestPostAttendance } from '../decorators/request-attendance.decorator';
+import { logFormat, logger } from '../utils/logger.utils';
 
 @Controller('attendance')
 @ApiSecurity('jwt')
@@ -55,7 +65,18 @@ export class AttendanceController {
   }
 
   @Post('')
-  async postAttendance() {
-    throw new NotImplementedException();
+  @UseInterceptors(FileInterceptor('photo'))
+  @ApiPostAttendance()
+  async postAttendance(@RequestPostAttendance() body: AttendancePostReqBody) {
+    const reqBody = { ...body, photo: body.photo.originalname };
+    logger.debug(`request body: ${logFormat(reqBody)}`);
+
+    if (body.type === 'check_in') {
+      return await this.service.handleCheckIn(body);
+    } else if (body.type === 'check_out') {
+      return await this.service.handleCheckOut(body);
+    } else {
+      throw new BadRequestException('type tidak valid');
+    }
   }
 }

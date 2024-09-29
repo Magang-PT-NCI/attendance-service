@@ -1,7 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { DateUtils } from '../utils/date.utils';
 import { LogbookResBody } from './logbook.dto';
-import { APP_URL, FILE_DESTINATION } from '../config/app.config';
 import { PermitResBody } from './permit.dto';
 import {
   Check,
@@ -10,14 +9,6 @@ import {
 } from '../interfaces/attendance.interfaces';
 import { AttendanceStatus } from '@prisma/client';
 import { CommonUtils } from '../utils/common.utils';
-
-export class AttendanceQuery {
-  @ApiProperty({ example: 'done', required: false })
-  public readonly filter: string;
-
-  @ApiProperty({ example: '2024-01-01', required: false })
-  public readonly date: string;
-}
 
 export class Location {
   @ApiProperty({ example: '-6.914744' })
@@ -34,6 +25,68 @@ export class Location {
   }
 }
 
+export class AttendanceQuery {
+  @ApiProperty({ example: 'done', required: false })
+  public readonly filter: string;
+
+  @ApiProperty({ example: '2024-01-01', required: false })
+  public readonly date: string;
+}
+
+export class AttendancePostReqBody {
+  @ApiProperty({ description: 'nomor induk karyawan' })
+  public readonly nik: string;
+
+  @ApiProperty({ description: 'presence location' })
+  public readonly location: string;
+
+  @ApiProperty({ description: 'type of presence (`check_in` or `check_out`)' })
+  public readonly type: string;
+
+  @ApiProperty({
+    description: 'presence photo',
+    type: 'string',
+    format: 'binary',
+  })
+  public readonly photo: Express.Multer.File;
+}
+
+export class AttendancePostResBody {
+  @ApiProperty({ example: '123456789' })
+  public readonly nik: string;
+
+  @ApiProperty({ example: 'check_in' })
+  public readonly type: string;
+
+  @ApiProperty({ example: '2024-01-01' })
+  public readonly date: string;
+
+  @ApiProperty({ example: '06:35' })
+  public readonly time: string;
+
+  @ApiProperty({
+    example:
+      'https://lh3.googleusercontent.com/d/17ZxckunTexIjn_j_Vve2CKTyH98hu0aY=s220',
+  })
+  public readonly photo: string;
+
+  @ApiProperty()
+  public readonly location: Location;
+
+  public constructor(
+    reqBody: AttendancePostReqBody,
+    filename: string,
+    dateUtil: DateUtils,
+  ) {
+    this.nik = reqBody.nik;
+    this.location = new Location(reqBody.location);
+    this.type = reqBody.type;
+    this.date = dateUtil.getDateString();
+    this.time = dateUtil.getTimeString();
+    this.photo = CommonUtils.getFileUrl(filename, reqBody.type);
+  }
+}
+
 export class AttendanceCheck {
   @ApiProperty({ example: '07:10' })
   public readonly time: string;
@@ -47,12 +100,9 @@ export class AttendanceCheck {
   @ApiProperty()
   public readonly location: Location;
 
-  public constructor(check: Check) {
+  public constructor(check: Check, type: 'in' | 'out') {
     this.time = DateUtils.setDate(check.time).getTimeString();
-    this.photo =
-      FILE_DESTINATION === 'local'
-        ? `${APP_URL}/${check.photo}`
-        : `https://lh3.googleusercontent.com/d/${check.photo}=s220`;
+    this.photo = CommonUtils.getFileUrl(check.photo, `check_${type}`);
     this.location = new Location(check.location);
   }
 }
@@ -111,10 +161,10 @@ export class AttendanceResBody extends Attendance {
     super(attendance);
 
     this.checkIn = attendance.checkIn
-      ? new AttendanceCheck(attendance.checkIn)
+      ? new AttendanceCheck(attendance.checkIn, 'in')
       : null;
     this.checkOut = attendance.checkOut
-      ? new AttendanceCheck(attendance.checkOut)
+      ? new AttendanceCheck(attendance.checkOut, 'out')
       : null;
     this.permit = attendance.permit
       ? new PermitResBody(attendance.permit)
