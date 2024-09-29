@@ -1,4 +1,5 @@
 import { DateUtils } from './date.utils';
+import { APP_URL, FILE_DESTINATION } from '../config/app.config';
 
 export class CommonUtils {
   private static readonly MINUTE_FROM_SECOND = 60;
@@ -72,5 +73,37 @@ export class CommonUtils {
       (checkOut.getTime() - checkIn.getTime()) / DateUtils.SECOND;
 
     return CommonUtils.createTimeMessage(durationInSeconds);
+  }
+
+  public static getFileUrl(
+    filename: string,
+    prefix: string,
+    type: 'file' | 'photo' = 'photo',
+  ) {
+    const localUrl = `${APP_URL}/files/${prefix}/${filename}`;
+
+    if (type === 'photo') {
+      return FILE_DESTINATION === 'local'
+        ? localUrl
+        : `https://lh3.googleusercontent.com/d/${filename}=s220`;
+    } else if (type === 'file') {
+      return FILE_DESTINATION === 'local'
+        ? localUrl
+        : `https://drive.google.com/file/d/${filename}/view`;
+    }
+
+    return null;
+  }
+
+  public static validateLocation(location: string) {
+    const [latStr, lonStr] = location.split(',');
+
+    const lat = parseFloat(latStr);
+    const lon = parseFloat(lonStr);
+
+    const isLatValid = lat >= -11 && lat <= 6;
+    const isLonValid = lon >= 95 && lon <= 141;
+
+    return isLatValid && isLonValid;
   }
 }

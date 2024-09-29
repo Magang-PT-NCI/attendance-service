@@ -62,3 +62,14 @@ export const ApiNotFound = (
     description,
     message,
   );
+
+export const ApiConflict = (
+  message: string,
+  description: string = 'conflict',
+): MethodDecorator =>
+  createApiResponseDecorator(
+    HttpStatus.CONFLICT,
+    'Conflict',
+    description,
+    message,
+  );

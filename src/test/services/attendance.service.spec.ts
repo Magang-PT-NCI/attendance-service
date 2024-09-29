@@ -30,7 +30,7 @@ describe('attendance service test', () => {
       (ApiUtils.getEmployee as jest.Mock).mockReturnValue(null);
 
       await expect(
-        service.handleGetAttendanceByNik(nik, filter, date),
+        service.handleGetAttendance(nik, filter, date),
       ).rejects.toThrow(new NotFoundException('karyawan tidak ditemukan'));
       expect(ApiUtils.getEmployee).toHaveBeenCalledWith(nik);
     });
@@ -41,7 +41,7 @@ describe('attendance service test', () => {
         null,
       );
 
-      const result = await service.handleGetAttendanceByNik(nik, filter, date);
+      const result = await service.handleGetAttendance(nik, filter, date);
       expect(result).toBeNull();
       expect(ApiUtils.getEmployee).toHaveBeenCalledWith(nik);
       expect(getPrismaClient().attendance.findFirst).toHaveBeenCalled();
@@ -58,7 +58,7 @@ describe('attendance service test', () => {
         .fn()
         .mockImplementation(() => {});
 
-      const result = await service.handleGetAttendanceByNik(nik, filter, date);
+      const result = await service.handleGetAttendance(nik, filter, date);
       expect(result).toBeInstanceOf(AttendanceResBody);
       expect(ApiUtils.getEmployee).toHaveBeenCalledWith(nik);
       expect(getPrismaClient().attendance.findFirst).toHaveBeenCalled();
