@@ -5,7 +5,7 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
-import { AttendancePostReqBody, AttendanceResBody } from '../dto/attendance.dto';
+import { AttendancePostReqBody, AttendancePostResBody, AttendanceResBody } from '../dto/attendance.dto';
 import { ApiBadRequest, ApiConflict, ApiNotFound } from './api-response.decorator';
 import { ServerErrorResBody } from '../dto/api-error.dto';
 import { ApiToken } from './api-token.decorator';
@@ -47,7 +47,7 @@ export const ApiPostAttendance = (): MethodDecorator => {
     ApiResponse({
       status: 200,
       description: 'success perform attendance',
-      type: AttendanceResBody,
+      type: AttendancePostResBody,
     }),
     ApiBadRequest('lokasi tidak valid', 'invalid input'),
     ApiNotFound('karyawan tidak ditemukan', 'not found'),
