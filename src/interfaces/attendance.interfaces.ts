@@ -22,11 +22,3 @@ export interface PrismaAttendance extends PrismaCommonAttendance {
   activities: PrismaActivity[];
   permit: Permit;
 }
-
-export interface PrismaAttendancePost {
-  location: string,
-  type: string,
-  date: Date,
-  time: Date,
-  employee: { nik: string },
-}
