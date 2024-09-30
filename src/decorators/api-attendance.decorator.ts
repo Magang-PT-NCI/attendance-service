@@ -45,7 +45,7 @@ export const ApiPostAttendance = (): MethodDecorator => {
     ApiBody({ type: AttendancePostReqBody }),
     ApiToken(),
     ApiResponse({
-      status: 200,
+      status: 201,
       description: 'success perform attendance',
       type: AttendancePostResBody,
     }),

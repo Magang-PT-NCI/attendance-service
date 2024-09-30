@@ -44,7 +44,7 @@ export class DateUtils {
       DateUtils.date = new Date();
     }
 
-    return this.getInstance();
+    return DateUtils.getInstance();
   }
 
   public getDateString(): string {
