@@ -1,10 +1,24 @@
-import { BadRequestException, Controller, Patch, Post, UseInterceptors } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Param,
+  Patch,
+  Post,
+  UseInterceptors,
+} from '@nestjs/common';
 import { PermitService } from '../services/permit.service';
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { RequestPostPermit } from '../decorators/request-permit.decorator';
-import { PermitPostReqBody } from '../dto/permit.dto';
+import {
+  PermitPatchParam,
+  PermitPatchReqBody,
+  PermitPostReqBody,
+  PermitResBody,
+} from '../dto/permit.dto';
 import { ApiPostPermit } from '../decorators/api-permit.decorator';
+import { logFormat, logger } from '../utils/logger.utils';
 
 @Controller('permit')
 @ApiSecurity('jwt')
@@ -15,7 +29,9 @@ export class PermitController {
   @Post('')
   @UseInterceptors(FileInterceptor('permission_letter'))
   @ApiPostPermit()
-  async permit(@RequestPostPermit() body: PermitPostReqBody) {
+  async permit(
+    @RequestPostPermit() body: PermitPostReqBody,
+  ): Promise<PermitResBody> {
     if (isNaN(body.duration)) {
       throw new BadRequestException('duration harus berisi angka');
     }
@@ -28,7 +44,26 @@ export class PermitController {
   }
 
   @Patch(':id')
-  async updatePermit() {
-    return this.service.handleUpdatePermit();
+  async updatePermit(
+    @Param() param: PermitPatchParam,
+    @Body() reqBody: PermitPatchReqBody,
+  ): Promise<PermitResBody> {
+    logger.debug(`request body: ${logFormat(reqBody)}`);
+
+    const id = parseInt(`${param.id}`);
+
+    if (isNaN(id)) {
+      throw new BadRequestException(
+        'permit id harus berisi id berupa angka yang valid',
+      );
+    }
+
+    if (typeof reqBody.approved !== 'boolean') {
+      throw new BadRequestException(
+        'approved harus berisi boolean true atau false',
+      );
+    }
+
+    return await this.service.handleUpdatePermit(id, reqBody.approved);
   }
 }

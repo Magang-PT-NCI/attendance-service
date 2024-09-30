@@ -59,6 +59,7 @@ export class PermitResBody {
     this.approved = permit.approved;
   }
 }
+
 export class PermitPostReqBody {
   @ApiProperty({ description: 'nomor induk karyawan' })
   public readonly nik: string;
@@ -78,4 +79,14 @@ export class PermitPostReqBody {
     format: 'binary',
   })
   public readonly permission_letter: Express.Multer.File;
+}
+
+export class PermitPatchParam {
+  @ApiProperty({ example: 4, description: 'permit id' })
+  public readonly id: number;
+}
+
+export class PermitPatchReqBody {
+  @ApiProperty({ example: true })
+  public readonly approved: boolean;
 }

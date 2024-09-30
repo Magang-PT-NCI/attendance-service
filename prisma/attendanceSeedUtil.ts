@@ -92,6 +92,7 @@ export const createPermit = async (employee) => {
 
   const permit = await prisma.permit.create({
     data: {
+      nik: employee.nik,
       reason: reasons[Math.floor(Math.random() * reasons.length)],
       start_date: date,
       duration: 1,

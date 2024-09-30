@@ -3,7 +3,6 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
-  NotImplementedException,
 } from '@nestjs/common';
 import { PermitPostReqBody, PermitResBody } from '../dto/permit.dto';
 import { ApiUtils } from '../utils/api.utils';
@@ -21,6 +20,7 @@ export class PermitService {
   constructor() {
     this.prisma = getPrismaClient();
   }
+
   async handlePermit(data: PermitPostReqBody) {
     const { nik, reason, start_date, duration, permission_letter } = data;
     const dateUtils = DateUtils.setDate(start_date);
@@ -79,6 +79,7 @@ export class PermitService {
     try {
       const result = await this.prisma.permit.create({
         data: {
+          nik,
           reason: reason as Reason,
           start_date: startDate,
           duration,
@@ -107,7 +108,39 @@ export class PermitService {
     // });
   }
 
-  async handleUpdatePermit() {
-    throw new NotImplementedException();
+  async handleUpdatePermit(id: number, approved: boolean) {
+    if (!approved) {
+      const deletedPermit = await this.prisma.permit.delete({
+        where: { id },
+      });
+      deletedPermit.approved = false;
+      return new PermitResBody(deletedPermit);
+    }
+
+    const permit = await this.prisma.permit.update({
+      where: { id },
+      data: { approved },
+    });
+
+    const currentDate = permit.start_date;
+
+    for (let i = 0; i < permit.duration; i++) {
+      if (currentDate.getDay() === 0) {
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      await this.prisma.attendance.create({
+        data: {
+          nik: permit.nik,
+          permit_id: permit.id,
+          date: DateUtils.setDate(currentDate).getDateIso(),
+          status: 'permit',
+        },
+      });
+
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    return new PermitResBody(permit);
   }
 }
