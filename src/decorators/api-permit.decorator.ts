@@ -4,6 +4,7 @@ import { ApiToken } from './api-token.decorator';
 import { ApiBadRequest, ApiConflict, ApiNotFound } from './api-response.decorator';
 import { ServerErrorResBody } from '../dto/api-error.dto';
 import { PermitPostReqBody, PermitResBody } from '../dto/permit.dto';
+import { LogbookResBody } from '../dto/logbook.dto';
 
 export const ApiPostPermit = (): MethodDecorator => {
   return applyDecorators(
@@ -25,6 +26,28 @@ export const ApiPostPermit = (): MethodDecorator => {
       'karyawan telah melakukan check in atau memiliki izin yang telah disetujui',
       'conflict error due to business logic constraints',
     ),
+    ApiResponse({
+      status: 500,
+      description: 'an unexpected error occurred',
+      type: ServerErrorResBody,
+    }),
+  );
+};
+
+export const ApiPatchPermit = (): MethodDecorator => {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'update permit',
+      description: 'update approved status for permit',
+    }),
+    ApiToken(),
+    ApiResponse({
+      status: 200,
+      description: 'success update permit data',
+      type: PermitResBody,
+    }),
+    ApiBadRequest('permit id harus berisi id berupa angka yang valid'),
+    ApiNotFound('data permit tidak ditemukan', 'permit not found'),
     ApiResponse({
       status: 500,
       description: 'an unexpected error occurred',

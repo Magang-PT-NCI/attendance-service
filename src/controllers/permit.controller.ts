@@ -17,7 +17,10 @@ import {
   PermitPostReqBody,
   PermitResBody,
 } from '../dto/permit.dto';
-import { ApiPostPermit } from '../decorators/api-permit.decorator';
+import {
+  ApiPatchPermit,
+  ApiPostPermit,
+} from '../decorators/api-permit.decorator';
 import { logFormat, logger } from '../utils/logger.utils';
 
 @Controller('permit')
@@ -44,6 +47,7 @@ export class PermitController {
   }
 
   @Patch(':id')
+  @ApiPatchPermit()
   async updatePermit(
     @Param() param: PermitPatchParam,
     @Body() reqBody: PermitPatchReqBody,

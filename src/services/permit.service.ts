@@ -109,6 +109,15 @@ export class PermitService {
   }
 
   async handleUpdatePermit(id: number, approved: boolean) {
+    const existingPermit = await this.prisma.permit.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!existingPermit) {
+      throw new NotFoundException('data permit tidak ditemukan');
+    }
+
     if (!approved) {
       const deletedPermit = await this.prisma.permit.delete({
         where: { id },
