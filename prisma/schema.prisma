@@ -24,14 +24,15 @@ model Attendance {
   checkIn      Check?           @relation("CheckIn", fields: [check_in_id], references: [id])
   checkOut     Check?           @relation("CheckOut", fields: [check_out_id], references: [id])
   permit       Permit?          @relation("Permit", fields: [permit_id], references: [id])
-  employee     EmployeeCache    @relation("employee", fields: [nik], references: [nik])
+  employee     EmployeeCache    @relation("Employee", fields: [nik], references: [nik])
   activities   Activity[]
 }
 
 model EmployeeCache {
   nik         String       @id @db.VarChar(20)
   name        String       @db.VarChar(50)
-  attendances Attendance[] @relation("employee")
+  attendances Attendance[] @relation("Employee")
+  permits     Permit[]     @relation("EmployeePermit")
 }
 
 model Check {
@@ -55,13 +56,15 @@ model Activity {
 }
 
 model Permit {
-  id                Int          @id @default(autoincrement())
+  id                Int           @id @default(autoincrement())
+  nik               String        @db.VarChar(20)
   reason            Reason
-  start_date        DateTime     @db.Date
+  start_date        DateTime      @db.Date
   duration          Int
-  permission_letter String       @db.VarChar(255)
+  permission_letter String        @db.VarChar(255)
   approved          Boolean
-  attendances       Attendance[] @relation("Permit")
+  attendances       Attendance[]  @relation("Permit")
+  employee          EmployeeCache @relation("EmployeePermit", fields: [nik], references: [nik])
 }
 
 enum AttendanceStatus {

@@ -1,13 +1,9 @@
-import {
-  BadRequestException,
-  createParamDecorator,
-  ExecutionContext,
-} from '@nestjs/common';
+import { BadRequestException, createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { Request } from 'express';
-import { AttendancePostReqBody } from '../dto/attendance.dto';
 import { logFormat, logger } from '../utils/logger.utils';
+import { PermitPostReqBody } from '../dto/permit.dto';
 
-export const RequestPostAttendance = createParamDecorator(
+export const RequestPostPermit = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest<Request>();
 
@@ -15,11 +11,12 @@ export const RequestPostAttendance = createParamDecorator(
       `request body: ${logFormat({ ...request.body, photo: request.file?.originalname })}`,
     );
 
-    const reqBody: AttendancePostReqBody = {
+    const reqBody: PermitPostReqBody = {
       nik: request.body.nik,
-      type: request.body.type,
-      location: request.body.location,
-      photo: request.file,
+      reason: request.body.reason?.toLowerCase(),
+      start_date: request.body.start_date,
+      duration: parseInt(request.body.duration),
+      permission_letter: request.file,
     };
 
     // check all required fields

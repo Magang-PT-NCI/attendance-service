@@ -35,7 +35,20 @@ export class PermitResBody {
     this.duration = permit.duration;
     this.start_date = DateUtils.setDate(permit.start_date).getDateString();
 
-    permit.start_date.setDate(permit.start_date.getDate() + 2);
+    let endDateCount = 0;
+    const currentDate = DateUtils.getInstance().getDate();
+
+    for (let i = 0; i < this.duration; i++) {
+      if (currentDate.getDay() === 0) {
+        currentDate.setDate(currentDate.getDate() + 1);
+        endDateCount++;
+      }
+
+      currentDate.setDate(currentDate.getDate() + 1);
+      endDateCount++;
+    }
+
+    permit.start_date.setDate(permit.start_date.getDate() + (endDateCount - 1));
 
     this.end_date = DateUtils.setDate(permit.start_date).getDateString();
     this.permission_letter = CommonUtils.getFileUrl(
@@ -45,4 +58,35 @@ export class PermitResBody {
     );
     this.approved = permit.approved;
   }
+}
+
+export class PermitPostReqBody {
+  @ApiProperty({ description: 'nomor induk karyawan' })
+  public readonly nik: string;
+
+  @ApiProperty({ description: 'permit reason' })
+  public readonly reason: string;
+
+  @ApiProperty({ description: 'start permit date' })
+  public readonly start_date: string;
+
+  @ApiProperty({ description: 'permit duration' })
+  public readonly duration: number;
+
+  @ApiProperty({
+    description: 'permission letter',
+    type: 'string',
+    format: 'binary',
+  })
+  public readonly permission_letter: Express.Multer.File;
+}
+
+export class PermitPatchParam {
+  @ApiProperty({ example: 4, description: 'permit id' })
+  public readonly id: number;
+}
+
+export class PermitPatchReqBody {
+  @ApiProperty({ example: true })
+  public readonly approved: boolean;
 }

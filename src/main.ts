@@ -26,6 +26,8 @@ async function bootstrap() {
     .addTag('Attendance')
     .addTag('Logbook')
     .addTag('Monitoring')
+    .addTag('Permit')
+    .addTag('File')
 
     .build();
   const document: OpenAPIObject = SwaggerModule.createDocument(app, config);
