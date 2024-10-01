@@ -6,17 +6,20 @@ import {
   GOOGLE_API_KEY_FILE,
   GOOGLE_DRIVE_FOLDER_ID,
 } from '../config/service.config';
-import { google } from 'googleapis';
+import { drive_v3, google } from 'googleapis';
 import { Readable } from 'stream';
 
 export class UploadUtil {
-  private static async getDriveService() {
-    const auth = new google.auth.GoogleAuth({
-      keyFile: `./${GOOGLE_API_KEY_FILE}`,
-      scopes: ['https://www.googleapis.com/auth/drive.file'],
-    });
+  private static drive: drive_v3.Drive;
 
-    return google.drive({ version: 'v3', auth });
+  static {
+    UploadUtil.drive = google.drive({
+      version: 'v3',
+      auth: new google.auth.GoogleAuth({
+        keyFile: `./${GOOGLE_API_KEY_FILE}`,
+        scopes: ['https://www.googleapis.com/auth/drive.file'],
+      }),
+    });
   }
 
   public static async uploadToDrive(
@@ -28,7 +31,6 @@ export class UploadUtil {
     const filename = `${nik}_${type}_${dateUtil.getDateString()}`;
 
     try {
-      const driveService = await this.getDriveService();
       const fileMetadata: any = {
         name: filename,
         parents: [GOOGLE_DRIVE_FOLDER_ID],
@@ -39,7 +41,7 @@ export class UploadUtil {
         body: Readable.from(file.buffer),
       };
 
-      const response = await driveService.files.create({
+      const response = await UploadUtil.drive.files.create({
         requestBody: fileMetadata,
         media: media,
         fields: 'id',
@@ -53,6 +55,17 @@ export class UploadUtil {
     }
 
     return null;
+  }
+
+  public static async deleteFromDrive(fileId: string) {
+    try {
+      await UploadUtil.drive.files.delete({ fileId });
+      return true;
+    } catch (error) {
+      logger.error(logFormat(error));
+    }
+
+    return false;
   }
 
   public static uploadToLocal(
