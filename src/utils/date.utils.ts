@@ -1,6 +1,3 @@
-import { Injectable } from '@nestjs/common';
-
-@Injectable()
 export class DateUtils {
   public static readonly SECOND = 1000;
   public static readonly MINUTE = DateUtils.SECOND * 60;

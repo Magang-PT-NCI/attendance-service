@@ -90,7 +90,7 @@ export class AttendanceService {
     const current = dateUtils.getDate();
 
     if (current.getHours() < 6) {
-      throw new BadRequestException(
+      throw new ConflictException(
         'tidak dapat melakukan check in sebelum pukul 06:00',
       );
     }
@@ -99,7 +99,7 @@ export class AttendanceService {
       current.getHours() > 9 ||
       (current.getHours() >= 9 && current.getMinutes() > 0)
     ) {
-      throw new BadRequestException(
+      throw new ConflictException(
         'tidak dapat melakukan check in setelah pukul 09:00',
       );
     }

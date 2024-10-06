@@ -1,27 +1,107 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  NotImplementedException,
-} from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { getPrismaClient } from '../utils/prisma.utils';
 import { ReportResBody } from '../dto/monitoring.dto';
 import { PrismaAttendanceReport } from 'src/interfaces/monitoring.interfaces';
 import { logFormat, logger } from '../utils/logger.utils';
+import { DateUtils } from '../utils/date.utils';
 
 @Injectable()
 export class MonitoringService {
+  private static DAYS = [
+    'monday',
+    'tuesday',
+    'wednesday',
+    'thursday',
+    'friday',
+    'saturday',
+  ];
+
   private prisma: PrismaClient;
 
-  constructor() {
+  public constructor() {
     this.prisma = getPrismaClient();
   }
 
-  async handleDashboard() {
-    throw new NotImplementedException();
+  private getDateWeek(dateUtil: DateUtils): { monday: Date; saturday: Date } {
+    const today = dateUtil.getDate();
+    const dayOfWeek = today.getDay();
+
+    const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + diffToMonday);
+
+    const saturday = new Date(monday);
+    saturday.setDate(monday.getDate() + 5);
+
+    return { monday, saturday };
   }
 
-  async handleReport(
+  private getSummaryCount(attendances) {
+    const summary = { presence: 0, permit: 0, absent: 0 };
+    attendances.forEach(({ status }) => summary[status]++);
+    return summary;
+  }
+
+  private getDaySummary(attendances, day) {
+    const dayData = attendances.filter(
+      (attendance) => attendance.date.getDay() === day,
+    );
+    return this.getSummaryCount(dayData);
+  }
+
+  public async handleDashboard() {
+    const dateUtil = DateUtils.setDate();
+    const { monday, saturday } = this.getDateWeek(dateUtil);
+
+    const attendances = await this.prisma.attendance.findMany({
+      where: {
+        date: {
+          gte: monday, // greater then equal
+          lte: saturday, // less then equal
+        },
+      },
+      select: {
+        nik: true,
+        date: true,
+        status: true,
+        employee: { select: { name: true } },
+        checkIn: { select: { time: true } },
+        permit: true,
+      },
+    });
+
+    const todayData = attendances.filter(
+      (attendance) => attendance.date.toISOString() === dateUtil.getDateIso(),
+    );
+    const {
+      presence: todayPresence,
+      permit: todayPermit,
+      absent: todayAbsent,
+    } = this.getSummaryCount(todayData);
+
+    const weeklySummary = {};
+    for (let day = 1; day <= 6; day++) {
+      weeklySummary[MonitoringService.DAYS[day - 1]] = this.getDaySummary(
+        attendances,
+        day,
+      );
+    }
+
+    // const notifications = await this.getNotifications(todayData);
+
+    return {
+      date: dateUtil.getDateString(),
+      total_presence: todayPresence,
+      total_permit: todayPermit,
+      total_absent: todayAbsent,
+      weekly_summary: weeklySummary,
+      // notifications,
+    };
+  }
+
+  public async handleReport(
     keyword: string,
     from: Date,
     to: Date,

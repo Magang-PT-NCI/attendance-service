@@ -10,15 +10,16 @@ import { ApiReport } from '../decorators/api-report.decorator';
 @ApiSecurity('jwt')
 @ApiTags('Monitoring')
 export class MonitoringController {
-  constructor(private readonly service: MonitoringService) {}
+  public constructor(private readonly service: MonitoringService) {}
 
-  async dashboard() {
+  @Get('dashboard')
+  public async dashboard() {
     return this.service.handleDashboard();
   }
 
   @Get('report')
   @ApiReport()
-  async report(@Query() query: ReportQuery): Promise<ReportResBody[]> {
+  public async report(@Query() query: ReportQuery): Promise<ReportResBody[]> {
     logger.debug(`query parameters: ${logFormat(query)}`);
 
     const keyword: string = query.keyword || '';

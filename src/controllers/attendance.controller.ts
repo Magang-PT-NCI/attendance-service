@@ -42,6 +42,7 @@ export class AttendanceController {
     @Param('nik') nik: string,
     @Query() query: AttendanceQuery,
   ): Promise<AttendanceResBody> {
+    logger.debug(logFormat(query));
     let filter = query.filter?.toLowerCase();
     let date = query.date;
 
