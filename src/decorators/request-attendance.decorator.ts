@@ -4,7 +4,7 @@ import {
   ExecutionContext,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { AttendancePostReqBody } from '../dto/attendance.dto';
+import { AttendancePostReqBody, Location } from '../dto/attendance.dto';
 import { LoggerUtil } from '../utils/logger.utils';
 
 export const RequestPostAttendance = createParamDecorator(
@@ -20,7 +20,7 @@ export const RequestPostAttendance = createParamDecorator(
     const reqBody: AttendancePostReqBody = {
       nik: request.body.nik,
       type: request.body.type,
-      location: request.body.location,
+      location: Location.getLocationFromRequest(request.body.location),
       photo: request.file,
     };
 

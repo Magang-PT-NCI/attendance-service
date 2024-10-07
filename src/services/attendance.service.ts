@@ -56,7 +56,7 @@ export class AttendanceService {
       data: {
         type: 'in',
         time: currentTimeIso,
-        location,
+        location: `${location.latitude},${location.longitude}`,
         photo: filename,
       },
     });
@@ -93,7 +93,7 @@ export class AttendanceService {
       data: {
         type: 'out',
         time: currentTimeIso,
-        location,
+        location: `${location.latitude},${location.longitude}`,
         photo: filename,
       },
     });

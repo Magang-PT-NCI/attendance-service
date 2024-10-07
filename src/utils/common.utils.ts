@@ -85,18 +85,6 @@ export const getFileUrl = (
   return null;
 };
 
-export const validateLocation = (location: string) => {
-  const [latStr, lonStr] = location.split(',');
-
-  const lat = parseFloat(latStr);
-  const lon = parseFloat(lonStr);
-
-  const isLatValid = lat >= -11 && lat <= 6;
-  const isLonValid = lon >= 95 && lon <= 141;
-
-  return isLatValid && isLonValid;
-};
-
 export const handleError = (error: Error, logger: LoggerUtil) => {
   logger.error(error);
   throw new InternalServerErrorException();

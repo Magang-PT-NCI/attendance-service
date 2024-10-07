@@ -28,7 +28,6 @@ import * as sharp from 'sharp';
 import { LoggerUtil } from '../utils/logger.utils';
 import { getDateString } from '../utils/date.utils';
 import { getEmployee } from '../utils/api.utils';
-import { validateLocation } from '../utils/common.utils';
 
 @Controller('attendance')
 @ApiSecurity('jwt')
@@ -110,10 +109,6 @@ export class AttendanceController {
     const employee = await getEmployee(body.nik);
     if (!employee) {
       throw new NotFoundException('karyawan tidak ditemukan');
-    }
-
-    if (!validateLocation(body.location)) {
-      throw new BadRequestException('lokasi tidak valid');
     }
 
     if (body.type === 'check_in') {
