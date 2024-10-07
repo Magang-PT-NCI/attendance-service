@@ -41,16 +41,12 @@ export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
     consumer.apply(HttpMiddleware).forRoutes('*');
 
-    if (FILE_DESTINATION === 'cloud') {
-      consumer.apply(TokenMiddleware).forRoutes('*');
-    } else {
-      consumer
-        .apply(TokenMiddleware)
-        .exclude({
-          path: 'files/:type/:filename',
-          method: RequestMethod.GET,
-        })
-        .forRoutes('*');
-    }
+    const tokenMiddleware = consumer.apply(TokenMiddleware);
+    if (FILE_DESTINATION !== 'cloud')
+      tokenMiddleware.exclude({
+        path: 'files/:type/:filename',
+        method: RequestMethod.GET,
+      });
+    tokenMiddleware.forRoutes('*');
   }
 }

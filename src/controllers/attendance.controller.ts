@@ -107,7 +107,8 @@ export class AttendanceController {
       throw new BadRequestException('photo harus gambar dengan rasio 1:1');
     }
 
-    if (!(await getEmployee(body.nik))) {
+    const employee = await getEmployee(body.nik);
+    if (!employee) {
       throw new NotFoundException('karyawan tidak ditemukan');
     }
 
@@ -116,7 +117,7 @@ export class AttendanceController {
     }
 
     if (body.type === 'check_in') {
-      return await this.service.handleCheckIn(body);
+      return await this.service.handleCheckIn(body, employee);
     } else if (body.type === 'check_out') {
       return await this.service.handleCheckOut(body);
     } else {
