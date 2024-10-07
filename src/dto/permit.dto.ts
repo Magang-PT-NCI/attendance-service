@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Reason } from '@prisma/client';
-import { DateUtils } from '../utils/date.utils';
 import { Permit } from '../interfaces/permit.interfaces';
-import { CommonUtils } from '../utils/common.utils';
+import { getDate, getDateString } from '../utils/date.utils';
+import { getFileUrl } from '../utils/common.utils';
 
 export class PermitResBody {
   @ApiProperty({ example: 10 })
@@ -33,10 +33,10 @@ export class PermitResBody {
     this.id = permit.id;
     this.reason = permit.reason;
     this.duration = permit.duration;
-    this.start_date = DateUtils.setDate(permit.start_date).getDateString();
+    this.start_date = getDateString(permit.start_date);
 
     let endDateCount = 0;
-    const currentDate = DateUtils.getInstance().getDate();
+    const currentDate = getDate(permit.start_date.toISOString());
 
     for (let i = 0; i < this.duration; i++) {
       if (currentDate.getDay() === 0) {
@@ -50,8 +50,8 @@ export class PermitResBody {
 
     permit.start_date.setDate(permit.start_date.getDate() + (endDateCount - 1));
 
-    this.end_date = DateUtils.setDate(permit.start_date).getDateString();
-    this.permission_letter = CommonUtils.getFileUrl(
+    this.end_date = getDateString(permit.start_date);
+    this.permission_letter = getFileUrl(
       permit.permission_letter,
       'permit',
       'file',

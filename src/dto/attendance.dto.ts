@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { DateUtils } from '../utils/date.utils';
 import { LogbookResBody } from './logbook.dto';
 import { PermitResBody } from './permit.dto';
 import {
@@ -8,7 +7,8 @@ import {
   PrismaCommonAttendance,
 } from '../interfaces/attendance.interfaces';
 import { AttendanceStatus } from '@prisma/client';
-import { CommonUtils } from '../utils/common.utils';
+import { getDate, getDateString, getTimeString } from '../utils/date.utils';
+import { getFileUrl, getLate, getOvertime, getWorkingHour } from '../utils/common.utils';
 
 export class Location {
   @ApiProperty({ example: '-6.914744' })
@@ -76,14 +76,14 @@ export class AttendancePostResBody {
   public constructor(
     reqBody: AttendancePostReqBody,
     filename: string,
-    dateUtil: DateUtils,
+    date: Date,
   ) {
     this.nik = reqBody.nik;
     this.location = new Location(reqBody.location);
     this.type = reqBody.type;
-    this.date = dateUtil.getDateString();
-    this.time = dateUtil.getTimeString();
-    this.photo = CommonUtils.getFileUrl(filename, reqBody.type);
+    this.date = getDateString(date);
+    this.time = getTimeString(date, true);
+    this.photo = getFileUrl(filename, reqBody.type);
   }
 }
 
@@ -101,8 +101,8 @@ export class AttendanceCheck {
   public readonly location: Location;
 
   public constructor(check: Check, type: 'in' | 'out') {
-    this.time = DateUtils.setDate(check.time).getTimeString();
-    this.photo = CommonUtils.getFileUrl(check.photo, `check_${type}`);
+    this.time = getTimeString(check.time, true);
+    this.photo = getFileUrl(check.photo, `check_${type}`);
     this.location = new Location(check.location);
   }
 }
@@ -128,15 +128,15 @@ export class Attendance {
 
   public constructor(attendance: PrismaCommonAttendance) {
     this.id = attendance.id;
-    this.date = DateUtils.setDate(attendance.date).getDateString();
+    this.date = getDateString(attendance.date);
     this.status = attendance.status;
 
     const checkIn = attendance.checkIn?.time;
     const checkOut = attendance.checkOut?.time;
 
-    this.overtime = CommonUtils.getOvertime(checkOut);
-    this.late = CommonUtils.getLate(checkIn);
-    this.working_hours = CommonUtils.getWorkingHour(checkIn, checkOut);
+    this.overtime = getOvertime(checkOut);
+    this.late = getLate(checkIn);
+    this.working_hours = getWorkingHour(checkIn, checkOut);
   }
 }
 

@@ -1,35 +1,34 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { MonitoringService } from '../services/monitoring.service';
 import { ReportQuery, ReportResBody } from '../dto/monitoring.dto';
-import { logFormat, logger } from '../utils/logger.utils';
-import { DateUtils } from '../utils/date.utils';
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { ApiReport } from '../decorators/api-report.decorator';
+import { LoggerUtil } from '../utils/logger.utils';
+import { getDate } from '../utils/date.utils';
 
 @Controller('monitoring')
 @ApiSecurity('jwt')
 @ApiTags('Monitoring')
 export class MonitoringController {
-  constructor(private readonly service: MonitoringService) {}
+  private readonly logger = new LoggerUtil('MonitoringController');
 
-  async dashboard() {
+  public constructor(private readonly service: MonitoringService) {}
+
+  @Get('dashboard')
+  public async dashboard() {
     return this.service.handleDashboard();
   }
 
   @Get('report')
   @ApiReport()
-  async report(@Query() query: ReportQuery): Promise<ReportResBody[]> {
-    logger.debug(`query parameters: ${logFormat(query)}`);
+  public async report(@Query() query: ReportQuery): Promise<ReportResBody[]> {
+    this.logger.debug('query parameters: ', query);
 
     const keyword: string = query.keyword || '';
     const from: Date = query.from
-      ? DateUtils.setDate(query.from).getDate()
-      : DateUtils.setDate().getDate();
-    const to: Date = query.to ? DateUtils.setDate(query.to).getDate() : from;
-
-    logger.silly(
-      `transformed query parameters: ${logFormat({ keyword, from, to })}`,
-    );
+      ? getDate(query.from)
+      : getDate(new Date().toISOString());
+    const to: Date = query.to ? getDate(query.to) : from;
 
     return await this.service.handleReport(keyword, from, to);
   }

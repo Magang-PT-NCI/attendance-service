@@ -2,7 +2,7 @@ import { AttendanceController } from '../../controllers/attendance.controller';
 import { AttendanceService } from '../../services/attendance.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AttendanceQuery } from '../../dto/attendance.dto';
-import { DateUtils } from '../../utils/date.utils';
+import { getDateString } from '../../utils/date.utils';
 
 describe('attendance controller test', () => {
   let controller: AttendanceController;
@@ -42,9 +42,7 @@ describe('attendance controller test', () => {
       ).rejects.toBeNull();
 
       const filter = defaultValue ? 'all' : query.filter;
-      const date = defaultValue
-        ? DateUtils.setDate().getDateString()
-        : query.date;
+      const date = defaultValue ? getDateString(new Date()) : query.date;
       expect(service.handleGetAttendance).toHaveBeenCalledWith(
         nik,
         filter,
@@ -54,7 +52,7 @@ describe('attendance controller test', () => {
 
     await testValueValidation({
       filter: 'all',
-      date: DateUtils.setDate().getDateString(),
+      date: getDateString(new Date()),
     });
     await testValueValidation({ filter: 'done', date: '2024-01-01' });
     await testValueValidation({ filter: 'progress', date: '2024-01-02' });
@@ -66,16 +64,13 @@ describe('attendance controller test', () => {
   it('should be return attendance data', async () => {
     (service.handleGetAttendance as jest.Mock).mockReturnValue({ id: 1 });
 
-    const result = await controller.getAttendance(
-      nik,
-      {} as AttendanceQuery,
-    );
+    const result = await controller.getAttendance(nik, {} as AttendanceQuery);
 
     expect(result).toEqual({ id: 1 });
     expect(service.handleGetAttendance).toHaveBeenCalledWith(
       nik,
       'all',
-      DateUtils.setDate().getDateString(),
+      getDateString(new Date()),
     );
   });
 });

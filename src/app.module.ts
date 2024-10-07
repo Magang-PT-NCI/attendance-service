@@ -17,6 +17,7 @@ import { TokenMiddleware } from './middlewares/token.middleware';
 import { FileController } from './controllers/file.controller';
 import { FileService } from './services/file.service';
 import { FILE_DESTINATION } from './config/app.config';
+import { PrismaService } from './services/prisma.service';
 
 @Module({
   imports: [],
@@ -33,6 +34,7 @@ import { FILE_DESTINATION } from './config/app.config';
     MonitoringService,
     PermitService,
     FileService,
+    PrismaService,
   ],
 })
 export class AppModule implements NestModule {

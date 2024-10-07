@@ -1,76 +1,47 @@
-import { Injectable } from '@nestjs/common';
+import { zeroPadding } from './common.utils';
+import { IS_SHOW_DATE } from '../config/logger.config';
 
-@Injectable()
-export class DateUtils {
-  public static readonly SECOND = 1000;
-  public static readonly MINUTE = DateUtils.SECOND * 60;
-  public static readonly HOUR = DateUtils.MINUTE * 60;
+export const getDateString = (date: Date) => {
+  const year: string = zeroPadding(date.getFullYear(), 4);
+  const month: string = zeroPadding(date.getMonth() + 1, 2);
+  const day: string = zeroPadding(date.getDate(), 2);
 
-  private static INSTANCE: DateUtils;
-  private static date: Date;
+  return `${year}-${month}-${day}`;
+};
 
-  private constructor() {}
-
-  public static getInstance(): DateUtils {
-    if (!DateUtils.INSTANCE) {
-      DateUtils.INSTANCE = new DateUtils();
-    }
-
-    return DateUtils.INSTANCE;
+export const getTimeString = (date: Date, timeFix: boolean = false) => {
+  if (timeFix) {
+    date.setHours(date.getHours() - 7);
   }
 
-  public static isValidTime(time: string): boolean {
-    const timeValidation = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
-    return timeValidation.test(time);
+  const hours: string = zeroPadding(date.getHours());
+  const minutes: string = zeroPadding(date.getMinutes());
+
+  return `${hours}:${minutes}`;
+};
+
+export const getLogTimeString = (date: Date) => {
+  const seconds: string = zeroPadding(date.getSeconds());
+  const miliseconds: string = zeroPadding(date.getMilliseconds(), 3);
+
+  return `${getTimeString(date)}:${seconds}.${miliseconds}`;
+};
+
+export const getLogDateFormat = (date: Date) => {
+  return IS_SHOW_DATE
+    ? `${getDateString(date)} ${getLogTimeString(date)}`
+    : getLogTimeString(date);
+};
+
+export const isValidTime = (time: string): boolean => {
+  const timeValidation = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
+  return timeValidation.test(time);
+};
+
+export const getDate = (dateString: string): Date => {
+  if (isValidTime(dateString)) {
+    return new Date(`1970-01-01T${dateString}:00.000Z`);
   }
 
-  public static setDate(date?: string | Date): DateUtils {
-    const isDate: boolean = date instanceof Date;
-
-    if (typeof date === 'string') {
-      if (DateUtils.isValidTime(date)) {
-        DateUtils.date = new Date(`1970-01-01T${date}:00.000Z`);
-        DateUtils.date.setHours(DateUtils.date.getHours() - 7);
-      } else {
-        DateUtils.date = new Date(date);
-      }
-    } else if (isDate) {
-      DateUtils.date = new Date(date);
-
-      if (date.toISOString().startsWith('1970-01-01T')) {
-        DateUtils.date.setHours(DateUtils.date.getHours() - 7);
-      }
-    } else {
-      DateUtils.date = new Date();
-    }
-
-    return DateUtils.getInstance();
-  }
-
-  public getDateString(): string {
-    const fullYear = `${DateUtils.date.getFullYear()}`.padStart(4, '0');
-    const month = `${DateUtils.date.getMonth() + 1}`.padStart(2, '0');
-    const date = `${DateUtils.date.getDate()}`.padStart(2, '0');
-
-    return `${fullYear}-${month}-${date}`;
-  }
-
-  public getDateIso(): string {
-    return `${this.getDateString()}T00:00:00.000Z`;
-  }
-
-  public getTimeString(): string {
-    const hours = `${DateUtils.date.getHours()}`.padStart(2, '0');
-    const minutes = `${DateUtils.date.getMinutes()}`.padStart(2, '0');
-
-    return `${hours}:${minutes}`;
-  }
-
-  public getTimeIso(): string {
-    return `1970-01-01T${this.getTimeString()}:00.000Z`;
-  }
-
-  public getDate(): Date {
-    return DateUtils.date;
-  }
-}
+  return new Date(dateString);
+};

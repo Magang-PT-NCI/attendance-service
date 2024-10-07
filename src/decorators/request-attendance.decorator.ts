@@ -5,15 +5,17 @@ import {
 } from '@nestjs/common';
 import { Request } from 'express';
 import { AttendancePostReqBody } from '../dto/attendance.dto';
-import { logFormat, logger } from '../utils/logger.utils';
+import { LoggerUtil } from '../utils/logger.utils';
 
 export const RequestPostAttendance = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {
+    const logger = LoggerUtil.getInstance('AttendanceController');
     const request = ctx.switchToHttp().getRequest<Request>();
 
-    logger.debug(
-      `request body: ${logFormat({ ...request.body, photo: request.file?.originalname })}`,
-    );
+    logger.debug('request body: ', {
+      ...request.body,
+      photo: request.file?.originalname,
+    });
 
     const reqBody: AttendancePostReqBody = {
       nik: request.body.nik,
