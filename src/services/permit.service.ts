@@ -5,33 +5,30 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PermitPostReqBody, PermitResBody } from '../dto/permit.dto';
-import { ApiUtils } from '../utils/api.utils';
-import { DateUtils } from '../utils/date.utils';
-import { PrismaClient, Reason } from '@prisma/client';
-import { getPrismaClient } from 'src/utils/prisma.utils';
+import { Reason } from '@prisma/client';
 import { FILE_DESTINATION } from '../config/app.config';
-import { UploadUtil } from '../utils/upload.utils';
-import { logFormat, logger } from '../utils/logger.utils';
+import { PrismaService } from './prisma.service';
+import { getEmployee } from '../utils/api.utils';
+import { getDate, getDateString } from '../utils/date.utils';
+import { uploadToDrive, uploadToLocal } from '../utils/upload.utils';
+import { LoggerUtil } from '../utils/logger.utils';
 
 @Injectable()
 export class PermitService {
-  private readonly prisma: PrismaClient;
+  private readonly logger = new LoggerUtil('PermitService');
 
-  constructor() {
-    this.prisma = getPrismaClient();
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async handlePermit(data: PermitPostReqBody) {
     const { nik, reason, start_date, duration, permission_letter } = data;
-    const dateUtils = DateUtils.setDate(start_date);
-    const startDate = dateUtils.getDate();
+    const startDate = getDate(getDateString(new Date(start_date)));
 
-    const employee = await ApiUtils.getEmployee(nik);
+    const employee = await getEmployee(nik);
     if (!employee) {
       throw new NotFoundException('karyawan tidak ditemukan');
     }
 
-    const currentDate = new Date(dateUtils.getDate());
+    const currentDate = new Date(start_date);
 
     for (let i = 0; i < duration; i++) {
       if (currentDate.getDay() === 0) {
@@ -41,13 +38,13 @@ export class PermitService {
       const attendance = await this.prisma.attendance.findFirst({
         where: {
           nik,
-          date: DateUtils.setDate(currentDate).getDateIso(),
+          date: currentDate,
         },
       });
 
       if (attendance) {
         throw new ConflictException(
-          'karyawan telah melakukan check in atau memiliki izin yang telah disetujui',
+          `karyawan telah melakukan check in atau memiliki izin yang telah disetujui pada ${getDateString(currentDate)}`,
         );
       }
 
@@ -57,23 +54,9 @@ export class PermitService {
     let filename: string = '';
 
     if (FILE_DESTINATION === 'cloud') {
-      filename = await UploadUtil.uploadToDrive(
-        permission_letter,
-        nik,
-        'permit',
-        dateUtils,
-      );
-
-      if (!filename) {
-        throw new InternalServerErrorException();
-      }
+      filename = await uploadToDrive(permission_letter, nik, 'permit');
     } else {
-      filename = UploadUtil.uploadToLocal(
-        permission_letter,
-        nik,
-        'permit',
-        dateUtils,
-      );
+      filename = uploadToLocal(permission_letter, nik, 'permit');
     }
 
     try {
@@ -90,7 +73,7 @@ export class PermitService {
 
       return new PermitResBody(result);
     } catch (error) {
-      logger.error(logFormat(error));
+      this.logger.error(error);
       throw new InternalServerErrorException();
     }
 
@@ -142,7 +125,7 @@ export class PermitService {
         data: {
           nik: permit.nik,
           permit_id: permit.id,
-          date: DateUtils.setDate(currentDate).getDateIso(),
+          date: currentDate,
           status: 'permit',
         },
       });

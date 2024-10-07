@@ -5,7 +5,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
-import { ApiUtils } from '../utils/api.utils';
+import { verifyToken } from '../utils/api.utils';
 
 @Injectable()
 export class TokenMiddleware implements NestMiddleware {
@@ -13,19 +13,19 @@ export class TokenMiddleware implements NestMiddleware {
     const authHeader = req.get('Authorization');
 
     if (!authHeader) {
-      throw new BadRequestException('token is required');
+      throw new BadRequestException('token harus diisi');
     }
 
     const tokenFormat = /bearer .+/i;
     if (!tokenFormat.test(authHeader)) {
-      throw new BadRequestException('token format is invalid');
+      throw new BadRequestException('format token tidak valid');
     }
 
     const token = authHeader.split(' ')[1];
-    const tokenValidity = await ApiUtils.verifyToken(token);
+    const tokenValidity = await verifyToken(token);
 
     if (!tokenValidity) {
-      throw new UnauthorizedException('token is not valid');
+      throw new UnauthorizedException('token tidak valid');
     }
 
     return next();

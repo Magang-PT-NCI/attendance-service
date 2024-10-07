@@ -1,15 +1,21 @@
-import { BadRequestException, createParamDecorator, ExecutionContext } from '@nestjs/common';
+import {
+  BadRequestException,
+  createParamDecorator,
+  ExecutionContext,
+} from '@nestjs/common';
 import { Request } from 'express';
-import { logFormat, logger } from '../utils/logger.utils';
 import { PermitPostReqBody } from '../dto/permit.dto';
+import { LoggerUtil } from '../utils/logger.utils';
 
 export const RequestPostPermit = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {
+    const logger = LoggerUtil.getInstance('PermitController');
     const request = ctx.switchToHttp().getRequest<Request>();
 
-    logger.debug(
-      `request body: ${logFormat({ ...request.body, photo: request.file?.originalname })}`,
-    );
+    logger.debug('request body: ', {
+      ...request.body,
+      photo: request.file?.originalname,
+    });
 
     const reqBody: PermitPostReqBody = {
       nik: request.body.nik,

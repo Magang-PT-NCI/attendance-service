@@ -1,8 +1,8 @@
-import { getPrismaClient } from '../../utils/prisma.utils';
 import { AttendanceService } from '../../services/attendance.service';
-import { ApiUtils } from '../../utils/api.utils';
 import { NotFoundException } from '@nestjs/common';
 import { AttendanceResBody } from '../../dto/attendance.dto';
+import { PrismaService } from '../../services/prisma.service';
+import { getEmployee } from '../../utils/api.utils';
 
 jest.mock('@prisma/client');
 jest.mock('../../utils/prisma.utils');
@@ -10,15 +10,17 @@ jest.mock('../../utils/api.utils');
 
 describe('attendance service test', () => {
   let service: AttendanceService;
+  let prisma: PrismaService;
 
   beforeEach(() => {
     const prismaMock = {
       attendance: { findFirst: jest.fn() },
     };
 
-    (getPrismaClient as jest.Mock).mockReturnValue(prismaMock);
+    // (getPrismaClient as jest.Mock).mockReturnValue(prismaMock);
 
-    service = new AttendanceService();
+    const prisma = new PrismaService();
+    service = new AttendanceService(prisma);
   });
 
   describe('handle get attendance test', () => {
@@ -27,12 +29,12 @@ describe('attendance service test', () => {
     const date = '2024-01-01';
 
     it('should throw NotFoundException for not existing employee', async () => {
-      (ApiUtils.getEmployee as jest.Mock).mockReturnValue(null);
+      (getEmployee as jest.Mock).mockReturnValue(null);
 
       await expect(
         service.handleGetAttendance(nik, filter, date),
       ).rejects.toThrow(new NotFoundException('karyawan tidak ditemukan'));
-      expect(ApiUtils.getEmployee).toHaveBeenCalledWith(nik);
+      expect(getEmployee).toHaveBeenCalledWith(nik);
     });
 
     it('should return null for not existing attendance', async () => {

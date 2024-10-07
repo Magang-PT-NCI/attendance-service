@@ -21,12 +21,14 @@ import {
   ApiPatchPermit,
   ApiPostPermit,
 } from '../decorators/api-permit.decorator';
-import { logFormat, logger } from '../utils/logger.utils';
+import { LoggerUtil } from '../utils/logger.utils';
 
 @Controller('permit')
 @ApiSecurity('jwt')
 @ApiTags('Permit')
 export class PermitController {
+  private readonly logger = new LoggerUtil('PermitController');
+
   constructor(private readonly service: PermitService) {}
 
   @Post('')
@@ -52,7 +54,7 @@ export class PermitController {
     @Param() param: PermitPatchParam,
     @Body() reqBody: PermitPatchReqBody,
   ): Promise<PermitResBody> {
-    logger.debug(`request body: ${logFormat(reqBody)}`);
+    this.logger.debug('request body: ', reqBody);
 
     const id = parseInt(`${param.id}`);
 

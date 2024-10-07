@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { ActivityStatus } from '@prisma/client';
-import { DateUtils } from '../utils/date.utils';
 import { PrismaActivity } from '../interfaces/logbook.interfaces';
+import { getTimeString } from '../utils/date.utils';
 
 export class LogbookReqBody {
   @ApiProperty({ example: 5 })
@@ -59,8 +59,8 @@ export class LogbookResBody {
     this.id = activity.id;
     this.description = activity.description;
     this.status = activity.status;
-    this.start_time = DateUtils.setDate(activity.start_time).getTimeString();
-    this.end_time = DateUtils.setDate(activity.end_time).getTimeString();
+    this.start_time = getTimeString(activity.start_time, true);
+    this.end_time = getTimeString(activity.end_time, true);
   }
 
   public static getActivities(

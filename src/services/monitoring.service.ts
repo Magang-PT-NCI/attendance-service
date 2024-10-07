@@ -1,13 +1,13 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
-import { getPrismaClient } from '../utils/prisma.utils';
 import { ReportResBody } from '../dto/monitoring.dto';
 import { PrismaAttendanceReport } from 'src/interfaces/monitoring.interfaces';
-import { logFormat, logger } from '../utils/logger.utils';
-import { DateUtils } from '../utils/date.utils';
+import { PrismaService } from './prisma.service';
+import { LoggerUtil } from '../utils/logger.utils';
+import { getDate, getDateString } from '../utils/date.utils';
 
 @Injectable()
 export class MonitoringService {
+  private readonly logger = new LoggerUtil('MonitoringService');
   private static DAYS = [
     'monday',
     'tuesday',
@@ -17,14 +17,9 @@ export class MonitoringService {
     'saturday',
   ];
 
-  private prisma: PrismaClient;
+  public constructor(private readonly prisma: PrismaService) {}
 
-  public constructor() {
-    this.prisma = getPrismaClient();
-  }
-
-  private getDateWeek(dateUtil: DateUtils): { monday: Date; saturday: Date } {
-    const today = dateUtil.getDate();
+  private getDateWeek(today: Date): { monday: Date; saturday: Date } {
     const dayOfWeek = today.getDay();
 
     const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
@@ -52,8 +47,8 @@ export class MonitoringService {
   }
 
   public async handleDashboard() {
-    const dateUtil = DateUtils.setDate();
-    const { monday, saturday } = this.getDateWeek(dateUtil);
+    const today = getDate(getDateString(new Date()));
+    const { monday, saturday } = this.getDateWeek(today);
 
     const attendances = await this.prisma.attendance.findMany({
       where: {
@@ -73,7 +68,7 @@ export class MonitoringService {
     });
 
     const todayData = attendances.filter(
-      (attendance) => attendance.date.toISOString() === dateUtil.getDateIso(),
+      (attendance) => attendance.date.toISOString() === today.toISOString(),
     );
     const {
       presence: todayPresence,
@@ -92,7 +87,7 @@ export class MonitoringService {
     // const notifications = await this.getNotifications(todayData);
 
     return {
-      date: dateUtil.getDateString(),
+      date: getDateString(today),
       total_presence: todayPresence,
       total_permit: todayPermit,
       total_absent: todayAbsent,
@@ -132,7 +127,7 @@ export class MonitoringService {
         include,
       });
     } catch (error) {
-      logger.error(logFormat(error));
+      this.logger.error(error);
       throw new InternalServerErrorException();
     }
 

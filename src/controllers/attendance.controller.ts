@@ -2,7 +2,8 @@ import {
   BadRequestException,
   Controller,
   Get,
-  InternalServerErrorException, NotFoundException,
+  InternalServerErrorException,
+  NotFoundException,
   Param,
   Post,
   Query,
@@ -19,20 +20,22 @@ import {
   AttendancePostReqBody,
   AttendanceResBody,
 } from '../dto/attendance.dto';
-import { DateUtils } from '../utils/date.utils';
 import { AttendanceInterceptor } from '../interceptors/attendance.interceptor';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { RequestPostAttendance } from '../decorators/request-attendance.decorator';
 import { extname as pathExtname } from 'path';
 import * as sharp from 'sharp';
-import { logFormat, logger } from '../utils/logger.utils';
-import { CommonUtils } from '../utils/common.utils';
-import { ApiUtils } from '../utils/api.utils';
+import { LoggerUtil } from '../utils/logger.utils';
+import { getDateString } from '../utils/date.utils';
+import { getEmployee } from '../utils/api.utils';
+import { validateLocation } from '../utils/common.utils';
 
 @Controller('attendance')
 @ApiSecurity('jwt')
 @ApiTags('Attendance')
 export class AttendanceController {
+  private readonly logger = new LoggerUtil('AttendanceController');
+
   constructor(private readonly service: AttendanceService) {}
 
   @Get(':nik')
@@ -42,7 +45,7 @@ export class AttendanceController {
     @Param('nik') nik: string,
     @Query() query: AttendanceQuery,
   ): Promise<AttendanceResBody> {
-    logger.debug(logFormat(query));
+    this.logger.debug('query parameters: ', query);
     let filter = query.filter?.toLowerCase();
     let date = query.date;
 
@@ -54,7 +57,7 @@ export class AttendanceController {
     const validDate =
       /^(19[7-9]\d|20\d{2})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
     if (!RegExp(validDate).exec(date)) {
-      date = DateUtils.setDate().getDateString();
+      date = getDateString(new Date());
     }
 
     const attendance = await this.service.handleGetAttendance(
@@ -96,9 +99,7 @@ export class AttendanceController {
         isValidImage = false;
       }
     } catch (error) {
-      logger.error(logFormat(error));
-      console.log(error);
-      console.log('ini');
+      this.logger.error(error);
       throw new InternalServerErrorException();
     }
 
@@ -106,11 +107,11 @@ export class AttendanceController {
       throw new BadRequestException('photo harus gambar dengan rasio 1:1');
     }
 
-    if (!(await ApiUtils.getEmployee(body.nik))) {
+    if (!(await getEmployee(body.nik))) {
       throw new NotFoundException('karyawan tidak ditemukan');
     }
 
-    if (!CommonUtils.validateLocation(body.location)) {
+    if (!validateLocation(body.location)) {
       throw new BadRequestException('lokasi tidak valid');
     }
 

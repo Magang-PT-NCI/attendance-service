@@ -1,16 +1,12 @@
 import { PrismaClient, Reason } from '@prisma/client';
 import { createLogbook } from './logbookSeedUtil';
-import { FILE_DESTINATION } from '../src/config/app.config';
 
 const prisma: PrismaClient = new PrismaClient();
 
 const getDate = (date: string): string => `${date}T00:00:00.000Z`;
 const getTime = (time: string): string => `1970-01-01T${time}:00.000Z`;
 
-const photo: string =
-  FILE_DESTINATION === 'local'
-    ? 'default.png'
-    : '17ZxcvViTexCuS_j_Vve2CKTyHG7iu0aY';
+const photo: string = '17ZxcvViTexCuS_j_Vve2CKTyHG7iu0aY';
 
 const year: number = 2024;
 const month: number = 9;
@@ -96,10 +92,7 @@ export const createPermit = async (employee) => {
       reason: reasons[Math.floor(Math.random() * reasons.length)],
       start_date: date,
       duration: 1,
-      permission_letter:
-        FILE_DESTINATION === 'local'
-          ? 'default.txt'
-          : '1xsCxPCsNJfoG7FPgO6nYXH2KHCgTQ-B8',
+      permission_letter: '1xsCxPCsNJfoG7FPgO6nYXH2KHCgTQ-B8',
       approved: true,
     },
   });

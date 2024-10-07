@@ -14,18 +14,20 @@ import {
   UpdateLogbookParam,
   UpdateLogbookReqBody,
 } from '../dto/logbook.dto';
-import { logFormat, logger } from '../utils/logger.utils';
 import { ActivityStatus } from '@prisma/client';
 import {
   ApiLogbookPatch,
   ApiLogbookPost,
 } from '../decorators/api-logbook.decorator';
-import { DateUtils } from '../utils/date.utils';
+import { LoggerUtil } from '../utils/logger.utils';
+import { getDate, isValidTime } from '../utils/date.utils';
 
 @Controller('logbook')
 @ApiSecurity('jwt')
 @ApiTags('Logbook')
 export class LogbookController {
+  private readonly logger = new LoggerUtil('LogbookController');
+
   constructor(private readonly service: LogbookService) {}
 
   @Post('')
@@ -39,7 +41,7 @@ export class LogbookController {
       end_time: reqBody.end_time,
     };
 
-    logger.debug(`request body: ${logFormat(data)}`);
+    this.logger.debug('request body: ', data);
 
     // check all required fields
     for (const [field, value] of Object.entries(data)) {
@@ -61,7 +63,7 @@ export class LogbookController {
     @Param() params: UpdateLogbookParam,
     @Body() reqBody: UpdateLogbookReqBody,
   ): Promise<LogbookResBody> {
-    logger.debug(`request body: ${logFormat(reqBody)}`);
+    this.logger.debug('request body: ', reqBody);
 
     const activityId = parseInt(`${params.activity_id}`);
 
@@ -86,26 +88,24 @@ export class LogbookController {
     }
 
     if (reqBody.start_time) {
-      if (!DateUtils.isValidTime(reqBody.start_time)) {
+      if (!isValidTime(reqBody.start_time)) {
         throw new BadRequestException(
           'start_time harus berupa waktu yang valid dengan format HH:MM',
         );
       }
 
-      data.start_time = DateUtils.setDate(reqBody.start_time).getTimeIso();
+      data.start_time = getDate(reqBody.start_time).toISOString();
     }
 
     if (reqBody.end_time) {
-      if (!DateUtils.isValidTime(reqBody.end_time)) {
+      if (!isValidTime(reqBody.end_time)) {
         throw new BadRequestException(
           'end_time harus berupa waktu yang valid dengan format HH:MM',
         );
       }
 
-      data.end_time = DateUtils.setDate(reqBody.end_time).getTimeIso();
+      data.end_time = getDate(reqBody.end_time).toISOString();
     }
-
-    logger.silly(`optimized request body: ${logFormat(data)}`);
 
     return await this.service.handleUpdateLogbook(activityId, data);
   }

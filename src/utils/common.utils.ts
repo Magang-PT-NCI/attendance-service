@@ -1,109 +1,96 @@
-import { DateUtils } from './date.utils';
-import { APP_URL, FILE_DESTINATION } from '../config/app.config';
+import { APP_URL } from '../config/app.config';
 
-export class CommonUtils {
-  private static readonly MINUTE_FROM_SECOND = 60;
-  private static readonly HOUR_FROM_SECONDS =
-    CommonUtils.MINUTE_FROM_SECOND * 60;
-  private static readonly REQUIRED_CHECKIN_TIME = new Date(
-    '1970-01-01T07:00:00.000Z',
-  );
-  private static readonly START_OVERTIME = new Date('1970-01-01T15:00:00.000Z');
+const SECOND = 1000;
+const MINUTE = 60;
+const HOUR = MINUTE * 60;
+const REQUIRED_CHECKIN_TIME = new Date('1970-01-01T07:00:00.000Z');
+const START_OVERTIME = new Date('1970-01-01T15:00:00.000Z');
 
-  private static createTimeMessage(timeInSeconds: number): string {
-    const hours = Math.floor(timeInSeconds / CommonUtils.HOUR_FROM_SECONDS);
-    const minutes = Math.floor(
-      (timeInSeconds % CommonUtils.HOUR_FROM_SECONDS) /
-        CommonUtils.MINUTE_FROM_SECOND,
-    );
-    const seconds = timeInSeconds % CommonUtils.MINUTE_FROM_SECOND;
+export const createTimeMessage = (timeInSeconds: number): string => {
+  const hours = Math.floor(timeInSeconds / HOUR);
+  const minutes = Math.floor((timeInSeconds % HOUR) / MINUTE);
+  const seconds = timeInSeconds % MINUTE;
 
-    const timeParts = [];
-    if (hours > 0) timeParts.push(`${hours} jam`);
-    if (minutes > 0) timeParts.push(`${minutes} menit`);
-    if (seconds > 0) timeParts.push(`${seconds} detik`);
+  const timeParts = [];
+  if (hours > 0) timeParts.push(`${hours} jam`);
+  if (minutes > 0) timeParts.push(`${minutes} menit`);
+  if (seconds > 0) timeParts.push(`${seconds} detik`);
 
-    return timeParts.join(' ').trim();
-  }
+  return timeParts.join(' ').trim();
+};
 
-  public static zeroPadding(
-    numText: string | number,
-    length: number = 2,
-  ): string {
-    return `${numText}`.padStart(length, '0');
-  }
+export const zeroPadding = (numText: string | number, length: number = 2) => {
+  return `${numText}`.padStart(length, '0');
+};
 
-  public static getOvertime(checkOut: Date): string {
-    if (!checkOut) {
-      return null;
-    }
-
-    const difference =
-      checkOut.getTime() - CommonUtils.START_OVERTIME.getTime();
-    const differenceInSeconds = difference / DateUtils.SECOND;
-
-    if (differenceInSeconds > 0) {
-      return CommonUtils.createTimeMessage(differenceInSeconds);
-    }
-
+export const getOvertime = (checkOut: Date): string => {
+  if (!checkOut) {
     return null;
   }
 
-  public static getLate(checkIn: Date): string {
-    if (!checkIn) {
-      return null;
-    }
+  const difference = checkOut.getTime() - START_OVERTIME.getTime();
+  const differenceInSeconds = difference / SECOND;
 
-    const difference =
-      checkIn.getTime() - CommonUtils.REQUIRED_CHECKIN_TIME.getTime();
-    const differenceInSeconds = difference / DateUtils.SECOND;
+  if (differenceInSeconds > 0) {
+    return createTimeMessage(differenceInSeconds);
+  }
 
-    if (differenceInSeconds > 0) {
-      return CommonUtils.createTimeMessage(differenceInSeconds);
-    }
+  return null;
+};
 
+export const getLate = (checkIn: Date): string => {
+  if (!checkIn) {
     return null;
   }
 
-  public static getWorkingHour(checkIn: Date, checkOut: Date): string {
-    if (!checkIn || !checkOut) {
-      return null;
-    }
-    const durationInSeconds =
-      (checkOut.getTime() - checkIn.getTime()) / DateUtils.SECOND;
+  const difference = checkIn.getTime() - REQUIRED_CHECKIN_TIME.getTime();
+  const differenceInSeconds = difference / SECOND;
 
-    return CommonUtils.createTimeMessage(durationInSeconds);
+  if (differenceInSeconds > 0) {
+    return createTimeMessage(differenceInSeconds);
   }
 
-  public static getFileUrl(
-    filename: string,
-    prefix: string,
-    type: 'file' | 'photo' = 'photo',
-  ) {
-    const localUrl = `${APP_URL}/files/${prefix}/${filename}`;
+  return null;
+};
 
-    if (type === 'photo') {
-      return FILE_DESTINATION === 'local'
-        ? localUrl
-        : `https://lh3.googleusercontent.com/d/${filename}=s220`;
-    } else if (type === 'file') {
-      return FILE_DESTINATION === 'local'
-        ? localUrl
-        : `https://drive.google.com/file/d/${filename}/view`;
-    }
-
+export const getWorkingHour = (checkIn: Date, checkOut: Date): string => {
+  if (!checkIn || !checkOut) {
     return null;
   }
+  const durationInSeconds = (checkOut.getTime() - checkIn.getTime()) / SECOND;
 
-  public static validateLocation(location: string) {
-    const [latStr, lonStr] = location.split(',');
+  return createTimeMessage(durationInSeconds);
+};
 
-    const lat = parseFloat(latStr);
-    const lon = parseFloat(lonStr);
+export const getFileUrl = (
+  filename: string,
+  prefix: string,
+  type: 'file' | 'photo' = 'photo',
+) => {
+  const localUrl = `${APP_URL}/files/${prefix}/${filename}`;
+  const localFile = /\d{4}-\d{2}-\d{2}/;
 
-    const isLatValid = lat >= -11 && lat <= 6;
-    const isLonValid = lon >= 95 && lon <= 141;
-
-    return isLatValid && isLonValid;
+  if (type === 'photo') {
+    return localFile.test(filename)
+      ? localUrl
+      : `https://lh3.googleusercontent.com/d/${filename}=s220`;
+  } else if (type === 'file') {
+    return localFile.test(filename)
+      ? localUrl
+      : `https://drive.google.com/file/d/${filename}/view`;
   }
-}
+
+  return null;
+};
+
+export const validateLocation = (location: string) => {
+  const [latStr, lonStr] = location.split(',');
+
+  const lat = parseFloat(latStr);
+  const lon = parseFloat(lonStr);
+
+  const isLatValid = lat >= -11 && lat <= 6;
+  const isLonValid = lon >= 95 && lon <= 141;
+
+  return isLatValid && isLonValid;
+};

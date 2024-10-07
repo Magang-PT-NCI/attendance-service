@@ -1,15 +1,10 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
-import { getPrismaClient } from '../utils/prisma.utils';
 import { EmployeeResData } from '../interfaces/api-service.interfaces';
-import { ApiUtils } from '../utils/api.utils';
-import { DateUtils } from '../utils/date.utils';
 import {
   AttendancePostReqBody,
   AttendancePostResBody,
@@ -17,18 +12,17 @@ import {
 } from '../dto/attendance.dto';
 import { PrismaAttendance } from '../interfaces/attendance.interfaces';
 import { FILE_DESTINATION } from '../config/app.config';
-import { UploadUtil } from '../utils/upload.utils';
+import { PrismaService } from './prisma.service';
+import { getEmployee } from '../utils/api.utils';
+import { getDate, getDateString, getTimeString } from '../utils/date.utils';
+import { uploadToDrive, uploadToLocal } from '../utils/upload.utils';
 
 @Injectable()
 export class AttendanceService {
-  private prisma: PrismaClient;
-
-  constructor() {
-    this.prisma = getPrismaClient();
-  }
+  constructor(private readonly prisma: PrismaService) {}
 
   async handleGetAttendance(nik: string, filter: string, date: string) {
-    const employee: EmployeeResData = await ApiUtils.getEmployee(nik);
+    const employee: EmployeeResData = await getEmployee(nik);
 
     if (!employee) {
       throw new NotFoundException('karyawan tidak ditemukan');
@@ -36,7 +30,7 @@ export class AttendanceService {
 
     const where = {
       nik,
-      date: DateUtils.setDate(date).getDateIso(),
+      date: getDate(date),
     };
 
     const checkSelect = {
@@ -85,9 +79,9 @@ export class AttendanceService {
   async handleCheckIn(data: AttendancePostReqBody) {
     const { nik, location, type, photo } = data;
 
-    DateUtils.setDate();
-    const dateUtils = DateUtils.getInstance();
-    const current = dateUtils.getDate();
+    const current = getDate(new Date().toISOString());
+    const currentDateIso = getDate(getDateString(current)).toISOString();
+    const currentTimeIso = getDate(getTimeString(current)).toISOString();
 
     if (current.getHours() < 6) {
       throw new ConflictException(
@@ -107,7 +101,7 @@ export class AttendanceService {
     const existingAttendance = await this.prisma.attendance.findFirst({
       where: {
         nik,
-        date: dateUtils.getDateIso(),
+        date: currentDateIso,
       },
     });
 
@@ -120,19 +114,15 @@ export class AttendanceService {
     let filename: string = '';
 
     if (FILE_DESTINATION === 'cloud') {
-      filename = await UploadUtil.uploadToDrive(photo, nik, type, dateUtils);
-
-      if (!filename) {
-        throw new InternalServerErrorException();
-      }
+      filename = await uploadToDrive(photo, nik, type);
     } else {
-      filename = UploadUtil.uploadToLocal(photo, nik, type, dateUtils);
+      filename = uploadToLocal(photo, nik, type);
     }
 
     const checkIn = await this.prisma.check.create({
       data: {
         type: 'in',
-        time: dateUtils.getTimeIso(),
+        time: currentTimeIso,
         location,
         photo: filename,
       },
@@ -148,7 +138,7 @@ export class AttendanceService {
       data: {
         nik,
         check_in_id: checkIn.id,
-        date: dateUtils.getDateIso(),
+        date: currentDateIso,
         status: 'presence',
       },
     });
@@ -176,19 +166,20 @@ export class AttendanceService {
     // });
     // }
 
-    return new AttendancePostResBody(data, filename, dateUtils);
+    return new AttendancePostResBody(data, filename, current);
   }
 
   async handleCheckOut(data: AttendancePostReqBody) {
     const { nik, location, type, photo } = data;
 
-    DateUtils.setDate();
-    const dateUtils = DateUtils.getInstance();
+    const current = getDate(new Date().toISOString());
+    const currentDateIso = getDate(getDateString(current)).toISOString();
+    const currentTimeIso = getDate(getTimeString(current)).toISOString();
 
     const attendance = await this.prisma.attendance.findFirst({
       where: {
         nik,
-        date: dateUtils.getDateIso(),
+        date: currentDateIso,
       },
       include: { checkIn: true },
     });
@@ -206,19 +197,15 @@ export class AttendanceService {
     let filename: string = '';
 
     if (FILE_DESTINATION === 'cloud') {
-      filename = await UploadUtil.uploadToDrive(photo, nik, type, dateUtils);
-
-      if (!filename) {
-        throw new InternalServerErrorException();
-      }
+      filename = await uploadToDrive(photo, nik, type);
     } else {
-      filename = UploadUtil.uploadToLocal(photo, nik, type, dateUtils);
+      filename = uploadToLocal(photo, nik, type);
     }
 
     const checkOut = await this.prisma.check.create({
       data: {
         type: 'out',
-        time: dateUtils.getTimeIso(),
+        time: currentTimeIso,
         location,
         photo: filename,
       },
@@ -229,11 +216,11 @@ export class AttendanceService {
       data: { check_out_id: checkOut.id },
     });
 
-    return new AttendancePostResBody(data, filename, dateUtils);
+    return new AttendancePostResBody(data, filename, current);
   }
 
   private async updateEmployeeCache(nik: string) {
-    const employee = await ApiUtils.getEmployee(nik);
+    const employee = await getEmployee(nik);
     let cachedEmployee = await this.prisma.employeeCache.findFirst({
       where: { nik },
     });
