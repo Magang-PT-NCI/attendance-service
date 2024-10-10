@@ -60,19 +60,21 @@ export class AttendanceQuery {
 }
 
 export class AttendancePostReqBody {
-  @ApiProperty({ description: 'nomor induk karyawan' })
+  @ApiProperty({ description: '`123456789`' })
   public readonly nik: string;
 
-  @ApiProperty({ description: 'presence location' })
+  @ApiProperty({
+    description: '`{ "latitude": -6.914744, "longitude": 107.60981 }`',
+  })
   public readonly location: Location;
 
-  @ApiProperty({ description: 'type of presence (`check_in` or `check_out`)' })
+  @ApiProperty({ description: '`check_in` | `check_out`' })
   public readonly type: string;
 
   @ApiProperty({
     description: 'presence photo',
     type: 'string',
-    format: 'binary',
+    format: 'buffer',
   })
   public readonly photo: Express.Multer.File;
 }

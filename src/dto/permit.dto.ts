@@ -61,22 +61,25 @@ export class PermitResBody {
 }
 
 export class PermitPostReqBody {
-  @ApiProperty({ description: 'nomor induk karyawan' })
+  @ApiProperty({ description: '`123456789`' })
   public readonly nik: string;
 
-  @ApiProperty({ description: 'permit reason' })
+  @ApiProperty({
+    description:
+      '`sakit` | `urusan_mendadak` | `cuti` | `duka` | `melahirkan` | `lainnya`',
+  })
   public readonly reason: string;
 
-  @ApiProperty({ description: 'start permit date' })
+  @ApiProperty({ description: '`2024-01-01`' })
   public readonly start_date: string;
 
-  @ApiProperty({ description: 'permit duration' })
+  @ApiProperty({ description: '`1` | `2` | `3`' })
   public readonly duration: number;
 
   @ApiProperty({
     description: 'permission letter',
     type: 'string',
-    format: 'binary',
+    format: 'buffer',
   })
   public readonly permission_letter: Express.Multer.File;
 }
