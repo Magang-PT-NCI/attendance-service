@@ -11,6 +11,14 @@ const photo: string = '17ZxcvViTexCuS_j_Vve2CKTyHG7iu0aY';
 const year: number = 2024;
 const month: number = 9;
 
+export const overtimeCheckOutTimes = [
+  '17:01',
+  '16:22',
+  '17:30',
+  '16:03',
+  '15:43',
+];
+
 const nextDate = (employee) => {
   employee.dateCount++;
 
@@ -67,6 +75,7 @@ export const createAttendance = async (
       nik: nik,
       date: getDate(nextDate(employee)),
       status,
+      is_overtime: overtimeCheckOutTimes.includes(checkOutTime),
     },
   });
 

@@ -21,6 +21,7 @@ model Attendance {
   permit_id    Int?
   date         DateTime         @db.Date
   status       AttendanceStatus
+  is_overtime  Boolean          @default(false)
   checkIn      Check?           @relation("CheckIn", fields: [check_in_id], references: [id])
   checkOut     Check?           @relation("CheckOut", fields: [check_out_id], references: [id])
   permit       Permit?          @relation("Permit", fields: [permit_id], references: [id])
@@ -65,6 +66,12 @@ model Permit {
   approved          Boolean
   attendances       Attendance[]  @relation("Permit")
   employee          EmployeeCache @relation("EmployeePermit", fields: [nik], references: [nik])
+}
+
+model Overtime {
+  id         Int      @id @default(autoincrement())
+  approved   Boolean
+  created_at DateTime @db.Date
 }
 
 enum AttendanceStatus {

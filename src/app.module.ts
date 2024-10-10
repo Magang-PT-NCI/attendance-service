@@ -18,9 +18,11 @@ import { FileController } from './controllers/file.controller';
 import { FileService } from './services/file.service';
 import { FILE_DESTINATION } from './config/app.config';
 import { PrismaService } from './services/prisma.service';
+import { CronJobService } from './services/cron-job.service';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
-  imports: [],
+  imports: [ScheduleModule.forRoot()],
   controllers: [
     AttendanceController,
     LogbookController,
@@ -35,6 +37,7 @@ import { PrismaService } from './services/prisma.service';
     PermitService,
     FileService,
     PrismaService,
+    CronJobService,
   ],
 })
 export class AppModule implements NestModule {

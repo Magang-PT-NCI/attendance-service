@@ -61,7 +61,7 @@ export class AttendanceService {
       },
     });
 
-    await this.updateEmployeeCache(nik, employee);
+    await this.prisma.updateEmployeeCache(employee);
     await this.prisma.attendance.create({
       data: {
         nik,
@@ -104,26 +104,6 @@ export class AttendanceService {
     });
 
     return new AttendancePostResBody(data, filename, current);
-  }
-
-  private async updateEmployeeCache(nik: string, employee: EmployeeResData) {
-    const cachedEmployee = await this.prisma.employeeCache.findUnique({
-      where: { nik },
-    });
-
-    try {
-      if (cachedEmployee && employee.name !== cachedEmployee.name)
-        await this.prisma.employeeCache.update({
-          where: { nik },
-          data: { name: employee.name },
-        });
-      else if (!cachedEmployee)
-        await this.prisma.employeeCache.create({
-          data: { nik: employee.nik, name: employee.name },
-        });
-    } catch (error) {
-      handleError(error, this.logger);
-    }
   }
 
   private buildSelectGetAttendance(filter: string): Prisma.AttendanceSelect {
