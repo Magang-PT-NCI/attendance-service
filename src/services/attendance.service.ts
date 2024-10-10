@@ -7,7 +7,7 @@ import { EmployeeResData } from '../interfaces/api-service.interfaces';
 import {
   AttendancePostReqBody,
   AttendancePostResBody,
-  AttendanceResBody,
+  AttendanceResBody, OvertimeReqBody, OvertimeResBody,
 } from '../dto/attendance.dto';
 import {
   PrismaAttendance,
@@ -81,7 +81,12 @@ export class AttendanceService {
     const { nik, location, type, photo } = data;
     const { current, currentDateIso, currentTimeIso } = this.getCurrentDate();
 
-    const attendance = await this.getAttendanceData(nik, currentDateIso, true, true);
+    const attendance = await this.getAttendanceData(
+      nik,
+      currentDateIso,
+      true,
+      true,
+    );
 
     if (!attendance?.checkIn)
       throw new ConflictException('tidak dapat check out sebelum check in');
@@ -119,7 +124,7 @@ export class AttendanceService {
     return new AttendancePostResBody(data, filename, current);
   }
 
-  public async handleOvertime(nik: string) {
+  public async handleOvertime(nik: string): Promise<OvertimeResBody> {
     const { current, currentDateIso } = this.getCurrentDate();
 
     if (current.getHours() < 14 || current.getHours() >= 15)
@@ -149,11 +154,11 @@ export class AttendanceService {
         const overtime = await prisma.overtime.create({
           data: { approved: false },
         });
-        await prisma.attendance.update({
+        const createAttendance = await prisma.attendance.update({
           where: { id: attendance.id },
           data: { overtime_id: overtime.id },
         });
-        return overtime;
+        return new OvertimeResBody(overtime, createAttendance);
       });
     } catch (error) {
       handleError(error, this.logger);

@@ -1,6 +1,14 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { ReportResBody } from '../dto/monitoring.dto';
-import { PrismaAttendanceReport } from 'src/interfaces/monitoring.interfaces';
+import {
+  DashboardResBody,
+  DashboardWeeklySummary,
+  ReportResBody,
+} from '../dto/monitoring.dto';
+import {
+  DaySummary,
+  PrismaAttendanceDashboard,
+  PrismaAttendanceReport,
+} from 'src/interfaces/monitoring.interfaces';
 import { PrismaService } from './prisma.service';
 import { LoggerUtil } from '../utils/logger.utils';
 import { getDate, getDateString } from '../utils/date.utils';
@@ -21,7 +29,6 @@ export class MonitoringService {
 
   private getDateWeek(today: Date): { monday: Date; saturday: Date } {
     const dayOfWeek = today.getDay();
-
     const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
 
     const monday = new Date(today);
@@ -33,41 +40,43 @@ export class MonitoringService {
     return { monday, saturday };
   }
 
-  private getSummaryCount(attendances) {
-    const summary = { presence: 0, permit: 0, absent: 0 };
+  private getSummaryCount(
+    attendances: PrismaAttendanceDashboard[],
+  ): DaySummary {
+    const summary: DaySummary = { presence: 0, permit: 0, absent: 0 };
     attendances.forEach(({ status }) => summary[status]++);
     return summary;
   }
 
-  private getDaySummary(attendances, day) {
+  private getDaySummary(
+    attendances: PrismaAttendanceDashboard[],
+    day: number,
+  ): DaySummary {
     const dayData = attendances.filter(
       (attendance) => attendance.date.getDay() === day,
     );
     return this.getSummaryCount(dayData);
   }
 
-  public async handleDashboard() {
+  public async handleDashboard(): Promise<DashboardResBody> {
     const today = getDate(getDateString(new Date()));
     const { monday, saturday } = this.getDateWeek(today);
 
-    const attendances = await this.prisma.attendance.findMany({
-      where: {
-        date: {
-          gte: monday, // greater then equal
-          lte: saturday, // less then equal
+    const attendances: PrismaAttendanceDashboard[] =
+      await this.prisma.attendance.findMany({
+        where: {
+          date: {
+            gte: monday, // greater than equal
+            lte: saturday, // less than equal
+          },
         },
-      },
-      select: {
-        nik: true,
-        date: true,
-        status: true,
-        employee: { select: { name: true } },
-        checkIn: { select: { time: true } },
-        permit: true,
-      },
-    });
+        select: {
+          date: true,
+          status: true,
+        },
+      });
 
-    const todayData = attendances.filter(
+    const todayData: PrismaAttendanceDashboard[] = attendances.filter(
       (attendance) => attendance.date.toISOString() === today.toISOString(),
     );
     const {
@@ -76,7 +85,7 @@ export class MonitoringService {
       absent: todayAbsent,
     } = this.getSummaryCount(todayData);
 
-    const weeklySummary = {};
+    const weeklySummary = {} as DashboardWeeklySummary;
     for (let day = 1; day <= 6; day++) {
       weeklySummary[MonitoringService.DAYS[day - 1]] = this.getDaySummary(
         attendances,
@@ -84,15 +93,12 @@ export class MonitoringService {
       );
     }
 
-    // const notifications = await this.getNotifications(todayData);
-
     return {
       date: getDateString(today),
       total_presence: todayPresence,
       total_permit: todayPermit,
       total_absent: todayAbsent,
       weekly_summary: weeklySummary,
-      // notifications,
     };
   }
 

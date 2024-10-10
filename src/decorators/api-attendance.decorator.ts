@@ -5,7 +5,12 @@ import {
   ApiOperation,
   ApiResponse,
 } from '@nestjs/swagger';
-import { AttendancePostReqBody, AttendancePostResBody, AttendanceResBody } from '../dto/attendance.dto';
+import {
+  AttendancePostReqBody,
+  AttendancePostResBody,
+  AttendanceResBody,
+  OvertimeReqBody, OvertimeResBody,
+} from '../dto/attendance.dto';
 import { ApiBadRequest, ApiConflict, ApiNotFound } from './api-response.decorator';
 import { ServerErrorResBody } from '../dto/api-error.dto';
 import { ApiToken } from './api-token.decorator';
@@ -53,6 +58,33 @@ export const ApiPostAttendance = (): MethodDecorator => {
     ApiNotFound('karyawan tidak ditemukan', 'not found'),
     ApiConflict(
       'karyawan telah melakukan check in atau memiliki izin yang telah disetujui',
+      'conflict error due to business logic constraints',
+    ),
+    ApiResponse({
+      status: 500,
+      description: 'an unexpected error occurred',
+      type: ServerErrorResBody,
+    }),
+  );
+};
+
+export const ApiOvertime = (): MethodDecorator => {
+  return applyDecorators(
+    ApiOperation({
+      summary: 'request for overtime',
+      description: 'request overtime for onsite',
+    }),
+    ApiBody({ type: OvertimeReqBody }),
+    ApiToken(),
+    ApiResponse({
+      status: 201,
+      description: 'success create overtime',
+      type: OvertimeResBody,
+    }),
+    ApiBadRequest('nik harus diisi!', 'invalid input'),
+    ApiNotFound('karyawan tidak ditemukan', 'not found'),
+    ApiConflict(
+      'konfirmasi lembur hanya dapat dilakukan pada pukul 14:00 hingga 15:00',
       'conflict error due to business logic constraints',
     ),
     ApiResponse({

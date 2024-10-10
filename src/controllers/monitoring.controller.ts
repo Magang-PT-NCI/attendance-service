@@ -1,8 +1,15 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { MonitoringService } from '../services/monitoring.service';
-import { ReportQuery, ReportResBody } from '../dto/monitoring.dto';
+import {
+  DashboardResBody,
+  ReportQuery,
+  ReportResBody,
+} from '../dto/monitoring.dto';
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { ApiReport } from '../decorators/api-report.decorator';
+import {
+  ApiDashboard,
+  ApiReport,
+} from '../decorators/api-monitoring.decorator';
 import { LoggerUtil } from '../utils/logger.utils';
 import { getDate } from '../utils/date.utils';
 
@@ -15,7 +22,8 @@ export class MonitoringController {
   public constructor(private readonly service: MonitoringService) {}
 
   @Get('dashboard')
-  public async dashboard() {
+  @ApiDashboard()
+  public async dashboard(): Promise<DashboardResBody> {
     return this.service.handleDashboard();
   }
 
