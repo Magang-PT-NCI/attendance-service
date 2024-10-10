@@ -1,14 +1,28 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { PORT } from './config/app.config';
+import { CERTIFICATE_FILE, KEY_FILE, PORT, SECURED } from './config/app.config';
 import { INestApplication } from '@nestjs/common';
 import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { LoggerUtil } from './utils/logger.utils';
+import { readFileSync } from 'fs';
 
 async function bootstrap() {
   const logger = new LoggerUtil('Main');
 
-  const app: INestApplication = await NestFactory.create(AppModule);
+  let httpsOptions = null;
+  if (SECURED) {
+    httpsOptions = {
+      key: readFileSync(KEY_FILE),
+      cert: readFileSync(CERTIFICATE_FILE),
+    };
+    logger.info('Server is running in secured mode (HTTPS)');
+  } else {
+    logger.info('Server is running in unsecured mode (HTTP)');
+  }
+
+  const app: INestApplication = await NestFactory.create(AppModule, {
+    httpsOptions,
+  });
   app.enableCors();
   logger.info('Loaded app modules');
 
