@@ -22,3 +22,9 @@ export interface PrismaAttendance extends PrismaCommonAttendance {
   activities: PrismaActivity[];
   permit: Permit;
 }
+
+export interface PrismaCheckAttendance {
+  id: number;
+  check_out_id: number;
+  checkIn?: { id: number };
+}

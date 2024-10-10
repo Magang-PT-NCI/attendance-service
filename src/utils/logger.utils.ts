@@ -2,16 +2,9 @@ import { createLogger, format, Logger } from 'winston';
 import {
   Console,
   ConsoleTransportInstance,
-  File,
-  FileTransportInstance,
-  FileTransportOptions,
 } from 'winston/lib/winston/transports';
-import {
-  DESTINATION,
-  FILE_FLAG,
-  LEVEL,
-  TRANSPORT,
-} from '../config/logger.config';
+import * as DailyRotateFile from 'winston-daily-rotate-file';
+import { LEVEL, TRANSPORT } from '../config/logger.config';
 import { getLogDateFormat } from './date.utils';
 
 export class LoggerUtil {
@@ -21,16 +14,21 @@ export class LoggerUtil {
   public constructor(private classname: string) {}
 
   static {
-    const fileOptions: FileTransportOptions = {
-      filename: DESTINATION,
-      options: { loggerFileFlag: FILE_FLAG },
-    };
-    const transports: (ConsoleTransportInstance | FileTransportInstance)[] = [];
+    const transports: (ConsoleTransportInstance | DailyRotateFile)[] = [];
+
+    const createFileTransport: () => DailyRotateFile = () =>
+      new DailyRotateFile({
+        filename: 'employee-service-%DATE%.log',
+        datePattern: 'YYYY-MM-DD',
+        zippedArchive: true,
+        maxSize: '20m',
+        maxFiles: '14d',
+      });
 
     if (TRANSPORT.toLowerCase() === 'file') {
-      transports.push(new File(fileOptions));
+      transports.push(createFileTransport());
     } else if (TRANSPORT.toLowerCase() === 'both') {
-      transports.push(new Console({}), new File(fileOptions));
+      transports.push(new Console({}), createFileTransport());
     } else {
       transports.push(new Console({}));
     }

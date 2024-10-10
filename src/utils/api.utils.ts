@@ -7,44 +7,23 @@ import axios, { AxiosResponse } from 'axios';
 import { InternalServerErrorException } from '@nestjs/common';
 import { LoggerUtil } from './logger.utils';
 
-export const getEmployee = async (nik: string): Promise<EmployeeResData> => {
-  const logger = LoggerUtil.getInstance('GetEmployee');
-  const url = `${EMPLOYEE_SERVICE_URL}/employee/${nik}`;
+const sendRequest = async (
+  method: 'get' | 'post',
+  url: string,
+  data: any = null,
+  headers: Record<string, string> = {},
+): Promise<AxiosResponse> => {
+  const logger = LoggerUtil.getInstance('ApiUtil');
   let result: AxiosResponse = null;
 
   try {
-    logger.debug(`send request GET ${url}`);
-    result = await axios.get(url, {
-      headers: { 'X-API-KEY': API_KEY },
+    logger.debug(`sending ${method.toUpperCase()} request to ${url}`);
+    result = await axios({
+      method,
+      url,
+      data,
+      headers,
     });
-  } catch (error) {
-    if (!error.response) {
-      logger.error(error);
-      throw new InternalServerErrorException();
-    }
-
-    result = error.response.data;
-  }
-
-  logger.debug(`response from GET ${url}: `, result.data);
-
-  if (result.status === 200) {
-    return result.data;
-  }
-
-  return null;
-};
-
-export const verifyToken = async (
-  token: string,
-): Promise<ValidateTokenResData> => {
-  const logger = LoggerUtil.getInstance('VerifyToken');
-  const url = `${EMPLOYEE_SERVICE_URL}/validate_token`;
-  let result: AxiosResponse = null;
-
-  try {
-    logger.debug(`send request POST ${url}`);
-    result = await axios.post(url, { token });
   } catch (error) {
     if (!error.response) {
       logger.error(error);
@@ -54,11 +33,41 @@ export const verifyToken = async (
     result = error.response;
   }
 
-  logger.debug(`response from POST ${url}: `, result.data);
+  logger.debug(`response ${result.status} from ${method.toUpperCase()} ${url}`);
+  return result.status === 200 ? result : null;
+};
 
-  if (result.status === 200) {
-    return result.data;
-  }
+export const getAllEmployee = async (): Promise<EmployeeResData[]> => {
+  const result = await sendRequest(
+    'get',
+    `${EMPLOYEE_SERVICE_URL}/employee`,
+    null,
+    {
+      'X-API-KEY': API_KEY,
+    },
+  );
+  return result.data;
+};
 
-  return null;
+export const getEmployee = async (nik: string): Promise<EmployeeResData> => {
+  const result = await sendRequest(
+    'get',
+    `${EMPLOYEE_SERVICE_URL}/employee/${nik}`,
+    null,
+    {
+      'X-API-KEY': API_KEY,
+    },
+  );
+  return result.data;
+};
+
+export const verifyToken = async (
+  token: string,
+): Promise<ValidateTokenResData> => {
+  const result = await sendRequest(
+    'get',
+    `${EMPLOYEE_SERVICE_URL}/validate_token`,
+    { token },
+  );
+  return result.data;
 };

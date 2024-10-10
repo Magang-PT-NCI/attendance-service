@@ -9,6 +9,7 @@ import { Readable } from 'stream';
 import { getDateString } from './date.utils';
 import { LoggerUtil } from './logger.utils';
 import { InternalServerErrorException } from '@nestjs/common';
+import { FILE_DESTINATION } from '../config/app.config';
 
 const drive = google.drive({
   version: 'v3',
@@ -68,5 +69,17 @@ export const uploadToLocal = (
   } catch (error) {
     LoggerUtil.getInstance('UploadLocalFile').error(error);
     throw new InternalServerErrorException();
+  }
+};
+
+export const uploadFile = async (
+  file: Express.Multer.File,
+  nik: string,
+  type: string,
+): Promise<string> => {
+  if (FILE_DESTINATION === 'cloud') {
+    return await uploadToDrive(file, nik, type);
+  } else {
+    return uploadToLocal(file, nik, type);
   }
 };

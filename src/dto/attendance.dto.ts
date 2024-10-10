@@ -7,8 +7,14 @@ import {
   PrismaCommonAttendance,
 } from '../interfaces/attendance.interfaces';
 import { AttendanceStatus } from '@prisma/client';
-import { getDate, getDateString, getTimeString } from '../utils/date.utils';
-import { getFileUrl, getLate, getOvertime, getWorkingHour } from '../utils/common.utils';
+import { getDateString, getTimeString } from '../utils/date.utils';
+import {
+  getFileUrl,
+  getLate,
+  getOvertime,
+  getWorkingHour,
+} from '../utils/common.utils';
+import { BadRequestException } from '@nestjs/common';
 
 export class Location {
   @ApiProperty({ example: '-6.914744' })
@@ -17,11 +23,27 @@ export class Location {
   @ApiProperty({ example: '107.609810' })
   public readonly longitude: number;
 
-  constructor(location: string) {
+  public constructor(location: string) {
     const [latitude, longitude] = location.split(/\s*,\s*/);
-
     this.latitude = parseFloat(latitude);
     this.longitude = parseFloat(longitude);
+  }
+
+  public static getLocationFromRequest(location: string | object): Location {
+    let result: Location = null;
+
+    if (typeof location === 'string')
+      try {
+        result = JSON.parse(location);
+      } catch {
+        throw new BadRequestException('lokasi tidak valid');
+      }
+    else result = location as Location;
+
+    if (!result.latitude || !result.longitude)
+      throw new BadRequestException('lokasi tidak valid');
+
+    return result;
   }
 }
 
@@ -38,7 +60,7 @@ export class AttendancePostReqBody {
   public readonly nik: string;
 
   @ApiProperty({ description: 'presence location' })
-  public readonly location: string;
+  public readonly location: Location;
 
   @ApiProperty({ description: 'type of presence (`check_in` or `check_out`)' })
   public readonly type: string;
@@ -79,7 +101,7 @@ export class AttendancePostResBody {
     date: Date,
   ) {
     this.nik = reqBody.nik;
-    this.location = new Location(reqBody.location);
+    this.location = reqBody.location;
     this.type = reqBody.type;
     this.date = getDateString(date);
     this.time = getTimeString(date, true);

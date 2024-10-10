@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { createAttendance, createPermit } from './attendanceSeedUtil';
+import { createAttendance, createPermit, overtimeCheckOutTimes } from './attendanceSeedUtil';
 
 const prisma = new PrismaClient();
 const dateStart = 2;
@@ -67,7 +67,7 @@ const checkOutTimes = [
   '14:12',
   '14:04',
 ];
-const overtimeCheckOutTimes = ['17:01', '16:22', '17:30', '16:03', '15:43'];
+
 const main = async () => {
   await prisma.employeeCache.createMany({ data: employeeCacheData });
 

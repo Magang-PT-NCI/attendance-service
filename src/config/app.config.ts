@@ -12,3 +12,7 @@ export const FILE_DESTINATION: string = validDestination.includes(destination)
   ? destination
   : 'local';
 export const APP_URL: string = process.env.APP_URL || 'http://localhost:3002';
+export const SECURED: boolean =
+  process.env.SECURED?.toLowerCase() === 'true' || false;
+export const KEY_FILE: string = process.env.KEY_FILE;
+export const CERTIFICATE_FILE: string = process.env.CERTIFICATE_FILE;

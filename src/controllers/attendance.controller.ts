@@ -28,7 +28,6 @@ import * as sharp from 'sharp';
 import { LoggerUtil } from '../utils/logger.utils';
 import { getDateString } from '../utils/date.utils';
 import { getEmployee } from '../utils/api.utils';
-import { validateLocation } from '../utils/common.utils';
 
 @Controller('attendance')
 @ApiSecurity('jwt')
@@ -107,16 +106,13 @@ export class AttendanceController {
       throw new BadRequestException('photo harus gambar dengan rasio 1:1');
     }
 
-    if (!(await getEmployee(body.nik))) {
+    const employee = await getEmployee(body.nik);
+    if (!employee) {
       throw new NotFoundException('karyawan tidak ditemukan');
     }
 
-    if (!validateLocation(body.location)) {
-      throw new BadRequestException('lokasi tidak valid');
-    }
-
     if (body.type === 'check_in') {
-      return await this.service.handleCheckIn(body);
+      return await this.service.handleCheckIn(body, employee);
     } else if (body.type === 'check_out') {
       return await this.service.handleCheckOut(body);
     } else {
