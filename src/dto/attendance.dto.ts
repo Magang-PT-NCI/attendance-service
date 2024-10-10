@@ -104,7 +104,7 @@ export class AttendancePostResBody {
     this.location = reqBody.location;
     this.type = reqBody.type;
     this.date = getDateString(date);
-    this.time = getTimeString(date, true);
+    this.time = getTimeString(date);
     this.photo = getFileUrl(filename, reqBody.type);
   }
 }
@@ -193,4 +193,15 @@ export class AttendanceResBody extends Attendance {
       : null;
     this.activities = LogbookResBody.getActivities(attendance.activities);
   }
+}
+
+export class OvertimeReqBody {
+  @ApiProperty({ example: '123456789' })
+  public readonly nik: string;
+
+
+}
+
+export class OvertimeResBody {
+  public readonly
 }

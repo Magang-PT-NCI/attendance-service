@@ -44,7 +44,10 @@ export class AttendanceService {
     return attendance ? new AttendanceResBody(attendance) : null;
   }
 
-  async handleCheckIn(data: AttendancePostReqBody, employee: EmployeeResData) {
+  public async handleCheckIn(
+    data: AttendancePostReqBody,
+    employee: EmployeeResData,
+  ) {
     const { nik, location, type, photo } = data;
     const { current, currentDateIso, currentTimeIso } = this.getCurrentDate();
 
@@ -74,19 +77,29 @@ export class AttendanceService {
     return new AttendancePostResBody(data, filename, current);
   }
 
-  async handleCheckOut(data: AttendancePostReqBody) {
+  public async handleCheckOut(data: AttendancePostReqBody) {
     const { nik, location, type, photo } = data;
     const { current, currentDateIso, currentTimeIso } = this.getCurrentDate();
 
-    const attendance = await this.getAttendanceData(nik, currentDateIso, true);
+    const attendance = await this.getAttendanceData(nik, currentDateIso, true, true);
 
-    if (!attendance?.checkIn) {
+    if (!attendance?.checkIn)
       throw new ConflictException('tidak dapat check out sebelum check in');
-    }
 
-    if (attendance.check_out_id) {
+    if (attendance.check_out_id)
       throw new ConflictException('check out telah dilakukan');
-    }
+
+    // not overtime
+    if (current.getHours() > 15 && !attendance.overtime_id)
+      throw new ConflictException(
+        'tidak dapat melakukan check out diluar pukul 15:00',
+      );
+
+    // overtime
+    if (current.getHours() >= 19 && attendance.overtime_id)
+      throw new ConflictException(
+        'tidak dapat melakukan check out diluar pukul 19:00',
+      );
 
     const filename = await uploadFile(photo, nik, type);
     const checkOut = await this.prisma.check.create({
@@ -104,6 +117,47 @@ export class AttendanceService {
     });
 
     return new AttendancePostResBody(data, filename, current);
+  }
+
+  public async handleOvertime(nik: string) {
+    const { current, currentDateIso } = this.getCurrentDate();
+
+    if (current.getHours() < 14 || current.getHours() >= 15)
+      throw new ConflictException(
+        'konfirmasi lembur hanya dapat dilakukan pada pukul 14:00 hingga 15:00',
+      );
+
+    const employee = await getEmployee(nik);
+    if (!employee) throw new NotFoundException('karyawan tidak ditemukan');
+
+    const attendance = await this.getAttendanceData(
+      nik,
+      currentDateIso,
+      true,
+      true,
+    );
+    if (!attendance?.checkIn)
+      throw new ConflictException(
+        'tidak dapat melakukan konfirmasi lembur karena belum melakukan check in',
+      );
+
+    if (attendance.overtime_id)
+      throw new ConflictException('telah melakukan konfirmasi lembur');
+
+    try {
+      return await this.prisma.$transaction(async (prisma) => {
+        const overtime = await prisma.overtime.create({
+          data: { approved: false },
+        });
+        await prisma.attendance.update({
+          where: { id: attendance.id },
+          data: { overtime_id: overtime.id },
+        });
+        return overtime;
+      });
+    } catch (error) {
+      handleError(error, this.logger);
+    }
   }
 
   private buildSelectGetAttendance(filter: string): Prisma.AttendanceSelect {
@@ -156,6 +210,7 @@ export class AttendanceService {
     nik: string,
     date: string,
     includeCheckIn: boolean = false,
+    includeOvertime: boolean = false,
   ): Promise<PrismaCheckAttendance> {
     try {
       return await this.prisma.attendance.findFirst({
@@ -166,6 +221,7 @@ export class AttendanceService {
         select: {
           id: true,
           check_out_id: true,
+          overtime_id: includeOvertime,
           checkIn: includeCheckIn ? { select: { id: true } } : false,
         },
       });

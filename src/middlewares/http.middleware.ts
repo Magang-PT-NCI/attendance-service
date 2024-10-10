@@ -17,7 +17,7 @@ export class HttpMiddleware implements NestMiddleware {
     // Override res.json method
     const send: Send = res.send;
     res.send = function (body: any) {
-      logResponse(body);
+      if (body) logResponse(body);
       return send.call(this, body);
     };
 

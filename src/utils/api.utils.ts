@@ -17,7 +17,7 @@ const sendRequest = async (
   let result: AxiosResponse = null;
 
   try {
-    logger.debug(`sending ${method.toUpperCase()} request to ${url}`);
+    logger.silly(`sending ${method.toUpperCase()} request to ${url}`);
     result = await axios({
       method,
       url,
@@ -33,7 +33,10 @@ const sendRequest = async (
     result = error.response;
   }
 
-  logger.debug(`response ${result.status} from ${method.toUpperCase()} ${url}`);
+  logger.silly(
+    `response ${result.status} from ${method.toUpperCase()} ${url}: `,
+    result.data,
+  );
   return result.status === 200 ? result : null;
 };
 
@@ -46,7 +49,7 @@ export const getAllEmployee = async (): Promise<EmployeeResData[]> => {
       'X-API-KEY': API_KEY,
     },
   );
-  return result.data;
+  return result ? result.data : null;
 };
 
 export const getEmployee = async (nik: string): Promise<EmployeeResData> => {
@@ -58,16 +61,16 @@ export const getEmployee = async (nik: string): Promise<EmployeeResData> => {
       'X-API-KEY': API_KEY,
     },
   );
-  return result.data;
+  return result ? result.data : null;
 };
 
 export const verifyToken = async (
   token: string,
 ): Promise<ValidateTokenResData> => {
   const result = await sendRequest(
-    'get',
+    'post',
     `${EMPLOYEE_SERVICE_URL}/validate_token`,
     { token },
   );
-  return result.data;
+  return result ? result.data : null;
 };
