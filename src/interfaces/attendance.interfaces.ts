@@ -26,5 +26,6 @@ export interface PrismaAttendance extends PrismaCommonAttendance {
 export interface PrismaCheckAttendance {
   id: number;
   check_out_id: number;
+  overtime_id?: number;
   checkIn?: { id: number };
 }

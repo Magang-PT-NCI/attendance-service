@@ -67,6 +67,9 @@ export const createAttendance = async (
   }
 
   const status = checkInTime && checkOutTime ? 'presence' : 'absent';
+  const overtime = overtimeCheckOutTimes.includes(checkOutTime)
+    ? await prisma.overtime.create({ data: { approved: true } })
+    : undefined;
 
   const attendance = await prisma.attendance.create({
     data: {
@@ -75,7 +78,7 @@ export const createAttendance = async (
       nik: nik,
       date: getDate(nextDate(employee)),
       status,
-      is_overtime: overtimeCheckOutTimes.includes(checkOutTime),
+      overtime_id: overtime?.id,
     },
   });
 

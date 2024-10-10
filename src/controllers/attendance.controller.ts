@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Body,
   Controller,
   Get,
   InternalServerErrorException,
@@ -19,6 +20,7 @@ import {
   AttendanceQuery,
   AttendancePostReqBody,
   AttendanceResBody,
+  OvertimeReqBody,
 } from '../dto/attendance.dto';
 import { AttendanceInterceptor } from '../interceptors/attendance.interceptor';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -118,5 +120,13 @@ export class AttendanceController {
     } else {
       throw new BadRequestException('type tidak valid');
     }
+  }
+
+  @Post('overtime')
+  async overtime(@Body() body: OvertimeReqBody) {
+    this.logger.debug('request body: ', body);
+
+    if (!body.nik) throw new BadRequestException('nik harus diisi!');
+    return await this.service.handleOvertime(body.nik);
   }
 }

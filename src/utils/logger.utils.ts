@@ -59,6 +59,13 @@ export class LoggerUtil {
     });
   }
 
+  public silly(message: string, dataObject?: object | string) {
+    const data: string = dataObject ? this.logFormat(dataObject) : '';
+    LoggerUtil.logger.silly(`${message}${data}`, {
+      classname: this.classname,
+    });
+  }
+
   public info(message: string) {
     LoggerUtil.logger.info(message, { classname: this.classname });
   }

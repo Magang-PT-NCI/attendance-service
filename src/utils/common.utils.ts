@@ -5,8 +5,16 @@ import { InternalServerErrorException } from '@nestjs/common';
 const SECOND = 1000;
 const MINUTE = 60;
 const HOUR = MINUTE * 60;
+const MAX_WORKING_HOURS = 7 * HOUR;
 const REQUIRED_CHECKIN_TIME = new Date('1970-01-01T07:00:00.000Z');
 const START_OVERTIME = new Date('1970-01-01T15:00:00.000Z');
+const END_OVERTIME = new Date('1970-01-01T18:00:00.000Z');
+
+const calculateOvertime = (checkOut: Date) => {
+  const difference = checkOut.getTime() - START_OVERTIME.getTime();
+  const differenceInSeconds = difference / SECOND;
+  return differenceInSeconds > 0 ? differenceInSeconds : null;
+};
 
 export const createTimeMessage = (timeInSeconds: number): string => {
   const hours = Math.floor(timeInSeconds / HOUR);
@@ -30,14 +38,11 @@ export const getOvertime = (checkOut: Date): string => {
     return null;
   }
 
-  const difference = checkOut.getTime() - START_OVERTIME.getTime();
-  const differenceInSeconds = difference / SECOND;
+  const actualCheckOut =
+    checkOut.getTime() > END_OVERTIME.getTime() ? END_OVERTIME : checkOut;
+  const overtime = calculateOvertime(actualCheckOut);
 
-  if (differenceInSeconds > 0) {
-    return createTimeMessage(differenceInSeconds);
-  }
-
-  return null;
+  return overtime ? createTimeMessage(overtime) : null;
 };
 
 export const getLate = (checkIn: Date): string => {
@@ -59,9 +64,20 @@ export const getWorkingHour = (checkIn: Date, checkOut: Date): string => {
   if (!checkIn || !checkOut) {
     return null;
   }
-  const durationInSeconds = (checkOut.getTime() - checkIn.getTime()) / SECOND;
 
-  return createTimeMessage(durationInSeconds);
+  const actualCheckOut =
+    checkOut.getTime() > END_OVERTIME.getTime() ? END_OVERTIME : checkOut;
+
+  const durationInSeconds =
+    (actualCheckOut.getTime() - checkIn.getTime()) / SECOND;
+
+  const workingHour =
+    durationInSeconds > MAX_WORKING_HOURS
+      ? MAX_WORKING_HOURS
+      : durationInSeconds;
+  const overtime = calculateOvertime(actualCheckOut) || 0;
+
+  return createTimeMessage(workingHour + overtime);
 };
 
 export const getFileUrl = (
