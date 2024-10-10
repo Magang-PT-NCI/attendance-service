@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Attendance } from './attendance.dto';
 import { PrismaAttendanceReport } from '../interfaces/monitoring.interfaces';
+import { getDateString } from '../utils/date.utils';
 
 export class ReportQuery {
   @ApiProperty({ example: 'ucup', required: false })
@@ -38,4 +39,52 @@ export class ReportResBody extends Attendance {
 
     return report;
   }
+}
+
+export class DashboardDaySummary {
+  @ApiProperty({ example: 8 })
+  public readonly presence: number;
+
+  @ApiProperty({ example: 2 })
+  public readonly permit: number;
+
+  @ApiProperty({ example: 0 })
+  public readonly absent: number;
+}
+
+export class DashboardWeeklySummary {
+  @ApiProperty()
+  public readonly monday: DashboardDaySummary;
+
+  @ApiProperty()
+  public readonly tuesday: DashboardDaySummary;
+
+  @ApiProperty()
+  public readonly wednesday: DashboardDaySummary;
+
+  @ApiProperty()
+  public readonly thursday: DashboardDaySummary;
+
+  @ApiProperty()
+  public readonly friday: DashboardDaySummary;
+
+  @ApiProperty()
+  public readonly saturday: DashboardDaySummary;
+}
+
+export class DashboardResBody {
+  @ApiProperty({ example: '2024-01-01' })
+  public readonly date: string;
+
+  @ApiProperty({ example: 8 })
+  public readonly total_presence: number;
+
+  @ApiProperty({ example: 2 })
+  public readonly total_permit: number;
+
+  @ApiProperty({ example: 0 })
+  public readonly total_absent: number;
+
+  @ApiProperty()
+  public readonly weekly_summary: DashboardWeeklySummary;
 }

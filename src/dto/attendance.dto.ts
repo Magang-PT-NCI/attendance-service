@@ -6,7 +6,11 @@ import {
   PrismaAttendance,
   PrismaCommonAttendance,
 } from '../interfaces/attendance.interfaces';
-import { AttendanceStatus } from '@prisma/client';
+import {
+  AttendanceStatus,
+  Attendance as PrismaAttendanceFields,
+  Overtime,
+} from '@prisma/client';
 import { getDateString, getTimeString } from '../utils/date.utils';
 import {
   getFileUrl,
@@ -198,10 +202,25 @@ export class AttendanceResBody extends Attendance {
 export class OvertimeReqBody {
   @ApiProperty({ example: '123456789' })
   public readonly nik: string;
-
-
 }
 
 export class OvertimeResBody {
-  public readonly
+  @ApiProperty({ example: 2 })
+  public readonly id: number;
+
+  @ApiProperty({ example: true })
+  public readonly approved: boolean;
+
+  @ApiProperty({ example: 42 })
+  public readonly attendance_id: number;
+
+  @ApiProperty({ example: '2024-01-01' })
+  public readonly date: string;
+
+  public constructor(overtime: Overtime, attendance: PrismaAttendanceFields) {
+    this.id = overtime.id;
+    this.approved = overtime.approved;
+    this.attendance_id = attendance.id;
+    this.date = getDateString(attendance.date);
+  }
 }

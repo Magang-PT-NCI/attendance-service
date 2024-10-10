@@ -13,7 +13,7 @@ import {
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AttendanceService } from '../services/attendance.service';
 import {
-  ApiAttendance,
+  ApiAttendance, ApiOvertime,
   ApiPostAttendance,
 } from '../decorators/api-attendance.decorator';
 import {
@@ -21,6 +21,7 @@ import {
   AttendancePostReqBody,
   AttendanceResBody,
   OvertimeReqBody,
+  OvertimeResBody,
 } from '../dto/attendance.dto';
 import { AttendanceInterceptor } from '../interceptors/attendance.interceptor';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -123,7 +124,8 @@ export class AttendanceController {
   }
 
   @Post('overtime')
-  async overtime(@Body() body: OvertimeReqBody) {
+  @ApiOvertime()
+  async overtime(@Body() body: OvertimeReqBody): Promise<OvertimeResBody> {
     this.logger.debug('request body: ', body);
 
     if (!body.nik) throw new BadRequestException('nik harus diisi!');
