@@ -51,11 +51,24 @@ export class Location {
   }
 }
 
+export class AttendanceParam {
+  @ApiProperty({ example: '123456789', description: 'nomor induk karyawan' })
+  public readonly nik: string;
+}
+
 export class AttendanceQuery {
-  @ApiProperty({ example: 'done', required: false })
+  @ApiProperty({
+    example: 'done',
+    description: '`all` | `progress` | `done`',
+    required: false,
+  })
   public readonly filter: string;
 
-  @ApiProperty({ example: '2024-01-01', required: false })
+  @ApiProperty({
+    example: '2024-01-01',
+    description: '`YYYY-MM-DD`',
+    required: false,
+  })
   public readonly date: string;
 }
 

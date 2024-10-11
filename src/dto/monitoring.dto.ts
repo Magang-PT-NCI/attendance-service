@@ -1,16 +1,23 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Attendance } from './attendance.dto';
 import { PrismaAttendanceReport } from '../interfaces/monitoring.interfaces';
-import { getDateString } from '../utils/date.utils';
 
 export class ReportQuery {
-  @ApiProperty({ example: 'ucup', required: false })
+  @ApiProperty({ example: 'ucup', description: 'nik or name', required: false })
   public readonly keyword: string;
 
-  @ApiProperty({ example: '2024-01-01', required: false })
+  @ApiProperty({
+    example: '2024-01-01',
+    description: '`YYYY-MM-DD`',
+    required: false,
+  })
   public readonly from: string;
 
-  @ApiProperty({ example: '2024-01-07', required: false })
+  @ApiProperty({
+    example: '2024-01-07',
+    description: '`YYYY-MM-DD`',
+    required: false,
+  })
   public readonly to: string;
 }
 
