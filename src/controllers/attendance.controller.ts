@@ -21,7 +21,7 @@ import {
   AttendancePostReqBody,
   AttendanceResBody,
   OvertimeReqBody,
-  OvertimeResBody,
+  OvertimeResBody, AttendanceParam,
 } from '../dto/attendance.dto';
 import { AttendanceInterceptor } from '../interceptors/attendance.interceptor';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -44,7 +44,7 @@ export class AttendanceController {
   @ApiAttendance()
   @UseInterceptors(AttendanceInterceptor)
   async getAttendance(
-    @Param('nik') nik: string,
+    @Param() { nik }: AttendanceParam,
     @Query() query: AttendanceQuery,
   ): Promise<AttendanceResBody> {
     this.logger.debug('query parameters: ', query);
