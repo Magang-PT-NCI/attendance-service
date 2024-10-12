@@ -28,6 +28,11 @@ export class TokenMiddleware implements NestMiddleware {
       throw new UnauthorizedException('token tidak valid');
     }
 
+    if (req.originalUrl.startsWith('/notification')) {
+      req.body.nik = tokenValidity.nik;
+      req.body.role = tokenValidity.user_role;
+    }
+
     return next();
   }
 }
