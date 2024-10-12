@@ -1,7 +1,11 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   DashboardResBody,
-  DashboardWeeklySummary,
+  DashboardWeeklySummary, OvertimePatchResBody,
   ReportResBody,
 } from '../dto/monitoring.dto';
 import {
@@ -138,5 +142,25 @@ export class MonitoringService {
     }
 
     return ReportResBody.getReport(attendances);
+  }
+
+  public async handleUpdateOvertime(
+    id: number,
+    approved: boolean,
+  ): Promise<OvertimePatchResBody> {
+    const existingOvertime = await this.prisma.overtime.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!existingOvertime) {
+      throw new NotFoundException('data lembur tidak ditemukan');
+    }
+
+    return this.prisma.overtime.update({
+      where: { id },
+      data: { approved, checked: true },
+      select: { id: true, approved: true },
+    });
   }
 }

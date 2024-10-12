@@ -5,6 +5,7 @@ CREATE TABLE `Attendance` (
     `check_in_id` INTEGER NULL,
     `check_out_id` INTEGER NULL,
     `permit_id` INTEGER NULL,
+    `overtime_id` INTEGER NULL,
     `date` DATE NOT NULL,
     `status` ENUM('presence', 'permit', 'absent') NOT NULL,
 
@@ -45,11 +46,24 @@ CREATE TABLE `Activity` (
 -- CreateTable
 CREATE TABLE `Permit` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `nik` VARCHAR(20) NOT NULL,
     `reason` ENUM('sakit', 'urusan_mendadak', 'cuti', 'duka', 'melahirkan', 'lainnya') NOT NULL,
     `start_date` DATE NOT NULL,
     `duration` INTEGER NOT NULL,
     `permission_letter` VARCHAR(255) NOT NULL,
-    `approved` BOOLEAN NOT NULL,
+    `checked` BOOLEAN NOT NULL DEFAULT false,
+    `approved` BOOLEAN NOT NULL DEFAULT false,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `Overtime` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `checked` BOOLEAN NOT NULL DEFAULT false,
+    `approved` BOOLEAN NOT NULL DEFAULT false,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -64,7 +78,13 @@ ALTER TABLE `Attendance` ADD CONSTRAINT `Attendance_check_out_id_fkey` FOREIGN K
 ALTER TABLE `Attendance` ADD CONSTRAINT `Attendance_permit_id_fkey` FOREIGN KEY (`permit_id`) REFERENCES `Permit`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `Attendance` ADD CONSTRAINT `Attendance_overtime_id_fkey` FOREIGN KEY (`overtime_id`) REFERENCES `Overtime`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `Attendance` ADD CONSTRAINT `Attendance_nik_fkey` FOREIGN KEY (`nik`) REFERENCES `EmployeeCache`(`nik`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Activity` ADD CONSTRAINT `Activity_attendance_id_fkey` FOREIGN KEY (`attendance_id`) REFERENCES `Attendance`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Permit` ADD CONSTRAINT `Permit_nik_fkey` FOREIGN KEY (`nik`) REFERENCES `EmployeeCache`(`nik`) ON DELETE RESTRICT ON UPDATE CASCADE;

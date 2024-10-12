@@ -68,6 +68,7 @@ export class PermitService {
           duration,
           permission_letter: filename,
           approved: false,
+          checked: false,
         },
       });
 
@@ -76,19 +77,6 @@ export class PermitService {
       this.logger.error(error);
       throw new InternalServerErrorException();
     }
-
-    // sendNotification({
-    //   nik: employee.nik,
-    //   name: employee.name,
-    //   time: dateUtc,
-    //   message:
-    //     `Mengajukan izin selama ${duration} hari`,
-    //   action: {
-    //     data: result.permit,
-    //     need: true,
-    //     type: 'permit',
-    //   },
-    // });
   }
 
   async handleUpdatePermit(id: number, approved: boolean) {
@@ -101,36 +89,30 @@ export class PermitService {
       throw new NotFoundException('data permit tidak ditemukan');
     }
 
-    if (!approved) {
-      const deletedPermit = await this.prisma.permit.delete({
-        where: { id },
-      });
-      deletedPermit.approved = false;
-      return new PermitResBody(deletedPermit);
-    }
-
     const permit = await this.prisma.permit.update({
       where: { id },
-      data: { approved },
+      data: { approved, checked: true },
     });
 
-    const currentDate = permit.start_date;
+    if (approved) {
+      const currentDate = permit.start_date;
 
-    for (let i = 0; i < permit.duration; i++) {
-      if (currentDate.getDay() === 0) {
+      for (let i = 0; i < permit.duration; i++) {
+        if (currentDate.getDay() === 0) {
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        await this.prisma.attendance.create({
+          data: {
+            nik: permit.nik,
+            permit_id: permit.id,
+            date: currentDate,
+            status: 'permit',
+          },
+        });
+
         currentDate.setDate(currentDate.getDate() + 1);
       }
-
-      await this.prisma.attendance.create({
-        data: {
-          nik: permit.nik,
-          permit_id: permit.id,
-          date: currentDate,
-          status: 'permit',
-        },
-      });
-
-      currentDate.setDate(currentDate.getDate() + 1);
     }
 
     return new PermitResBody(permit);

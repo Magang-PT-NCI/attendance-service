@@ -7,7 +7,8 @@ import { EmployeeResData } from '../interfaces/api-service.interfaces';
 import {
   AttendancePostReqBody,
   AttendancePostResBody,
-  AttendanceResBody, OvertimeReqBody, OvertimeResBody,
+  AttendanceResBody,
+  OvertimeResBody,
 } from '../dto/attendance.dto';
 import {
   PrismaAttendance,
@@ -152,7 +153,7 @@ export class AttendanceService {
     try {
       return await this.prisma.$transaction(async (prisma) => {
         const overtime = await prisma.overtime.create({
-          data: { approved: false },
+          data: { approved: false, checked: false },
         });
         const createAttendance = await prisma.attendance.update({
           where: { id: attendance.id },

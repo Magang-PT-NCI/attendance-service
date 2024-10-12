@@ -96,7 +96,7 @@ export class NotificationService {
           OR: [
             { status: 'absent' },
             { status: 'presence' },
-            { overtime: { approved: false } },
+            { overtime: { checked: false } },
           ],
         },
         select: {
@@ -126,7 +126,7 @@ export class NotificationService {
             .setLevel('attendance')
             .push();
 
-        if (attendance?.overtime?.approved === false)
+        if (attendance?.overtime?.checked === false)
           notificationBuilder
             .setMessage('Mengajukan lembur hari ini.')
             .setDate(getTimeString(attendance.overtime.created_at))
@@ -137,7 +137,7 @@ export class NotificationService {
 
       notificationBuilder.setLevel('permit');
       const permits = await this.prisma.permit.findMany({
-        where: { start_date: { gt: current }, approved: false },
+        where: { start_date: { gt: current }, checked: false },
         include: {
           employee: { select: { nik: true, name: true } },
         },
