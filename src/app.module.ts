@@ -20,6 +20,8 @@ import { FILE_DESTINATION } from './config/app.config';
 import { PrismaService } from './services/prisma.service';
 import { CronJobService } from './services/cron-job.service';
 import { ScheduleModule } from '@nestjs/schedule';
+import { NotificationController } from './controllers/notification.controller';
+import { NotificationService } from './services/notification.service';
 
 @Module({
   imports: [ScheduleModule.forRoot()],
@@ -28,6 +30,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     LogbookController,
     MonitoringController,
     PermitController,
+    NotificationController,
     FileController,
   ],
   providers: [
@@ -35,6 +38,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     LogbookService,
     MonitoringService,
     PermitService,
+    NotificationService,
     FileService,
     PrismaService,
     CronJobService,
@@ -47,7 +51,7 @@ export class AppModule implements NestModule {
     const tokenMiddleware = consumer.apply(TokenMiddleware);
     if (FILE_DESTINATION !== 'cloud')
       tokenMiddleware.exclude({
-        path: 'files/:type/:filename',
+        path: '/files/:type/:filename',
         method: RequestMethod.GET,
       });
     tokenMiddleware.forRoutes('*');

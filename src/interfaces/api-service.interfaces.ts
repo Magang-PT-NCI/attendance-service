@@ -9,4 +9,5 @@ export interface EmployeeResData {
 export interface ValidateTokenResData {
   nik: string;
   profile_photo: string;
+  user_role: string;
 }
