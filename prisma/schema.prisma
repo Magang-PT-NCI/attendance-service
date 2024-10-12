@@ -64,7 +64,8 @@ model Permit {
   start_date        DateTime      @db.Date
   duration          Int
   permission_letter String        @db.VarChar(255)
-  approved          Boolean
+  checked           Boolean       @default(false)
+  approved          Boolean       @default(false)
   attendances       Attendance[]  @relation("Permit")
   employee          EmployeeCache @relation("EmployeePermit", fields: [nik], references: [nik])
   created_at        DateTime      @default(now())
@@ -72,7 +73,8 @@ model Permit {
 
 model Overtime {
   id          Int          @id @default(autoincrement())
-  approved    Boolean
+  checked     Boolean      @default(false)
+  approved    Boolean      @default(false)
   created_at  DateTime     @default(now())
   attendances Attendance[] @relation("Overtime")
 }

@@ -95,3 +95,21 @@ export class DashboardResBody {
   @ApiProperty()
   public readonly weekly_summary: DashboardWeeklySummary;
 }
+
+export class OvertimePatchReqParam {
+  @ApiProperty({ example: 5, description: 'overtime id' })
+  public readonly id: number;
+}
+
+export class OvertimePatchReqBody {
+  @ApiProperty({ example: true })
+  public readonly approved: boolean;
+}
+
+export class OvertimePatchResBody {
+  @ApiProperty({ example: 5 })
+  public readonly id: number;
+
+  @ApiProperty({ example: true })
+  public readonly approved: boolean;
+}
