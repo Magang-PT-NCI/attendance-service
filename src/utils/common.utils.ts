@@ -1,6 +1,6 @@
 import { APP_URL } from '../config/app.config';
 import { LoggerUtil } from './logger.utils';
-import { InternalServerErrorException } from '@nestjs/common';
+import { HttpException, InternalServerErrorException } from '@nestjs/common';
 
 const SECOND = 1000;
 const MINUTE = 60;
@@ -102,6 +102,10 @@ export const getFileUrl = (
 };
 
 export const handleError = (error: Error, logger: LoggerUtil) => {
+  if (error instanceof HttpException) {
+    throw error;
+  }
+
   logger.error(error);
   throw new InternalServerErrorException();
 };

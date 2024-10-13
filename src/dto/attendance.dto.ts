@@ -7,9 +7,13 @@ import {
   PrismaCommonAttendance,
 } from '../interfaces/attendance.interfaces';
 import {
+  AttendanceConfirmation,
   AttendanceStatus,
   Attendance as PrismaAttendanceFields,
   Overtime,
+  ConfirmationType,
+  ConfirmationStatus,
+  Reason,
 } from '@prisma/client';
 import { getDateString, getTimeString } from '../utils/date.utils';
 import {
@@ -237,5 +241,95 @@ export class OvertimeResBody {
     this.approved = overtime.approved;
     this.attendance_id = attendance.id;
     this.date = getDateString(attendance.date);
+  }
+}
+
+export class AttendanceConfirmationReqBody {
+  @ApiProperty({ description: 'attendance id' })
+  public readonly attendance_id: number;
+
+  @ApiProperty({ description: '`check_in` | `check_out` | `permit`' })
+  public readonly type: ConfirmationType;
+
+  @ApiProperty({ description: 'confirmation description' })
+  public readonly description: string;
+
+  @ApiProperty({ description: '`late` | `absent`' })
+  public readonly initial_status: ConfirmationStatus;
+
+  @ApiProperty({
+    description: 'attendance confirmation attachment',
+    type: 'string',
+    format: 'buffer',
+  })
+  public readonly attachment: Express.Multer.File;
+
+  @ApiProperty({ description: 'HH:MM', required: false })
+  public initial_time?: string;
+
+  @ApiProperty({ description: 'HH:MM', required: false })
+  public actual_time?: string;
+
+  @ApiProperty({
+    description:
+      '`sakit` | `urusan_mendadak` | `cuti` | `duka` | `melahirkan` | `lainnya`',
+    required: false,
+  })
+  public reason?: Reason;
+}
+
+export class AttendanceConfirmationResBody {
+  @ApiProperty({ example: 5 })
+  public readonly id: number;
+
+  @ApiProperty({ description: 'attendance id' })
+  public readonly attendance_id: number;
+
+  @ApiProperty({ example: 'check_in' })
+  public readonly type: ConfirmationType;
+
+  @ApiProperty({ example: 'saya lupa melakukan check in' })
+  public readonly description: string;
+
+  @ApiProperty({
+    example:
+      'https://drive.google.com/file/d/1xsCnECsNJfoG7FPgO9nhXH2KHCgTQ-B8/view',
+  })
+  public readonly attachment: string;
+
+  @ApiProperty({ example: false })
+  public readonly approved: boolean;
+
+  @ApiProperty({ example: 'late' })
+  public readonly initial_status: ConfirmationStatus;
+
+  @ApiProperty({ example: '07:23', description: 'may be null' })
+  public readonly initial_time?: string;
+
+  @ApiProperty({ example: '06:50', description: 'may be null' })
+  public readonly actual_time?: string;
+
+  @ApiProperty({ example: null, description: 'may be null' })
+  public readonly reason?: Reason;
+
+  public constructor(confirmation: AttendanceConfirmation) {
+    this.id = confirmation.id;
+    this.attendance_id = confirmation.attendance_id;
+    this.type = confirmation.type;
+    this.description = confirmation.description;
+    this.attachment = getFileUrl(
+      confirmation.attachment,
+      'confirmation',
+      'file',
+    );
+    this.approved = confirmation.approved;
+    this.initial_status = confirmation.initial_status;
+    this.initial_time = confirmation.initial_time
+      ? getTimeString(confirmation.initial_time, true)
+      : null;
+    this.actual_time = confirmation.actual_time
+      ? getTimeString(confirmation.actual_time, true)
+      : null;
+    this.reason = confirmation.reason;
   }
 }
