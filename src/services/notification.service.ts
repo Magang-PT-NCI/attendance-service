@@ -26,7 +26,9 @@ export class NotificationService {
         select: {
           id: true,
           status: true,
-          overtime: { select: { approved: true, created_at: true } },
+          overtime: {
+            select: { approved: true, checked: true, created_at: true },
+          },
           checkIn: { select: { time: true } },
         },
       });
@@ -35,6 +37,7 @@ export class NotificationService {
         where: { attendance_id: attendance.id },
         select: {
           approved: true,
+          checked: true,
           created_at: true,
           attachment: true,
           type: true,
@@ -44,7 +47,7 @@ export class NotificationService {
       confirmations.forEach((confirmation) => {
         const message =
           `Konfirmasi kehadiran ${this.getConfirmationType(confirmation.type)} Anda hari ini ` +
-          `${this.getApprovalMessage(confirmation.approved)}.` +
+          `${this.getApprovalMessage(confirmation.approved, confirmation.checked)}.` +
           `\nDeskripsi konfirmasi kehadiran:\n${confirmation.description}`;
 
         notificationBuilder
@@ -75,7 +78,7 @@ export class NotificationService {
       if (attendance?.overtime) {
         notificationBuilder
           .setMessage(
-            `Pengajuan lembur Anda hari ini ${this.getApprovalMessage(attendance.overtime.approved)}.`,
+            `Pengajuan lembur Anda hari ini ${this.getApprovalMessage(attendance.overtime.approved, attendance.overtime.checked)}.`,
           )
           .setDate(getTimeString(attendance.overtime.created_at))
           .setLevel('overtime')
@@ -88,6 +91,7 @@ export class NotificationService {
           start_date: true,
           duration: true,
           approved: true,
+          checked: true,
           created_at: true,
           permission_letter: true,
         },
@@ -96,7 +100,7 @@ export class NotificationService {
       if (permit) {
         notificationBuilder
           .setMessage(
-            `Pengajuan izin Anda untuk tanggal ${getDateString(permit.start_date)} selama ${permit.duration} hari ${this.getApprovalMessage(permit.approved)}.`,
+            `Pengajuan izin Anda untuk tanggal ${getDateString(permit.start_date)} selama ${permit.duration} hari ${this.getApprovalMessage(permit.approved, permit.checked)}.`,
           )
           .setDate(getDateString(permit.created_at))
           .setFile(getFileUrl(permit.permission_letter, 'permit', 'file'))
@@ -185,8 +189,8 @@ export class NotificationService {
           const actualTime = getTimeString(confirmation.actual_time, true);
 
           message += initialTime
-            ? `\nJika disetujui, waktu kehadiran OnSite akan diubah dari ${initialTime} menjadi ${actualTime}.`
-            : `\nJika disetujui, waktu kehadiran OnSite akan diubah menjadi ${actualTime}.`;
+            ? `\nJika disetujui, waktu ${type} OnSite akan diubah dari ${initialTime} menjadi ${actualTime}.`
+            : `\nJika disetujui, waktu ${type} OnSite akan diubah menjadi ${actualTime}.`;
         }
 
         notificationBuilder
@@ -234,8 +238,10 @@ export class NotificationService {
     return employee.name;
   }
 
-  private getApprovalMessage(approved: boolean) {
-    return `${approved ? 'telah' : 'belum'} disetujui oleh Koordinator`;
+  private getApprovalMessage(approved: boolean, checked: boolean) {
+    const approvedMessage = approved ? 'telah' : 'tidak';
+    const message = !checked ? 'belum' : approvedMessage;
+    return `${message} disetujui oleh Koordinator`;
   }
 
   private getInitialStatus(status: ConfirmationStatus) {

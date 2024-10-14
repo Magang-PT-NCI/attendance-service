@@ -139,16 +139,17 @@ export class AttendanceCheck {
   @ApiProperty({
     example:
       'https://lh3.googleusercontent.com/d/17ZxckunTexIjn_j_Vve2CKTyH98hu0aY=s220',
+    description: 'may be null',
   })
   public readonly photo: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'may be null' })
   public readonly location: Location;
 
   public constructor(check: Check, type: 'in' | 'out') {
     this.time = getTimeString(check.time, true);
-    this.photo = getFileUrl(check.photo, `check_${type}`);
-    this.location = new Location(check.location);
+    this.photo = check.photo ? getFileUrl(check.photo, `check_${type}`) : null;
+    this.location = check.location ? new Location(check.location) : null;
   }
 }
 

@@ -42,8 +42,8 @@ model Check {
   id                 Int          @id @default(autoincrement())
   type               CheckType
   time               DateTime     @db.Time
-  location           String       @db.VarChar(50)
-  photo              String       @db.VarChar(255)
+  location           String?      @db.VarChar(50)
+  photo              String?      @db.VarChar(255)
   checkInAttendance  Attendance[] @relation("CheckIn")
   checkOutAttendance Attendance[] @relation("CheckOut")
 }

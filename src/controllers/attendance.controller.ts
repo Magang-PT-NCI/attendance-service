@@ -150,7 +150,7 @@ export class AttendanceController {
     if (!validType.includes(body.type))
       throw new BadRequestException('type tidak valid!');
 
-    const validStatus = ['late', 'absent'];
+    const validStatus = ['late', 'absent', 'present'];
     if (!validStatus.includes(body.initial_status))
       throw new BadRequestException('initial_status tidak valid!');
 
