@@ -5,6 +5,8 @@ import {
 } from '@nestjs/common';
 import { EmployeeResData } from '../interfaces/api-service.interfaces';
 import {
+  AttendanceConfirmationReqBody,
+  AttendanceConfirmationResBody,
   AttendancePostReqBody,
   AttendancePostResBody,
   AttendanceResBody,
@@ -161,6 +163,52 @@ export class AttendanceService {
         });
         return new OvertimeResBody(overtime, createAttendance);
       });
+    } catch (error) {
+      handleError(error, this.logger);
+    }
+  }
+
+  public async handleAttendanceConfirmation(
+    data: AttendanceConfirmationReqBody,
+  ): Promise<AttendanceConfirmationResBody> {
+    if (data.initial_status === 'absent' && data.type === 'check_out')
+      throw new ConflictException(
+        'tidak dapat konfirmasi check out dengan initial status absent!',
+      );
+
+    const filename = await uploadFile(
+      data.attachment,
+      `${data.attendance_id}_${data.type}`,
+      'confirmation',
+    );
+    try {
+      const existingConfirmation =
+        await this.prisma.attendanceConfirmation.findFirst({
+          where: { attendance_id: data.attendance_id, checked: false },
+          select: { id: true },
+        });
+
+      if (existingConfirmation)
+        throw new ConflictException(
+          'Anda masih memiliki konfirmasi yang belum diperiksa!',
+        );
+
+      return new AttendanceConfirmationResBody(
+        await this.prisma.attendanceConfirmation.create({
+          data: {
+            type: data.type,
+            attendance_id: data.attendance_id,
+            description: data.description,
+            attachment: filename,
+            initial_status: data.initial_status,
+            initial_time: data.initial_time ? getDate(data.initial_time) : null,
+            actual_time: data.actual_time ? getDate(data.actual_time) : null,
+            reason: data.reason,
+            checked: false,
+            approved: false,
+          },
+        }),
+      );
     } catch (error) {
       handleError(error, this.logger);
     }

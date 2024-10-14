@@ -13,7 +13,9 @@ import {
 import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { AttendanceService } from '../services/attendance.service';
 import {
-  ApiAttendance, ApiOvertime,
+  ApiAttendance,
+  ApiAttendanceConfirmation,
+  ApiOvertime,
   ApiPostAttendance,
 } from '../decorators/api-attendance.decorator';
 import {
@@ -21,15 +23,21 @@ import {
   AttendancePostReqBody,
   AttendanceResBody,
   OvertimeReqBody,
-  OvertimeResBody, AttendanceParam,
+  OvertimeResBody,
+  AttendanceParam,
+  AttendanceConfirmationResBody,
+  AttendanceConfirmationReqBody,
 } from '../dto/attendance.dto';
 import { AttendanceInterceptor } from '../interceptors/attendance.interceptor';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { RequestPostAttendance } from '../decorators/request-attendance.decorator';
+import {
+  RequestAttendanceConfirmation,
+  RequestPostAttendance,
+} from '../decorators/request-attendance.decorator';
 import { extname as pathExtname } from 'path';
 import * as sharp from 'sharp';
 import { LoggerUtil } from '../utils/logger.utils';
-import { getDateString } from '../utils/date.utils';
+import { getDateString, isValidTime } from '../utils/date.utils';
 import { getEmployee } from '../utils/api.utils';
 
 @Controller('attendance')
@@ -130,5 +138,49 @@ export class AttendanceController {
 
     if (!body.nik) throw new BadRequestException('nik harus diisi!');
     return await this.service.handleOvertime(body.nik);
+  }
+
+  @Post('confirmation')
+  @UseInterceptors(FileInterceptor('attachment'))
+  @ApiAttendanceConfirmation()
+  public async attendanceConfirmation(
+    @RequestAttendanceConfirmation() body: AttendanceConfirmationReqBody,
+  ): Promise<AttendanceConfirmationResBody> {
+    const validType = ['check_in', 'check_out', 'permit'];
+    if (!validType.includes(body.type))
+      throw new BadRequestException('type tidak valid!');
+
+    const validStatus = ['late', 'absent', 'present'];
+    if (!validStatus.includes(body.initial_status))
+      throw new BadRequestException('initial_status tidak valid!');
+
+    if (body.type === 'permit') {
+      if (!body.reason) throw new BadRequestException('reason harus diisi!');
+
+      const validReason = [
+        'sakit',
+        'urusan_mendadak',
+        'cuti',
+        'duka',
+        'melahirkan',
+        'lainnya',
+      ];
+      if (!validReason.includes(body.reason))
+        throw new BadRequestException('reason tidak valid!');
+
+      body.initial_time = null;
+      body.actual_time = null;
+    } else {
+      if (body.initial_time && !isValidTime(body.initial_time))
+        throw new BadRequestException('initial_time tidak valid!');
+      if (!body.actual_time)
+        throw new BadRequestException('actual_time harus diisi!');
+      if (!isValidTime(body.actual_time))
+        throw new BadRequestException(`actual_time tidak valid!`);
+
+      body.reason = null;
+    }
+
+    return this.service.handleAttendanceConfirmation(body);
   }
 }

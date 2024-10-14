@@ -6,11 +6,10 @@ import {
 } from '@nestjs/common';
 import { PermitPostReqBody, PermitResBody } from '../dto/permit.dto';
 import { Reason } from '@prisma/client';
-import { FILE_DESTINATION } from '../config/app.config';
 import { PrismaService } from './prisma.service';
 import { getEmployee } from '../utils/api.utils';
 import { getDate, getDateString } from '../utils/date.utils';
-import { uploadToDrive, uploadToLocal } from '../utils/upload.utils';
+import { uploadFile } from '../utils/upload.utils';
 import { LoggerUtil } from '../utils/logger.utils';
 
 @Injectable()
@@ -51,14 +50,7 @@ export class PermitService {
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    let filename: string = '';
-
-    if (FILE_DESTINATION === 'cloud') {
-      filename = await uploadToDrive(permission_letter, nik, 'permit');
-    } else {
-      filename = uploadToLocal(permission_letter, nik, 'permit');
-    }
-
+    const filename = await uploadFile(permission_letter, nik, 'permit');
     try {
       const result = await this.prisma.permit.create({
         data: {

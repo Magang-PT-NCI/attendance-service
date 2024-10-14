@@ -4,8 +4,10 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  ConfirmationPatchResBody,
   DashboardResBody,
-  DashboardWeeklySummary, OvertimePatchResBody,
+  DashboardWeeklySummary,
+  OvertimePatchResBody,
   ReportResBody,
 } from '../dto/monitoring.dto';
 import {
@@ -16,6 +18,8 @@ import {
 import { PrismaService } from './prisma.service';
 import { LoggerUtil } from '../utils/logger.utils';
 import { getDate, getDateString } from '../utils/date.utils';
+import { handleError } from '../utils/common.utils';
+import { AttendanceStatus } from '@prisma/client';
 
 @Injectable()
 export class MonitoringService {
@@ -148,19 +152,121 @@ export class MonitoringService {
     id: number,
     approved: boolean,
   ): Promise<OvertimePatchResBody> {
-    const existingOvertime = await this.prisma.overtime.findUnique({
-      where: { id },
-      select: { id: true },
-    });
+    try {
+      const existingOvertime = await this.prisma.overtime.findUnique({
+        where: { id },
+        select: { id: true },
+      });
 
-    if (!existingOvertime) {
-      throw new NotFoundException('data lembur tidak ditemukan');
+      if (!existingOvertime)
+        throw new NotFoundException('data lembur tidak ditemukan');
+
+      return this.prisma.overtime.update({
+        where: { id },
+        data: { approved, checked: true },
+        select: { id: true, approved: true },
+      });
+    } catch (error) {
+      handleError(error, this.logger);
     }
+  }
 
-    return this.prisma.overtime.update({
-      where: { id },
-      data: { approved, checked: true },
-      select: { id: true, approved: true },
-    });
+  public async handleUpdateAttendanceConfirmation(
+    id: number,
+    approved: boolean,
+  ): Promise<ConfirmationPatchResBody> {
+    try {
+      const confirmation = await this.prisma.attendanceConfirmation.findUnique({
+        where: { id },
+        include: {
+          attendance: {
+            select: {
+              nik: true,
+              check_in_id: true,
+              check_out_id: true,
+            },
+          },
+        },
+      });
+
+      if (!confirmation)
+        throw new NotFoundException(
+          'data konfirmasi kehadiran tidak ditemukan',
+        );
+
+      if (!approved)
+        return this.prisma.attendanceConfirmation.update({
+          where: { id },
+          data: { approved, checked: true },
+          select: { id: true, approved: true },
+        });
+
+      return this.prisma.$transaction(async (prisma) => {
+        const attendanceUpdateData = {
+          status: (confirmation.type === 'permit'
+            ? 'permit'
+            : 'presence') as AttendanceStatus,
+          check_in_id: undefined,
+          check_out_id: undefined,
+          permit_id: undefined,
+        };
+
+        const handleCheck = async (type: 'in' | 'out') => {
+          if (confirmation.attendance[`check_${type}_id`]) {
+            await prisma.check.update({
+              where: { id: confirmation.attendance[`check_${type}_id`] },
+              data: { time: confirmation.actual_time },
+            });
+          } else {
+            const check = await prisma.check.create({
+              data: {
+                type: type,
+                time: confirmation.actual_time,
+              },
+              select: { id: true },
+            });
+            attendanceUpdateData[`check_${type}_id`] = check.id;
+          }
+        };
+
+        switch (confirmation.type) {
+          case 'permit': {
+            const permit = await prisma.permit.create({
+              data: {
+                nik: confirmation.attendance.nik,
+                reason: confirmation.reason,
+                start_date: getDate(getDateString(confirmation.created_at)),
+                duration: 1,
+                permission_letter: confirmation.attachment,
+                approved: true,
+                checked: true,
+              },
+              select: { id: true },
+            });
+            attendanceUpdateData.permit_id = permit.id;
+            break;
+          }
+          case 'check_in':
+            await handleCheck('in');
+            break;
+          case 'check_out':
+            await handleCheck('out');
+            break;
+        }
+
+        await prisma.attendance.update({
+          where: { id: confirmation.attendance_id },
+          data: attendanceUpdateData,
+        });
+
+        return prisma.attendanceConfirmation.update({
+          where: { id },
+          data: { approved, checked: true },
+          select: { id: true, approved: true },
+        });
+      });
+    } catch (error) {
+      handleError(error, this.logger);
+    }
   }
 }

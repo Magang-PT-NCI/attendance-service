@@ -14,20 +14,21 @@ datasource db {
 }
 
 model Attendance {
-  id           Int              @id @default(autoincrement())
-  nik          String           @db.VarChar(20)
-  check_in_id  Int?
-  check_out_id Int?
-  permit_id    Int?
-  overtime_id  Int?
-  date         DateTime         @db.Date
-  status       AttendanceStatus
-  checkIn      Check?           @relation("CheckIn", fields: [check_in_id], references: [id])
-  checkOut     Check?           @relation("CheckOut", fields: [check_out_id], references: [id])
-  permit       Permit?          @relation("Permit", fields: [permit_id], references: [id])
-  overtime     Overtime?        @relation("Overtime", fields: [overtime_id], references: [id])
-  employee     EmployeeCache    @relation("Employee", fields: [nik], references: [nik])
-  activities   Activity[]
+  id            Int                      @id @default(autoincrement())
+  nik           String                   @db.VarChar(20)
+  check_in_id   Int?
+  check_out_id  Int?
+  permit_id     Int?
+  overtime_id   Int?
+  date          DateTime                 @db.Date
+  status        AttendanceStatus
+  checkIn       Check?                   @relation("CheckIn", fields: [check_in_id], references: [id])
+  checkOut      Check?                   @relation("CheckOut", fields: [check_out_id], references: [id])
+  permit        Permit?                  @relation("Permit", fields: [permit_id], references: [id])
+  overtime      Overtime?                @relation("Overtime", fields: [overtime_id], references: [id])
+  employee      EmployeeCache            @relation("Employee", fields: [nik], references: [nik])
+  activities    Activity[]
+  confirmations AttendanceConfirmation[]
 }
 
 model EmployeeCache {
@@ -41,8 +42,8 @@ model Check {
   id                 Int          @id @default(autoincrement())
   type               CheckType
   time               DateTime     @db.Time
-  location           String       @db.VarChar(50)
-  photo              String       @db.VarChar(255)
+  location           String?      @db.VarChar(50)
+  photo              String?      @db.VarChar(255)
   checkInAttendance  Attendance[] @relation("CheckIn")
   checkOutAttendance Attendance[] @relation("CheckOut")
 }
@@ -79,6 +80,22 @@ model Overtime {
   attendances Attendance[] @relation("Overtime")
 }
 
+model AttendanceConfirmation {
+  id             Int                @id @default(autoincrement())
+  attendance_id  Int
+  type           ConfirmationType
+  description    String             @db.Text
+  attachment     String             @db.VarChar(255)
+  checked        Boolean            @default(false)
+  approved       Boolean            @default(false)
+  initial_status ConfirmationStatus
+  created_at     DateTime           @default(now())
+  initial_time   DateTime?          @db.Time
+  actual_time    DateTime?          @db.Time
+  reason         Reason?
+  attendance     Attendance         @relation(fields: [attendance_id], references: [id])
+}
+
 enum AttendanceStatus {
   presence
   permit
@@ -102,4 +119,16 @@ enum Reason {
   duka
   melahirkan
   lainnya
+}
+
+enum ConfirmationType {
+  check_in
+  check_out
+  permit
+}
+
+enum ConfirmationStatus {
+  late
+  absent
+  present
 }
