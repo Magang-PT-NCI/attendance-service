@@ -89,6 +89,7 @@ model AttendanceConfirmation {
   checked        Boolean            @default(false)
   approved       Boolean            @default(false)
   initial_status ConfirmationStatus
+  created_at     DateTime           @default(now())
   initial_time   DateTime?          @db.Time
   actual_time    DateTime?          @db.Time
   reason         Reason?

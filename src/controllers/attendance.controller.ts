@@ -171,11 +171,12 @@ export class AttendanceController {
       body.initial_time = null;
       body.actual_time = null;
     } else {
-      ['initial_time', 'actual_time'].forEach((time) => {
-        if (!body[time]) throw new BadRequestException(`${time} harus diisi!`);
-        if (!isValidTime(body[time]))
-          throw new BadRequestException(`${time} tidak valid!`);
-      });
+      if (body.initial_time && !isValidTime(body.initial_time))
+        throw new BadRequestException('initial_time tidak valid!');
+      if (!body.actual_time)
+        throw new BadRequestException('actual_time harus diisi!');
+      if (!isValidTime(body.actual_time))
+        throw new BadRequestException(`actual_time tidak valid!`);
 
       body.reason = null;
     }

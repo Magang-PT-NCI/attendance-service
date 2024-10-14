@@ -78,6 +78,7 @@ CREATE TABLE `AttendanceConfirmation` (
     `checked` BOOLEAN NOT NULL DEFAULT false,
     `approved` BOOLEAN NOT NULL DEFAULT false,
     `initial_status` ENUM('late', 'absent', 'present') NOT NULL,
+    `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `initial_time` TIME NULL,
     `actual_time` TIME NULL,
     `reason` ENUM('sakit', 'urusan_mendadak', 'cuti', 'duka', 'melahirkan', 'lainnya') NULL,

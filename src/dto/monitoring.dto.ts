@@ -113,3 +113,16 @@ export class OvertimePatchResBody {
   @ApiProperty({ example: true })
   public readonly approved: boolean;
 }
+
+export class ConfirmationPatchReqBody {
+  @ApiProperty({ example: true })
+  public readonly approved: boolean;
+}
+
+export class ConfirmationPatchResBody {
+  @ApiProperty({ example: 5 })
+  public readonly id: number;
+
+  @ApiProperty({ example: true })
+  public readonly approved: boolean;
+}
