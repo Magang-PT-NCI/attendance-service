@@ -1,5 +1,4 @@
 import { logger } from '../mocks/logger.mock';
-
 import { LoggerUtil } from '../../utils/logger.utils';
 
 describe('logger utility test', () => {
@@ -91,5 +90,40 @@ describe('logger utility test', () => {
     const data = '{ invalid json }';
     const formattedData = (loggerUtil as any).logFormat(data);
     expect(formattedData).toBe(data);
+  });
+
+  it('should return return log data with censored token and password', () => {
+    let data: any = { nik: '12345', name: 'ucup' };
+    let formattedData = (loggerUtil as any).logFormat(data);
+    let expectedResult = JSON.stringify(data, null, 2);
+    expect(formattedData).toBe(expectedResult);
+
+    data = { nik: '12345', name: 'ucup', password: 'admin$1234' };
+    formattedData = (loggerUtil as any).logFormat(data);
+    expectedResult = JSON.stringify(
+      { ...data, password: '**********' },
+      null,
+      2,
+    );
+    expect(formattedData).toBe(expectedResult);
+
+    data = { token: 'klsadfjoinvwekureong' };
+    formattedData = (loggerUtil as any).logFormat(data);
+    expectedResult = JSON.stringify({ ...data, token: '**********' }, null, 2);
+    expect(formattedData).toBe(expectedResult);
+
+    data = {
+      nik: '12345',
+      name: 'ucup',
+      password: 'admin$1234',
+      token: 'klsadfjoinvwekureong',
+    };
+    formattedData = (loggerUtil as any).logFormat(data);
+    expectedResult = JSON.stringify(
+      { ...data, password: '**********', token: '**********' },
+      null,
+      2,
+    );
+    expect(formattedData).toBe(expectedResult);
   });
 });
