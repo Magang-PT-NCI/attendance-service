@@ -26,7 +26,7 @@ import {
   ApiUpdateOvertime,
 } from '../decorators/api-monitoring.decorator';
 import { LoggerUtil } from '../utils/logger.utils';
-import { getDate } from '../utils/date.utils';
+import { getDate, getDateString } from '../utils/date.utils';
 
 @Controller('monitoring')
 @ApiSecurity('jwt')
@@ -50,8 +50,14 @@ export class MonitoringController {
     const keyword: string = query.keyword || '';
     const from: Date = query.from
       ? getDate(query.from)
-      : getDate(new Date().toISOString());
+      : getDate(getDateString(new Date()));
     const to: Date = query.to ? getDate(query.to) : from;
+
+    this.logger.silly('transformed query parameters: ', {
+      keyword,
+      from,
+      to,
+    });
 
     return await this.service.handleReport(keyword, from, to);
   }

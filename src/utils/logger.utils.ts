@@ -87,6 +87,10 @@ export class LoggerUtil {
       return data as string;
     }
 
-    return JSON.stringify(data, null, 2);
+    const formattedData = { ...(data as object) } as any;
+    formattedData.password = formattedData.password ? '**********' : undefined;
+    formattedData.token = formattedData.token ? '**********' : undefined;
+
+    return JSON.stringify(formattedData, null, 2);
   }
 }
