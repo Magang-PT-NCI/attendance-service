@@ -19,7 +19,7 @@ const drive = google.drive({
   }),
 });
 
-export const uploadToDrive = async (
+const uploadToDrive = async (
   file: Express.Multer.File,
   nik: string,
   type: string,
@@ -50,7 +50,7 @@ export const uploadToDrive = async (
   }
 };
 
-export const uploadToLocal = (
+const uploadToLocal = (
   file: Express.Multer.File,
   nik: string,
   type: string,

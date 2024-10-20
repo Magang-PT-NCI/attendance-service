@@ -25,6 +25,3 @@ jest.mock('../../config/logger.config', () => ({
   LEVEL: 'debug',
   TRANSPORT: 'console',
 }));
-jest.mock('../../utils/date.utils', () => ({
-  getDateFormat: jest.fn(() => '10:00:00.000'),
-}));
