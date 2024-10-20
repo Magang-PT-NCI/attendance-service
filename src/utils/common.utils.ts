@@ -16,7 +16,7 @@ const calculateOvertime = (checkOut: Date) => {
   return differenceInSeconds > 0 ? differenceInSeconds : null;
 };
 
-export const createTimeMessage = (timeInSeconds: number): string => {
+const createTimeMessage = (timeInSeconds: number): string => {
   const hours = Math.floor(timeInSeconds / HOUR);
   const minutes = Math.floor((timeInSeconds % HOUR) / MINUTE);
   const seconds = timeInSeconds % MINUTE;
@@ -27,10 +27,6 @@ export const createTimeMessage = (timeInSeconds: number): string => {
   if (seconds > 0) timeParts.push(`${seconds} detik`);
 
   return timeParts.join(' ').trim();
-};
-
-export const zeroPadding = (numText: string | number, length: number = 2) => {
-  return `${numText}`.padStart(length, '0');
 };
 
 export const getOvertime = (checkOut: Date): string => {
