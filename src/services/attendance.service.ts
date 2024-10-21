@@ -3,7 +3,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { EmployeeResData } from '../interfaces/api-service.interfaces';
 import {
   AttendanceConfirmationReqBody,
   AttendanceConfirmationResBody,
@@ -47,10 +46,7 @@ export class AttendanceService {
     return attendance ? new AttendanceResBody(attendance) : null;
   }
 
-  public async handleCheckIn(
-    data: AttendancePostReqBody,
-    employee: EmployeeResData,
-  ) {
+  public async handleCheckIn(data: AttendancePostReqBody) {
     const { nik, location, type, photo } = data;
     const { current, currentDateIso, currentTimeIso } = this.getCurrentDate();
 
@@ -58,24 +54,28 @@ export class AttendanceService {
     await this.checkExistingAttendance(nik, currentDateIso);
 
     const filename = await uploadFile(photo, nik, type);
-    const checkIn = await this.prisma.check.create({
-      data: {
-        type: 'in',
-        time: currentTimeIso,
-        location: `${location.latitude},${location.longitude}`,
-        photo: filename,
-      },
-    });
 
-    await this.prisma.updateEmployeeCache(employee);
-    await this.prisma.attendance.create({
-      data: {
-        nik,
-        check_in_id: checkIn.id,
-        date: currentDateIso,
-        status: 'presence',
-      },
-    });
+    try {
+      const checkIn = await this.prisma.check.create({
+        data: {
+          type: 'in',
+          time: currentTimeIso,
+          location: `${location.latitude},${location.longitude}`,
+          photo: filename,
+        },
+      });
+
+      await this.prisma.attendance.create({
+        data: {
+          nik,
+          check_in_id: checkIn.id,
+          date: currentDateIso,
+          status: 'presence',
+        },
+      });
+    } catch (error) {
+      handleError(error, this.logger);
+    }
 
     return new AttendancePostResBody(data, filename, current);
   }
