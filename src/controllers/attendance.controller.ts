@@ -117,13 +117,12 @@ export class AttendanceController {
       throw new BadRequestException('photo harus gambar dengan rasio 1:1');
     }
 
-    const employee = await getEmployee(body.nik);
-    if (!employee) {
+    if (!(await getEmployee(body.nik))) {
       throw new NotFoundException('karyawan tidak ditemukan');
     }
 
     if (body.type === 'check_in') {
-      return await this.service.handleCheckIn(body, employee);
+      return await this.service.handleCheckIn(body);
     } else if (body.type === 'check_out') {
       return await this.service.handleCheckOut(body);
     } else {
