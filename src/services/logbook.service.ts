@@ -3,7 +3,6 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
-  NotImplementedException,
 } from '@nestjs/common';
 import { $Enums } from '@prisma/client';
 import {
@@ -12,17 +11,14 @@ import {
   UpdateLogbookReqBody,
 } from '../dto/logbook.dto';
 import { PrismaActivity } from '../interfaces/logbook.interfaces';
-import { LoggerUtil } from '../utils/logger.utils';
-import { PrismaService } from './prisma.service';
 import { getDate, isValidTime } from '../utils/date.utils';
+import { BaseService } from './base.service';
 
 @Injectable()
-export class LogbookService {
-  private readonly logger = new LoggerUtil('LogbookService');
-
-  constructor(private readonly prisma: PrismaService) {}
-
-  async handlePostLogbook(data: LogbookReqBody): Promise<LogbookResBody> {
+export class LogbookService extends BaseService {
+  public async handlePostLogbook(
+    data: LogbookReqBody,
+  ): Promise<LogbookResBody> {
     const { attendance_id, description, status, start_time, end_time } = data;
 
     let attendance: { id: number };
@@ -77,11 +73,7 @@ export class LogbookService {
     }
   }
 
-  async handleGetLogbook() {
-    throw new NotImplementedException();
-  }
-
-  async handleUpdateLogbook(
+  public async handleUpdateLogbook(
     activityId: number,
     data: UpdateLogbookReqBody,
   ): Promise<LogbookResBody> {

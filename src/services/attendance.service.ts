@@ -12,23 +12,19 @@ import {
   OvertimeResBody,
 } from '../dto/attendance.dto';
 import {
+  CurrentDate,
   PrismaAttendance,
   PrismaCheckAttendance,
 } from '../interfaces/attendance.interfaces';
-import { PrismaService } from './prisma.service';
 import { getEmployee } from '../utils/api.utils';
 import { getDate, getDateString, getTimeString } from '../utils/date.utils';
 import { uploadFile } from '../utils/upload.utils';
 import { ActivityStatus, Prisma } from '@prisma/client';
-import { LoggerUtil } from '../utils/logger.utils';
 import { handleError } from '../utils/common.utils';
+import { BaseService } from './base.service';
 
 @Injectable()
-export class AttendanceService {
-  private readonly logger = new LoggerUtil('AttendanceService');
-
-  constructor(private readonly prisma: PrismaService) {}
-
+export class AttendanceService extends BaseService {
   public async handleGetAttendance(
     nik: string,
     filter: string,
@@ -36,6 +32,8 @@ export class AttendanceService {
   ): Promise<AttendanceResBody> {
     const employee = await getEmployee(nik);
     if (!employee) throw new NotFoundException('karyawan tidak ditemukan');
+
+    this.logger.info('ok');
 
     const where: Prisma.AttendanceWhereInput = { nik, date: getDate(date) };
     const select = this.buildSelectGetAttendance(filter);
@@ -46,7 +44,9 @@ export class AttendanceService {
     return attendance ? new AttendanceResBody(attendance) : null;
   }
 
-  public async handleCheckIn(data: AttendancePostReqBody) {
+  public async handleCheckIn(
+    data: AttendancePostReqBody,
+  ): Promise<AttendancePostResBody> {
     const { nik, location, type, photo } = data;
     const { current, currentDateIso, currentTimeIso } = this.getCurrentDate();
 
@@ -80,7 +80,9 @@ export class AttendanceService {
     return new AttendancePostResBody(data, filename, current);
   }
 
-  public async handleCheckOut(data: AttendancePostReqBody) {
+  public async handleCheckOut(
+    data: AttendancePostReqBody,
+  ): Promise<AttendancePostResBody> {
     const { nik, location, type, photo } = data;
     const { current, currentDateIso, currentTimeIso } = this.getCurrentDate();
 
@@ -236,7 +238,7 @@ export class AttendanceService {
     };
   }
 
-  private getCurrentDate() {
+  private getCurrentDate(): CurrentDate {
     const current = getDate(new Date().toISOString());
     return {
       current,

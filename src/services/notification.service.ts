@@ -1,18 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from './prisma.service';
 import { getDate, getDateString, getTimeString } from '../utils/date.utils';
-import { LoggerUtil } from '../utils/logger.utils';
 import { getFileUrl, getLate, handleError } from '../utils/common.utils';
 import { NotificationBuilder } from '../builders/notification.builder';
 import { NotificationResBody } from '../dto/notification.dto';
 import { ConfirmationStatus, ConfirmationType } from '@prisma/client';
+import { BaseService } from './base.service';
 
 @Injectable()
-export class NotificationService {
-  private readonly logger = new LoggerUtil('NotificationService');
-
-  public constructor(private readonly prisma: PrismaService) {}
-
+export class NotificationService extends BaseService {
   public async handleOnSiteNotification(
     nik: string,
   ): Promise<NotificationResBody[]> {
@@ -230,7 +225,7 @@ export class NotificationService {
     return notificationBuilder.getNotifications();
   }
 
-  private async getEmployeeName(nik: string) {
+  private async getEmployeeName(nik: string): Promise<string> {
     const employee = await this.prisma.employeeCache.findUnique({
       where: { nik },
       select: { name: true },
@@ -238,13 +233,13 @@ export class NotificationService {
     return employee.name;
   }
 
-  private getApprovalMessage(approved: boolean, checked: boolean) {
+  private getApprovalMessage(approved: boolean, checked: boolean): string {
     const approvedMessage = approved ? 'telah' : 'tidak';
     const message = !checked ? 'belum' : approvedMessage;
     return `${message} disetujui oleh Koordinator`;
   }
 
-  private getInitialStatus(status: ConfirmationStatus) {
+  private getInitialStatus(status: ConfirmationStatus): string {
     switch (status) {
       case 'absent':
         return 'tidak hadir';
@@ -257,7 +252,7 @@ export class NotificationService {
     }
   }
 
-  private getConfirmationType(type: ConfirmationType) {
+  private getConfirmationType(type: ConfirmationType): string {
     return type.replace('_', ' ');
   }
 }

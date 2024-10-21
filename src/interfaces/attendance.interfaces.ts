@@ -29,3 +29,9 @@ export interface PrismaCheckAttendance {
   overtime_id?: number;
   checkIn?: { id: number };
 }
+
+export interface CurrentDate {
+  current: Date;
+  currentDateIso: string;
+  currentTimeIso: string;
+}

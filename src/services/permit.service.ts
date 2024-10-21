@@ -6,19 +6,14 @@ import {
 } from '@nestjs/common';
 import { PermitPostReqBody, PermitResBody } from '../dto/permit.dto';
 import { Reason } from '@prisma/client';
-import { PrismaService } from './prisma.service';
 import { getEmployee } from '../utils/api.utils';
 import { getDate, getDateString } from '../utils/date.utils';
 import { uploadFile } from '../utils/upload.utils';
-import { LoggerUtil } from '../utils/logger.utils';
+import { BaseService } from './base.service';
 
 @Injectable()
-export class PermitService {
-  private readonly logger = new LoggerUtil('PermitService');
-
-  constructor(private readonly prisma: PrismaService) {}
-
-  async handlePermit(data: PermitPostReqBody) {
+export class PermitService extends BaseService {
+  public async handlePermit(data: PermitPostReqBody): Promise<PermitResBody> {
     const { nik, reason, start_date, duration, permission_letter } = data;
     const startDate = getDate(getDateString(new Date(start_date)));
 
@@ -71,7 +66,10 @@ export class PermitService {
     }
   }
 
-  async handleUpdatePermit(id: number, approved: boolean) {
+  public async handleUpdatePermit(
+    id: number,
+    approved: boolean,
+  ): Promise<PermitResBody> {
     const existingPermit = await this.prisma.permit.findUnique({
       where: { id },
       select: { id: true },
