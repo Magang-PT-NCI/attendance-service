@@ -5,7 +5,7 @@ import { FileResult } from '../interfaces/file.interfaces';
 
 @Injectable()
 export class FileService {
-  public getFile(prefix: string, filename: string): FileResult {
+  public handleGetFile(prefix: string, filename: string): FileResult {
     const filePath = `./public/upload/${prefix}/${filename}`;
 
     if (!existsSync(filePath)) {

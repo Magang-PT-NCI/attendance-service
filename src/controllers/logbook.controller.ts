@@ -7,7 +7,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { LogbookService } from '../services/logbook.service';
-import { ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import {
   LogbookReqBody,
   LogbookResBody,
@@ -19,26 +19,27 @@ import {
   ApiLogbookPatch,
   ApiLogbookPost,
 } from '../decorators/api-logbook.decorator';
-import { LoggerUtil } from '../utils/logger.utils';
 import { getDate, isValidTime } from '../utils/date.utils';
+import { BaseController } from './base.controller';
 
 @Controller('logbook')
-@ApiSecurity('jwt')
 @ApiTags('Logbook')
-export class LogbookController {
-  private readonly logger = new LoggerUtil('LogbookController');
-
-  constructor(private readonly service: LogbookService) {}
+export class LogbookController extends BaseController {
+  public constructor(private readonly service: LogbookService) {
+    super();
+  }
 
   @Post('')
   @ApiLogbookPost()
-  async postLogbook(@Body() reqBody: LogbookReqBody): Promise<LogbookResBody> {
+  public async postLogbook(
+    @Body() body: LogbookReqBody,
+  ): Promise<LogbookResBody> {
     const data: LogbookReqBody = {
-      attendance_id: reqBody.attendance_id,
-      description: reqBody.description,
-      status: reqBody.status?.toLowerCase() as ActivityStatus,
-      start_time: reqBody.start_time,
-      end_time: reqBody.end_time,
+      attendance_id: body.attendance_id,
+      description: body.description,
+      status: body.status?.toLowerCase() as ActivityStatus,
+      start_time: body.start_time,
+      end_time: body.end_time,
     };
 
     this.logger.debug('request body: ', data);
@@ -59,11 +60,11 @@ export class LogbookController {
 
   @Patch(':activity_id')
   @ApiLogbookPatch()
-  async updateLogbook(
+  public async updateLogbook(
     @Param() params: UpdateLogbookParam,
-    @Body() reqBody: UpdateLogbookReqBody,
+    @Body() body: UpdateLogbookReqBody,
   ): Promise<LogbookResBody> {
-    this.logger.debug('request body: ', reqBody);
+    this.logger.debug('request body: ', body);
 
     const activityId = parseInt(`${params.activity_id}`);
 
@@ -75,36 +76,36 @@ export class LogbookController {
 
     const data: UpdateLogbookReqBody = {};
 
-    if (reqBody.description) {
-      data.description = reqBody.description;
+    if (body.description) {
+      data.description = body.description;
     }
 
-    if (reqBody.status) {
-      data.status = reqBody.status.toLowerCase() as ActivityStatus;
+    if (body.status) {
+      data.status = body.status.toLowerCase() as ActivityStatus;
 
       if (data.status !== 'progress' && data.status !== 'done') {
         throw new BadRequestException(`status ${data.status} tidak valid`);
       }
     }
 
-    if (reqBody.start_time) {
-      if (!isValidTime(reqBody.start_time)) {
+    if (body.start_time) {
+      if (!isValidTime(body.start_time)) {
         throw new BadRequestException(
           'start_time harus berupa waktu yang valid dengan format HH:MM',
         );
       }
 
-      data.start_time = getDate(reqBody.start_time).toISOString();
+      data.start_time = getDate(body.start_time).toISOString();
     }
 
-    if (reqBody.end_time) {
-      if (!isValidTime(reqBody.end_time)) {
+    if (body.end_time) {
+      if (!isValidTime(body.end_time)) {
         throw new BadRequestException(
           'end_time harus berupa waktu yang valid dengan format HH:MM',
         );
       }
 
-      data.end_time = getDate(reqBody.end_time).toISOString();
+      data.end_time = getDate(body.end_time).toISOString();
     }
 
     return await this.service.handleUpdateLogbook(activityId, data);

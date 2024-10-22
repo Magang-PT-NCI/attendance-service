@@ -10,7 +10,7 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { AttendanceService } from '../services/attendance.service';
 import {
   ApiAttendance,
@@ -27,6 +27,7 @@ import {
   AttendanceParam,
   AttendanceConfirmationResBody,
   AttendanceConfirmationReqBody,
+  AttendancePostResBody,
 } from '../dto/attendance.dto';
 import { AttendanceInterceptor } from '../interceptors/attendance.interceptor';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -36,23 +37,22 @@ import {
 } from '../decorators/request-attendance.decorator';
 import { extname as pathExtname } from 'path';
 import * as sharp from 'sharp';
-import { LoggerUtil } from '../utils/logger.utils';
 import { getDateString, isValidTime } from '../utils/date.utils';
 import { getEmployee } from '../utils/api.utils';
+import { BaseController } from './base.controller';
 
 @Controller('attendance')
-@ApiSecurity('jwt')
 @ApiTags('Attendance')
-export class AttendanceController {
-  private readonly logger = new LoggerUtil('AttendanceController');
-
-  constructor(private readonly service: AttendanceService) {}
+export class AttendanceController extends BaseController {
+  public constructor(private readonly service: AttendanceService) {
+    super();
+  }
 
   @Get(':nik')
   @ApiAttendance()
   @UseInterceptors(AttendanceInterceptor)
-  async getAttendance(
-    @Param() { nik }: AttendanceParam,
+  public async getAttendance(
+    @Param() param: AttendanceParam,
     @Query() query: AttendanceQuery,
   ): Promise<AttendanceResBody> {
     this.logger.debug('query parameters: ', query);
@@ -71,7 +71,7 @@ export class AttendanceController {
     }
 
     const attendance = await this.service.handleGetAttendance(
-      nik,
+      param.nik,
       filter,
       date,
     );
@@ -86,7 +86,9 @@ export class AttendanceController {
   @Post('')
   @UseInterceptors(FileInterceptor('photo'))
   @ApiPostAttendance()
-  async postAttendance(@RequestPostAttendance() body: AttendancePostReqBody) {
+  public async postAttendance(
+    @RequestPostAttendance() body: AttendancePostReqBody,
+  ): Promise<AttendancePostResBody> {
     const filetypes = /jpeg|jpg|png/;
     const mimetype = filetypes.test(body.photo.mimetype);
     const extname = filetypes.test(
@@ -132,7 +134,9 @@ export class AttendanceController {
 
   @Post('overtime')
   @ApiOvertime()
-  async overtime(@Body() body: OvertimeReqBody): Promise<OvertimeResBody> {
+  public async overtime(
+    @Body() body: OvertimeReqBody,
+  ): Promise<OvertimeResBody> {
     this.logger.debug('request body: ', body);
 
     if (!body.nik) throw new BadRequestException('nik harus diisi!');
