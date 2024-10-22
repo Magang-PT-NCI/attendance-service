@@ -50,7 +50,7 @@ export class NotificationBuilder {
     this.action_endpoint = null;
   }
 
-  public getNotifications() {
+  public getNotifications(): NotificationResBody[] {
     return [
       ...this.overtimeNotifications,
       ...this.permitNotifications,
@@ -58,37 +58,39 @@ export class NotificationBuilder {
     ];
   }
 
-  public setLevel(level: 'attendance' | 'permit' | 'overtime') {
+  public setLevel(
+    level: 'attendance' | 'permit' | 'overtime',
+  ): NotificationBuilder {
     this.level = level;
     return this;
   }
 
-  public setNik(nik: string) {
+  public setNik(nik: string): NotificationBuilder {
     this.nik = nik;
     return this;
   }
 
-  public setName(name: string) {
+  public setName(name: string): NotificationBuilder {
     this.name = name;
     return this;
   }
 
-  public setMessage(message: string) {
+  public setMessage(message: string): NotificationBuilder {
     this.message = message;
     return this;
   }
 
-  public setDate(date: string) {
+  public setDate(date: string): NotificationBuilder {
     this.date = date;
     return this;
   }
 
-  public setFile(file: string) {
+  public setFile(file: string): NotificationBuilder {
     this.file = file;
     return this;
   }
 
-  public setActionEndpoint(actionEndpoint: string) {
+  public setActionEndpoint(actionEndpoint: string): NotificationBuilder {
     this.action_endpoint = actionEndpoint;
     return this;
   }
