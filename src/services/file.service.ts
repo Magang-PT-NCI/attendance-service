@@ -1,13 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { existsSync } from 'fs';
 import { mime } from 'serve-static';
+import { FileResult } from '../interfaces/file.interfaces';
 
 @Injectable()
 export class FileService {
-  getFile(
-    prefix: string,
-    filename: string,
-  ): { path: string; mimeType: string } {
+  public handleGetFile(prefix: string, filename: string): FileResult {
     const filePath = `./public/upload/${prefix}/${filename}`;
 
     if (!existsSync(filePath)) {

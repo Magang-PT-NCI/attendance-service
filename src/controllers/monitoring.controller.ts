@@ -11,6 +11,7 @@ import { MonitoringService } from '../services/monitoring.service';
 import {
   ConfirmationPatchReqBody,
   ConfirmationPatchReqParam,
+  ConfirmationPatchResBody,
   DashboardResBody,
   OvertimePatchReqBody,
   OvertimePatchReqParam,
@@ -18,23 +19,22 @@ import {
   ReportQuery,
   ReportResBody,
 } from '../dto/monitoring.dto';
-import { ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import {
   ApiDashboard,
   ApiReport,
   ApiUpdateAttendanceConfirmation,
   ApiUpdateOvertime,
 } from '../decorators/api-monitoring.decorator';
-import { LoggerUtil } from '../utils/logger.utils';
 import { getDate, getDateString } from '../utils/date.utils';
+import { BaseController } from './base.controller';
 
 @Controller('monitoring')
-@ApiSecurity('jwt')
 @ApiTags('Monitoring')
-export class MonitoringController {
-  private readonly logger = new LoggerUtil('MonitoringController');
-
-  public constructor(private readonly service: MonitoringService) {}
+export class MonitoringController extends BaseController {
+  public constructor(private readonly service: MonitoringService) {
+    super();
+  }
 
   @Get('dashboard')
   @ApiDashboard()
@@ -66,22 +66,25 @@ export class MonitoringController {
   @ApiUpdateOvertime()
   public async updateOvertime(
     @Param() param: OvertimePatchReqParam,
-    @Body() { approved }: OvertimePatchReqBody,
+    @Body() body: OvertimePatchReqBody,
   ): Promise<OvertimePatchResBody> {
-    this.validateUpdate(approved);
+    this.validateUpdate(body.approved);
     const id = this.getNumberId(`${param.id}`);
-    return await this.service.handleUpdateOvertime(id, approved);
+    return await this.service.handleUpdateOvertime(id, body.approved);
   }
 
   @Patch('confirmation/:id')
   @ApiUpdateAttendanceConfirmation()
   public async updateAttendanceConfirmation(
     @Param() param: ConfirmationPatchReqParam,
-    @Body() { approved }: ConfirmationPatchReqBody,
-  ): Promise<OvertimePatchResBody> {
-    this.validateUpdate(approved);
+    @Body() body: ConfirmationPatchReqBody,
+  ): Promise<ConfirmationPatchResBody> {
+    this.validateUpdate(body.approved);
     const id = this.getNumberId(`${param.id}`);
-    return await this.service.handleUpdateAttendanceConfirmation(id, approved);
+    return await this.service.handleUpdateAttendanceConfirmation(
+      id,
+      body.approved,
+    );
   }
 
   private getNumberId(id: string): number {
@@ -91,7 +94,7 @@ export class MonitoringController {
     return result;
   }
 
-  private validateUpdate(approved: boolean): void {
+  private validateUpdate(approved: boolean) {
     this.logger.debug('request body: ', { approved });
     if (typeof approved !== 'boolean')
       throw new BadRequestException(

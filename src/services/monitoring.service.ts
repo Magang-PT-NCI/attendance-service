@@ -15,15 +15,13 @@ import {
   PrismaAttendanceDashboard,
   PrismaAttendanceReport,
 } from 'src/interfaces/monitoring.interfaces';
-import { PrismaService } from './prisma.service';
-import { LoggerUtil } from '../utils/logger.utils';
 import { getDate, getDateString } from '../utils/date.utils';
 import { handleError } from '../utils/common.utils';
 import { AttendanceStatus } from '@prisma/client';
+import { BaseService } from './base.service';
 
 @Injectable()
-export class MonitoringService {
-  private readonly logger = new LoggerUtil('MonitoringService');
+export class MonitoringService extends BaseService {
   private static DAYS = [
     'monday',
     'tuesday',
@@ -33,9 +31,9 @@ export class MonitoringService {
     'saturday',
   ];
 
-  public constructor(private readonly prisma: PrismaService) {}
+  public async handleDashboard(): Promise<DashboardResBody> {
+    const today = getDate(getDateString(new Date()));
 
-  private getDateWeek(today: Date): { monday: Date; saturday: Date } {
     const dayOfWeek = today.getDay();
     const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
 
@@ -44,31 +42,6 @@ export class MonitoringService {
 
     const saturday = new Date(monday);
     saturday.setDate(monday.getDate() + 5);
-
-    return { monday, saturday };
-  }
-
-  private getSummaryCount(
-    attendances: PrismaAttendanceDashboard[],
-  ): DaySummary {
-    const summary: DaySummary = { presence: 0, permit: 0, absent: 0 };
-    attendances.forEach(({ status }) => summary[status]++);
-    return summary;
-  }
-
-  private getDaySummary(
-    attendances: PrismaAttendanceDashboard[],
-    day: number,
-  ): DaySummary {
-    const dayData = attendances.filter(
-      (attendance) => attendance.date.getDay() === day,
-    );
-    return this.getSummaryCount(dayData);
-  }
-
-  public async handleDashboard(): Promise<DashboardResBody> {
-    const today = getDate(getDateString(new Date()));
-    const { monday, saturday } = this.getDateWeek(today);
 
     const attendances: PrismaAttendanceDashboard[] =
       await this.prisma.attendance.findMany({
@@ -268,5 +241,23 @@ export class MonitoringService {
     } catch (error) {
       handleError(error, this.logger);
     }
+  }
+
+  private getSummaryCount(
+    attendances: PrismaAttendanceDashboard[],
+  ): DaySummary {
+    const summary: DaySummary = { presence: 0, permit: 0, absent: 0 };
+    attendances.forEach(({ status }) => summary[status]++);
+    return summary;
+  }
+
+  private getDaySummary(
+    attendances: PrismaAttendanceDashboard[],
+    day: number,
+  ): DaySummary {
+    const dayData = attendances.filter(
+      (attendance) => attendance.date.getDay() === day,
+    );
+    return this.getSummaryCount(dayData);
   }
 }

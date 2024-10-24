@@ -9,12 +9,12 @@ import { FileParams } from '../dto/file.dto';
 @Controller('files')
 @ApiTags('File')
 export class FileController {
-  constructor(private readonly fileService: FileService) {}
+  public constructor(private readonly fileService: FileService) {}
 
   @Get('/:type/:filename')
   @ApiFile()
-  checkInFile(@Param() params: FileParams, @Res() res: Response) {
-    const { path, mimeType } = this.fileService.getFile(
+  public getFile(@Param() params: FileParams, @Res() res: Response) {
+    const { path, mimeType } = this.fileService.handleGetFile(
       params.type,
       params.filename,
     );

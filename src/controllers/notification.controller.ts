@@ -1,18 +1,17 @@
 import { Controller, Get, Req } from '@nestjs/common';
 import { Request } from 'express';
-import { ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { LoggerUtil } from '../utils/logger.utils';
+import { ApiTags } from '@nestjs/swagger';
 import { NotificationService } from '../services/notification.service';
 import { ApiNotification } from '../decorators/api-notification.decorator';
 import { NotificationResBody } from '../dto/notification.dto';
+import { BaseController } from './base.controller';
 
 @Controller('notification')
-@ApiSecurity('jwt')
 @ApiTags('Notification')
-export class NotificationController {
-  private readonly logger = new LoggerUtil('NotificationController');
-
-  public constructor(private readonly service: NotificationService) {}
+export class NotificationController extends BaseController {
+  public constructor(private readonly service: NotificationService) {
+    super();
+  }
 
   @Get('')
   @ApiNotification()

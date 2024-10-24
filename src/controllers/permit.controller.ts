@@ -8,7 +8,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { PermitService } from '../services/permit.service';
-import { ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { RequestPostPermit } from '../decorators/request-permit.decorator';
 import {
@@ -21,20 +21,19 @@ import {
   ApiPatchPermit,
   ApiPostPermit,
 } from '../decorators/api-permit.decorator';
-import { LoggerUtil } from '../utils/logger.utils';
+import { BaseController } from './base.controller';
 
 @Controller('permit')
-@ApiSecurity('jwt')
 @ApiTags('Permit')
-export class PermitController {
-  private readonly logger = new LoggerUtil('PermitController');
-
-  constructor(private readonly service: PermitService) {}
+export class PermitController extends BaseController {
+  public constructor(private readonly service: PermitService) {
+    super();
+  }
 
   @Post('')
   @UseInterceptors(FileInterceptor('permission_letter'))
   @ApiPostPermit()
-  async permit(
+  public async permit(
     @RequestPostPermit() body: PermitPostReqBody,
   ): Promise<PermitResBody> {
     if (isNaN(body.duration)) {
@@ -50,11 +49,11 @@ export class PermitController {
 
   @Patch(':id')
   @ApiPatchPermit()
-  async updatePermit(
+  public async updatePermit(
     @Param() param: PermitPatchParam,
-    @Body() reqBody: PermitPatchReqBody,
+    @Body() body: PermitPatchReqBody,
   ): Promise<PermitResBody> {
-    this.logger.debug('request body: ', reqBody);
+    this.logger.debug('request body: ', body);
 
     const id = parseInt(`${param.id}`);
 
@@ -64,12 +63,12 @@ export class PermitController {
       );
     }
 
-    if (typeof reqBody.approved !== 'boolean') {
+    if (typeof body.approved !== 'boolean') {
       throw new BadRequestException(
         'approved harus berisi boolean true atau false',
       );
     }
 
-    return await this.service.handleUpdatePermit(id, reqBody.approved);
+    return await this.service.handleUpdatePermit(id, body.approved);
   }
 }

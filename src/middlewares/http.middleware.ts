@@ -4,9 +4,9 @@ import { LoggerUtil } from '../utils/logger.utils';
 
 @Injectable()
 export class HttpMiddleware implements NestMiddleware {
-  private readonly logger = new LoggerUtil('HttpMiddleware');
+  private readonly logger = new LoggerUtil(HttpMiddleware.name);
 
-  public use(req: Request, res: Response, next: NextFunction): void {
+  public use(req: Request, res: Response, next: NextFunction) {
     const start: number = Date.now();
     this.logger.http(`${req.method} ${req.originalUrl}`);
 
