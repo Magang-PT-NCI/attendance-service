@@ -14,6 +14,7 @@ import {
 import {
   CurrentDate,
   PrismaAttendance,
+  PrismaAttendancePost,
   PrismaCheckAttendance,
 } from '../interfaces/attendance.interfaces';
 import { getEmployee } from '../utils/api.utils';
@@ -65,19 +66,23 @@ export class AttendanceService extends BaseService {
         },
       });
 
-      await this.prisma.attendance.create({
+      const result: PrismaAttendancePost = await this.prisma.attendance.create({
         data: {
           nik,
           check_in_id: checkIn.id,
           date: currentDateIso,
           status: 'presence',
         },
+        select: {
+          id: true,
+          checkIn: { select: { time: true, photo: true } },
+          checkOut: { select: { time: true, photo: true } },
+        },
       });
+      return new AttendancePostResBody(data, result);
     } catch (error) {
       handleError(error, this.logger);
     }
-
-    return new AttendancePostResBody(data, filename, current);
   }
 
   public async handleCheckOut(
@@ -121,12 +126,17 @@ export class AttendanceService extends BaseService {
       },
     });
 
-    await this.prisma.attendance.update({
+    const result: PrismaAttendancePost = await this.prisma.attendance.update({
       where: { id: attendance.id },
       data: { check_out_id: checkOut.id },
+      select: {
+        id: true,
+        checkIn: { select: { time: true, photo: true } },
+        checkOut: { select: { time: true, photo: true } },
+      },
     });
 
-    return new AttendancePostResBody(data, filename, current);
+    return new AttendancePostResBody(data, result);
   }
 
   public async handleOvertime(nik: string): Promise<OvertimeResBody> {

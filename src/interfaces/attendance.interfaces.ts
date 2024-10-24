@@ -8,6 +8,12 @@ export interface Check {
   photo: string;
 }
 
+export interface PrismaAttendancePost {
+  id: number;
+  checkIn: { time: Date; photo: string };
+  checkOut: { time: Date; photo: string };
+}
+
 export interface PrismaCommonAttendance {
   id: number;
   date: Date;

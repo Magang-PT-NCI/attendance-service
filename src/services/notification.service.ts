@@ -173,10 +173,10 @@ export class NotificationService extends BaseService {
         );
         const type = this.getConfirmationType(confirmation.type);
         let message = `Melakukan konfirmasi kehadiran ${type} dengan status awal '${initialStatus}'.`;
-        message += `\nDeskripsi Konfirmasi Kehadiran:\n"${confirmation.description}"`;
+        message += `\n\nDeskripsi Konfirmasi Kehadiran:\n"${confirmation.description}"`;
 
         if (confirmation.type === 'permit') {
-          message += `\nJika disetujui, data izin untuk OnSite dengan alasan '${confirmation.reason}' akan dibuat untuk hari ini.`;
+          message += `\n\nJika disetujui, data izin untuk OnSite dengan alasan '${confirmation.reason}' akan dibuat untuk hari ini.`;
         } else {
           const initialTime = confirmation.initial_time
             ? getTimeString(confirmation.initial_time, true)
@@ -184,8 +184,8 @@ export class NotificationService extends BaseService {
           const actualTime = getTimeString(confirmation.actual_time, true);
 
           message += initialTime
-            ? `\nJika disetujui, waktu ${type} OnSite akan diubah dari ${initialTime} menjadi ${actualTime}.`
-            : `\nJika disetujui, waktu ${type} OnSite akan diubah menjadi ${actualTime}.`;
+            ? `\n\nJika disetujui, waktu ${type} OnSite akan diubah dari ${initialTime} menjadi ${actualTime}.`
+            : `\n\nJika disetujui, waktu ${type} OnSite akan diubah menjadi ${actualTime}.`;
         }
 
         notificationBuilder
