@@ -49,8 +49,11 @@ export class NotificationService extends BaseService {
           .setMessage(message)
           .setDate(getTimeString(confirmation.created_at))
           .setFile(getFileUrl(confirmation.attachment, 'confirmation', 'file'))
+          .setPriority(2)
           .push();
       });
+
+      notificationBuilder.setPriority(3);
 
       const late = getLate(attendance?.checkIn?.time);
       if (late) {
@@ -76,7 +79,7 @@ export class NotificationService extends BaseService {
             `Pengajuan lembur Anda hari ini ${this.getApprovalMessage(attendance.overtime.approved, attendance.overtime.checked)}.`,
           )
           .setDate(getTimeString(attendance.overtime.created_at))
-          .setLevel('overtime')
+          .setPriority(1)
           .push();
       }
 
@@ -99,7 +102,7 @@ export class NotificationService extends BaseService {
           )
           .setDate(getDateString(permit.created_at))
           .setFile(getFileUrl(permit.permission_letter, 'permit', 'file'))
-          .setLevel('permit')
+          .setPriority(1)
           .push();
       }
     } catch (error) {
@@ -134,31 +137,31 @@ export class NotificationService extends BaseService {
       attendances.forEach((attendance) => {
         notificationBuilder
           .setNik(attendance.employee.nik)
-          .setName(attendance.employee.name);
+          .setName(attendance.employee.name)
+          .setPriority(4);
 
         const late = getLate(attendance?.checkIn?.time);
         if (late)
           notificationBuilder
             .setMessage(`Terlambat ${late} hari ini.`)
             .setDate(getTimeString(attendance.checkIn.time, true))
-            .setLevel('attendance')
             .push();
         else if (attendance?.status === 'absent')
           notificationBuilder
             .setMessage('Tidak masuk hari ini.')
             .setDate('09:01')
-            .setLevel('attendance')
             .push();
 
         if (attendance?.overtime?.checked === false)
           notificationBuilder
             .setMessage('Mengajukan lembur hari ini.')
             .setDate(getTimeString(attendance.overtime.created_at))
-            .setLevel('overtime')
+            .setPriority(1)
             .setActionEndpoint(`/monitoring/overtime/${attendance.overtime.id}`)
             .push();
       });
 
+      notificationBuilder.setPriority(2);
       const confirmations = await this.prisma.attendanceConfirmation.findMany({
         where: { attendance: { date: current }, checked: false },
         include: {
@@ -212,7 +215,7 @@ export class NotificationService extends BaseService {
           .push();
       }
 
-      notificationBuilder.setLevel('permit');
+      notificationBuilder.setPriority(3);
       const permits = await this.prisma.permit.findMany({
         where: { start_date: { gt: current }, checked: false },
         include: {
