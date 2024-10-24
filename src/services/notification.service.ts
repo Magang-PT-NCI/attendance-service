@@ -3,7 +3,7 @@ import { getDate, getDateString, getTimeString } from '../utils/date.utils';
 import { getFileUrl, getLate, handleError } from '../utils/common.utils';
 import { NotificationBuilder } from '../builders/notification.builder';
 import { NotificationResBody } from '../dto/notification.dto';
-import { ConfirmationStatus, ConfirmationType } from '@prisma/client';
+import { ConfirmationType } from '@prisma/client';
 import { BaseService } from './base.service';
 
 @Injectable()
@@ -167,10 +167,23 @@ export class NotificationService extends BaseService {
           },
         },
       });
-      confirmations.forEach((confirmation) => {
-        const initialStatus = this.getInitialStatus(
-          confirmation.initial_status,
-        );
+
+      for (const confirmation of confirmations) {
+        const attendance = await this.prisma.attendance.findUnique({
+          where: { id: confirmation.attendance_id },
+          select: {
+            status: true,
+            check_out_id: true,
+            checkIn: { select: { time: true } },
+          },
+        });
+
+        let initialStatus = 'hadir';
+        if (attendance.status === 'absent') initialStatus = 'tidak hadir';
+        else if (getLate(attendance.checkIn.time)) initialStatus = 'terlambat';
+        else if (!attendance.check_out_id) initialStatus = 'tidak check out';
+        else if (attendance.status === 'permit') initialStatus = 'izin';
+
         const type = this.getConfirmationType(confirmation.type);
         let message = `Melakukan konfirmasi kehadiran ${type} dengan status awal '${initialStatus}'.`;
         message += `\n\nDeskripsi Konfirmasi Kehadiran:\n"${confirmation.description}"`;
@@ -178,10 +191,11 @@ export class NotificationService extends BaseService {
         if (confirmation.type === 'permit') {
           message += `\n\nJika disetujui, data izin untuk OnSite dengan alasan '${confirmation.reason}' akan dibuat untuk hari ini.`;
         } else {
-          const initialTime = confirmation.initial_time
-            ? getTimeString(confirmation.initial_time, true)
+          const initialTime = attendance.checkIn
+            ? getTimeString(attendance.checkIn.time, true)
             : null;
-          const actualTime = getTimeString(confirmation.actual_time, true);
+          const actualTime =
+            confirmation.type === 'check_in' ? '07:00' : '15:00';
 
           message += initialTime
             ? `\n\nJika disetujui, waktu ${type} OnSite akan diubah dari ${initialTime} menjadi ${actualTime}.`
@@ -196,7 +210,7 @@ export class NotificationService extends BaseService {
           .setMessage(message)
           .setActionEndpoint(`/monitoring/confirmation/${confirmation.id}`)
           .push();
-      });
+      }
 
       notificationBuilder.setLevel('permit');
       const permits = await this.prisma.permit.findMany({
@@ -237,19 +251,6 @@ export class NotificationService extends BaseService {
     const approvedMessage = approved ? 'telah' : 'tidak';
     const message = !checked ? 'belum' : approvedMessage;
     return `${message} disetujui oleh Koordinator`;
-  }
-
-  private getInitialStatus(status: ConfirmationStatus): string {
-    switch (status) {
-      case 'absent':
-        return 'tidak hadir';
-      case 'late':
-        return 'terlambat';
-      case 'present':
-        return 'hadir';
-      default:
-        return null;
-    }
   }
 
   private getConfirmationType(type: ConfirmationType): string {

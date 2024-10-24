@@ -2,8 +2,8 @@ import { PrismaClient } from '@prisma/client';
 import { createAttendance, createPermit, overtimeCheckOutTimes } from './attendanceSeedUtil';
 
 const prisma = new PrismaClient();
-const dateStart = 7;
-const dayCount = 13;
+const dateStart = 1;
+const dayCount = 27;
 
 const locations = {
   bandung: '-6.914744,107.609810',

@@ -13,7 +13,6 @@ import {
   Attendance as PrismaAttendanceFields,
   Overtime,
   ConfirmationType,
-  ConfirmationStatus,
   Reason,
 } from '@prisma/client';
 import { getDateString, getTimeString } from '../utils/date.utils';
@@ -261,21 +260,12 @@ export class AttendanceConfirmationReqBody {
   @ApiProperty({ description: 'confirmation description' })
   public readonly description: string;
 
-  @ApiProperty({ description: '`late` | `absent`' })
-  public readonly initial_status: ConfirmationStatus;
-
   @ApiProperty({
     description: 'attendance confirmation attachment',
     type: 'string',
     format: 'buffer',
   })
   public readonly attachment: Express.Multer.File;
-
-  @ApiProperty({ description: 'HH:MM', required: false })
-  public initial_time?: string;
-
-  @ApiProperty({ description: 'HH:MM', required: false })
-  public actual_time?: string;
 
   @ApiProperty({
     description:
@@ -307,15 +297,6 @@ export class AttendanceConfirmationResBody {
   @ApiProperty({ example: false })
   public readonly approved: boolean;
 
-  @ApiProperty({ example: 'late' })
-  public readonly initial_status: ConfirmationStatus;
-
-  @ApiProperty({ example: '07:23', description: 'may be null' })
-  public readonly initial_time?: string;
-
-  @ApiProperty({ example: '06:50', description: 'may be null' })
-  public readonly actual_time?: string;
-
   @ApiProperty({ example: null, description: 'may be null' })
   public readonly reason?: Reason;
 
@@ -330,13 +311,6 @@ export class AttendanceConfirmationResBody {
       'file',
     );
     this.approved = confirmation.approved;
-    this.initial_status = confirmation.initial_status;
-    this.initial_time = confirmation.initial_time
-      ? getTimeString(confirmation.initial_time, true)
-      : null;
-    this.actual_time = confirmation.actual_time
-      ? getTimeString(confirmation.actual_time, true)
-      : null;
     this.reason = confirmation.reason;
   }
 }

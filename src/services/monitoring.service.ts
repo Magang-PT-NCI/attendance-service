@@ -185,16 +185,17 @@ export class MonitoringService extends BaseService {
         };
 
         const handleCheck = async (type: 'in' | 'out') => {
+          const time = type === 'in' ? '07:00' : '15:00';
           if (confirmation.attendance[`check_${type}_id`]) {
             await prisma.check.update({
               where: { id: confirmation.attendance[`check_${type}_id`] },
-              data: { time: confirmation.actual_time },
+              data: { time },
             });
           } else {
             const check = await prisma.check.create({
               data: {
                 type: type,
-                time: confirmation.actual_time,
+                time,
               },
               select: { id: true },
             });

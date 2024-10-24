@@ -34,8 +34,6 @@ export class AttendanceService extends BaseService {
     const employee = await getEmployee(nik);
     if (!employee) throw new NotFoundException('karyawan tidak ditemukan');
 
-    this.logger.info('ok');
-
     const where: Prisma.AttendanceWhereInput = { nik, date: getDate(date) };
     const select = this.buildSelectGetAttendance(filter);
 
@@ -183,17 +181,13 @@ export class AttendanceService extends BaseService {
   public async handleAttendanceConfirmation(
     data: AttendanceConfirmationReqBody,
   ): Promise<AttendanceConfirmationResBody> {
-    if (data.initial_status === 'absent' && data.type === 'check_out')
-      throw new ConflictException(
-        'tidak dapat konfirmasi check out dengan initial status absent!',
+    try {
+      const filename = await uploadFile(
+        data.attachment,
+        `${data.attendance_id}_${data.type}`,
+        'confirmation',
       );
 
-    const filename = await uploadFile(
-      data.attachment,
-      `${data.attendance_id}_${data.type}`,
-      'confirmation',
-    );
-    try {
       const existingConfirmation =
         await this.prisma.attendanceConfirmation.findFirst({
           where: { attendance_id: data.attendance_id, checked: false },
@@ -212,9 +206,6 @@ export class AttendanceService extends BaseService {
             attendance_id: data.attendance_id,
             description: data.description,
             attachment: filename,
-            initial_status: data.initial_status,
-            initial_time: data.initial_time ? getDate(data.initial_time) : null,
-            actual_time: data.actual_time ? getDate(data.actual_time) : null,
             reason: data.reason,
             checked: false,
             approved: false,
