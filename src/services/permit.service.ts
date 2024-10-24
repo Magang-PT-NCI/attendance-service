@@ -4,7 +4,11 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { PermitPostReqBody, PermitResBody } from '../dto/permit.dto';
+import {
+  PermitPatchResBody,
+  PermitPostReqBody,
+  PermitResBody,
+} from '../dto/permit.dto';
 import { Reason } from '@prisma/client';
 import { getEmployee } from '../utils/api.utils';
 import { getDate, getDateString } from '../utils/date.utils';
@@ -69,7 +73,7 @@ export class PermitService extends BaseService {
   public async handleUpdatePermit(
     id: number,
     approved: boolean,
-  ): Promise<PermitResBody> {
+  ): Promise<PermitPatchResBody> {
     const existingPermit = await this.prisma.permit.findUnique({
       where: { id },
       select: { id: true },
@@ -105,6 +109,9 @@ export class PermitService extends BaseService {
       }
     }
 
-    return new PermitResBody(permit);
+    return {
+      id: permit.id,
+      approved,
+    };
   }
 }

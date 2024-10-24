@@ -93,3 +93,11 @@ export class PermitPatchReqBody {
   @ApiProperty({ example: true })
   public readonly approved: boolean;
 }
+
+export class PermitPatchResBody {
+  @ApiProperty({ example: 5 })
+  public readonly id: number;
+
+  @ApiProperty({ example: true })
+  public readonly approved: boolean;
+}
