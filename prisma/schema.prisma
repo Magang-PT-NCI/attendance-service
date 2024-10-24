@@ -81,19 +81,16 @@ model Overtime {
 }
 
 model AttendanceConfirmation {
-  id             Int                @id @default(autoincrement())
-  attendance_id  Int
-  type           ConfirmationType
-  description    String             @db.Text
-  attachment     String             @db.VarChar(255)
-  checked        Boolean            @default(false)
-  approved       Boolean            @default(false)
-  initial_status ConfirmationStatus
-  created_at     DateTime           @default(now())
-  initial_time   DateTime?          @db.Time
-  actual_time    DateTime?          @db.Time
-  reason         Reason?
-  attendance     Attendance         @relation(fields: [attendance_id], references: [id])
+  id            Int              @id @default(autoincrement())
+  attendance_id Int
+  type          ConfirmationType
+  description   String           @db.Text
+  attachment    String           @db.VarChar(255)
+  checked       Boolean          @default(false)
+  approved      Boolean          @default(false)
+  created_at    DateTime         @default(now())
+  reason        Reason?
+  attendance    Attendance       @relation(fields: [attendance_id], references: [id])
 }
 
 enum AttendanceStatus {
@@ -125,10 +122,4 @@ enum ConfirmationType {
   check_in
   check_out
   permit
-}
-
-enum ConfirmationStatus {
-  late
-  absent
-  present
 }

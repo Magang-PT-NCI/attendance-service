@@ -32,6 +32,7 @@ describe('common utility test', () => {
 
     it('should return correct value', () => {
       expect(getLate(getDate('06:30'))).toBeNull();
+      expect(getLate(getDate('07:00'))).toBeNull();
       expect(getLate(getDate('07:30'))).toBe('30 menit');
     });
   });

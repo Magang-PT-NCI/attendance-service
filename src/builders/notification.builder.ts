@@ -1,9 +1,8 @@
 import { NotificationResBody } from '../dto/notification.dto';
+import { NotificationBuilderItem } from '../interfaces/notification.interfaces';
 
 export class NotificationBuilder {
-  private readonly attendanceNotifications: NotificationResBody[];
-  private readonly permitNotifications: NotificationResBody[];
-  private readonly overtimeNotifications: NotificationResBody[];
+  private readonly notifications: NotificationBuilderItem[];
 
   private nik: string;
   private name: string;
@@ -11,38 +10,25 @@ export class NotificationBuilder {
   private date: string;
   private file: string | null = null;
   private action_endpoint: string | null = null;
-  private level: 'attendance' | 'permit' | 'overtime';
+  private priority: number;
 
   public constructor(nik?: string, name?: string) {
     this.nik = nik;
     this.name = name;
-    this.level = 'attendance';
-    this.attendanceNotifications = [];
-    this.permitNotifications = [];
-    this.overtimeNotifications = [];
+    this.priority = 1;
+    this.notifications = [];
   }
 
   public push() {
-    const notification = {
+    this.notifications.push({
       nik: this.nik,
       name: this.name,
       message: this.message,
       date: this.date,
       file: this.file,
       action_endpoint: this.action_endpoint,
-    };
-
-    switch (this.level) {
-      case 'attendance':
-        this.attendanceNotifications.push(notification);
-        break;
-      case 'permit':
-        this.permitNotifications.push(notification);
-        break;
-      case 'overtime':
-        this.overtimeNotifications.push(notification);
-        break;
-    }
+      priority: this.priority,
+    });
 
     this.message = '';
     this.date = '';
@@ -51,17 +37,11 @@ export class NotificationBuilder {
   }
 
   public getNotifications(): NotificationResBody[] {
-    return [
-      ...this.overtimeNotifications,
-      ...this.permitNotifications,
-      ...this.attendanceNotifications,
-    ];
+    return this.notifications.sort((a, b) => a.priority - b.priority);
   }
 
-  public setLevel(
-    level: 'attendance' | 'permit' | 'overtime',
-  ): NotificationBuilder {
-    this.level = level;
+  public setPriority(priority: number): NotificationBuilder {
+    this.priority = priority;
     return this;
   }
 

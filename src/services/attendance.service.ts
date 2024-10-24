@@ -14,6 +14,7 @@ import {
 import {
   CurrentDate,
   PrismaAttendance,
+  PrismaAttendancePost,
   PrismaCheckAttendance,
 } from '../interfaces/attendance.interfaces';
 import { getEmployee } from '../utils/api.utils';
@@ -32,8 +33,6 @@ export class AttendanceService extends BaseService {
   ): Promise<AttendanceResBody> {
     const employee = await getEmployee(nik);
     if (!employee) throw new NotFoundException('karyawan tidak ditemukan');
-
-    this.logger.info('ok');
 
     const where: Prisma.AttendanceWhereInput = { nik, date: getDate(date) };
     const select = this.buildSelectGetAttendance(filter);
@@ -65,19 +64,23 @@ export class AttendanceService extends BaseService {
         },
       });
 
-      await this.prisma.attendance.create({
+      const result: PrismaAttendancePost = await this.prisma.attendance.create({
         data: {
           nik,
           check_in_id: checkIn.id,
           date: currentDateIso,
           status: 'presence',
         },
+        select: {
+          id: true,
+          checkIn: { select: { time: true, photo: true } },
+          checkOut: { select: { time: true, photo: true } },
+        },
       });
+      return new AttendancePostResBody(data, result);
     } catch (error) {
       handleError(error, this.logger);
     }
-
-    return new AttendancePostResBody(data, filename, current);
   }
 
   public async handleCheckOut(
@@ -121,12 +124,17 @@ export class AttendanceService extends BaseService {
       },
     });
 
-    await this.prisma.attendance.update({
+    const result: PrismaAttendancePost = await this.prisma.attendance.update({
       where: { id: attendance.id },
       data: { check_out_id: checkOut.id },
+      select: {
+        id: true,
+        checkIn: { select: { time: true, photo: true } },
+        checkOut: { select: { time: true, photo: true } },
+      },
     });
 
-    return new AttendancePostResBody(data, filename, current);
+    return new AttendancePostResBody(data, result);
   }
 
   public async handleOvertime(nik: string): Promise<OvertimeResBody> {
@@ -173,17 +181,13 @@ export class AttendanceService extends BaseService {
   public async handleAttendanceConfirmation(
     data: AttendanceConfirmationReqBody,
   ): Promise<AttendanceConfirmationResBody> {
-    if (data.initial_status === 'absent' && data.type === 'check_out')
-      throw new ConflictException(
-        'tidak dapat konfirmasi check out dengan initial status absent!',
+    try {
+      const filename = await uploadFile(
+        data.attachment,
+        `${data.attendance_id}_${data.type}`,
+        'confirmation',
       );
 
-    const filename = await uploadFile(
-      data.attachment,
-      `${data.attendance_id}_${data.type}`,
-      'confirmation',
-    );
-    try {
       const existingConfirmation =
         await this.prisma.attendanceConfirmation.findFirst({
           where: { attendance_id: data.attendance_id, checked: false },
@@ -202,9 +206,6 @@ export class AttendanceService extends BaseService {
             attendance_id: data.attendance_id,
             description: data.description,
             attachment: filename,
-            initial_status: data.initial_status,
-            initial_time: data.initial_time ? getDate(data.initial_time) : null,
-            actual_time: data.actual_time ? getDate(data.actual_time) : null,
             reason: data.reason,
             checked: false,
             approved: false,

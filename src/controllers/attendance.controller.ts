@@ -37,7 +37,7 @@ import {
 } from '../decorators/request-attendance.decorator';
 import { extname as pathExtname } from 'path';
 import * as sharp from 'sharp';
-import { getDateString, isValidTime } from '../utils/date.utils';
+import { getDateString } from '../utils/date.utils';
 import { getEmployee } from '../utils/api.utils';
 import { BaseController } from './base.controller';
 
@@ -153,10 +153,6 @@ export class AttendanceController extends BaseController {
     if (!validType.includes(body.type))
       throw new BadRequestException('type tidak valid!');
 
-    const validStatus = ['late', 'absent', 'present'];
-    if (!validStatus.includes(body.initial_status))
-      throw new BadRequestException('initial_status tidak valid!');
-
     if (body.type === 'permit') {
       if (!body.reason) throw new BadRequestException('reason harus diisi!');
 
@@ -170,18 +166,6 @@ export class AttendanceController extends BaseController {
       ];
       if (!validReason.includes(body.reason))
         throw new BadRequestException('reason tidak valid!');
-
-      body.initial_time = null;
-      body.actual_time = null;
-    } else {
-      if (body.initial_time && !isValidTime(body.initial_time))
-        throw new BadRequestException('initial_time tidak valid!');
-      if (!body.actual_time)
-        throw new BadRequestException('actual_time harus diisi!');
-      if (!isValidTime(body.actual_time))
-        throw new BadRequestException(`actual_time tidak valid!`);
-
-      body.reason = null;
     }
 
     return this.service.handleAttendanceConfirmation(body);

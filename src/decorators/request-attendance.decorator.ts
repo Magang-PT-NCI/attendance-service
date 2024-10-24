@@ -59,7 +59,6 @@ export const RequestAttendanceConfirmation = createParamDecorator(
       attendance_id,
       type: body.type?.toLowerCase(),
       description: body.description,
-      initial_status: body.initial_status?.toLowerCase(),
       attachment: request.file,
     };
 

@@ -4,6 +4,7 @@ import { PermitResBody } from './permit.dto';
 import {
   Check,
   PrismaAttendance,
+  PrismaAttendancePost,
   PrismaCommonAttendance,
 } from '../interfaces/attendance.interfaces';
 import {
@@ -12,7 +13,6 @@ import {
   Attendance as PrismaAttendanceFields,
   Overtime,
   ConfirmationType,
-  ConfirmationStatus,
   Reason,
 } from '@prisma/client';
 import { getDateString, getTimeString } from '../utils/date.utils';
@@ -97,14 +97,14 @@ export class AttendancePostReqBody {
 }
 
 export class AttendancePostResBody {
+  @ApiProperty({ example: 3 })
+  public readonly attendance_id: number;
+
   @ApiProperty({ example: '123456789' })
   public readonly nik: string;
 
   @ApiProperty({ example: 'check_in' })
   public readonly type: string;
-
-  @ApiProperty({ example: '2024-01-01' })
-  public readonly date: string;
 
   @ApiProperty({ example: '06:35' })
   public readonly time: string;
@@ -119,16 +119,21 @@ export class AttendancePostResBody {
   public readonly location: Location;
 
   public constructor(
-    reqBody: AttendancePostReqBody,
-    filename: string,
-    date: Date,
+    body: AttendancePostReqBody,
+    result: PrismaAttendancePost,
   ) {
-    this.nik = reqBody.nik;
-    this.location = reqBody.location;
-    this.type = reqBody.type;
-    this.date = getDateString(date);
-    this.time = getTimeString(date);
-    this.photo = getFileUrl(filename, reqBody.type);
+    this.attendance_id = result.id;
+    this.nik = body.nik;
+    this.location = body.location;
+    this.type = body.type;
+    this.time =
+      body.type === 'check_in'
+        ? getTimeString(result.checkIn.time)
+        : getTimeString(result.checkOut.time);
+    this.photo =
+      body.type === 'check_in'
+        ? getFileUrl(result.checkIn.photo, body.type)
+        : getFileUrl(result.checkOut.photo, body.type);
   }
 }
 
@@ -141,10 +146,10 @@ export class AttendanceCheck {
       'https://lh3.googleusercontent.com/d/17ZxckunTexIjn_j_Vve2CKTyH98hu0aY=s220',
     description: 'may be null',
   })
-  public readonly photo: string;
+  public readonly photo?: string;
 
   @ApiProperty({ description: 'may be null' })
-  public readonly location: Location;
+  public readonly location?: Location;
 
   public constructor(check: Check, type: 'in' | 'out') {
     this.time = getTimeString(check.time, true);
@@ -164,13 +169,13 @@ export class Attendance {
   public readonly status: AttendanceStatus;
 
   @ApiProperty({ description: 'may be null', example: '2 jam 5 menit' })
-  public readonly overtime: string;
+  public readonly overtime?: string;
 
   @ApiProperty({ description: 'may be null', example: '20 menit 3 detik' })
-  public readonly late: string;
+  public readonly late?: string;
 
   @ApiProperty({ description: 'may be null', example: '7 jam 34 detik' })
-  public readonly working_hours: string;
+  public readonly working_hours?: string;
 
   public constructor(attendance: PrismaCommonAttendance) {
     this.id = attendance.id;
@@ -188,13 +193,13 @@ export class Attendance {
 
 export class AttendanceResBody extends Attendance {
   @ApiProperty({ description: 'may be null' })
-  public readonly checkIn: AttendanceCheck;
+  public readonly checkIn?: AttendanceCheck;
 
   @ApiProperty({ description: 'may be null' })
-  public readonly checkOut: AttendanceCheck;
+  public readonly checkOut?: AttendanceCheck;
 
   @ApiProperty({ description: 'may be null' })
-  public readonly permit: PermitResBody;
+  public readonly permit?: PermitResBody;
 
   @ApiProperty({
     description: 'may be null',
@@ -255,21 +260,12 @@ export class AttendanceConfirmationReqBody {
   @ApiProperty({ description: 'confirmation description' })
   public readonly description: string;
 
-  @ApiProperty({ description: '`late` | `absent`' })
-  public readonly initial_status: ConfirmationStatus;
-
   @ApiProperty({
     description: 'attendance confirmation attachment',
     type: 'string',
     format: 'buffer',
   })
   public readonly attachment: Express.Multer.File;
-
-  @ApiProperty({ description: 'HH:MM', required: false })
-  public initial_time?: string;
-
-  @ApiProperty({ description: 'HH:MM', required: false })
-  public actual_time?: string;
 
   @ApiProperty({
     description:
@@ -301,15 +297,6 @@ export class AttendanceConfirmationResBody {
   @ApiProperty({ example: false })
   public readonly approved: boolean;
 
-  @ApiProperty({ example: 'late' })
-  public readonly initial_status: ConfirmationStatus;
-
-  @ApiProperty({ example: '07:23', description: 'may be null' })
-  public readonly initial_time?: string;
-
-  @ApiProperty({ example: '06:50', description: 'may be null' })
-  public readonly actual_time?: string;
-
   @ApiProperty({ example: null, description: 'may be null' })
   public readonly reason?: Reason;
 
@@ -324,13 +311,6 @@ export class AttendanceConfirmationResBody {
       'file',
     );
     this.approved = confirmation.approved;
-    this.initial_status = confirmation.initial_status;
-    this.initial_time = confirmation.initial_time
-      ? getTimeString(confirmation.initial_time, true)
-      : null;
-    this.actual_time = confirmation.actual_time
-      ? getTimeString(confirmation.actual_time, true)
-      : null;
     this.reason = confirmation.reason;
   }
 }
