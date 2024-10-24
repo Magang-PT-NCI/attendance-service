@@ -14,6 +14,7 @@ import { RequestPostPermit } from '../decorators/request-permit.decorator';
 import {
   PermitPatchParam,
   PermitPatchReqBody,
+  PermitPatchResBody,
   PermitPostReqBody,
   PermitResBody,
 } from '../dto/permit.dto';
@@ -52,7 +53,7 @@ export class PermitController extends BaseController {
   public async updatePermit(
     @Param() param: PermitPatchParam,
     @Body() body: PermitPatchReqBody,
-  ): Promise<PermitResBody> {
+  ): Promise<PermitPatchResBody> {
     this.logger.debug('request body: ', body);
 
     const id = parseInt(`${param.id}`);
