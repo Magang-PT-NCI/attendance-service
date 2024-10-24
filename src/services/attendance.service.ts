@@ -102,16 +102,19 @@ export class AttendanceService extends BaseService {
     if (attendance.check_out_id)
       throw new ConflictException('check out telah dilakukan');
 
+    if (attendance.activities.length < 1)
+      throw new ConflictException('harus mengisi logbook terlebih dahulu');
+
     // not overtime
     if (current.getHours() > 15 && !attendance.overtime_id)
       throw new ConflictException(
-        'tidak dapat melakukan check out diluar pukul 15:00',
+        'tidak dapat melakukan check out setelah pukul 15:00',
       );
 
     // overtime
     if (current.getHours() >= 19 && attendance.overtime_id)
       throw new ConflictException(
-        'tidak dapat melakukan check out diluar pukul 19:00',
+        'tidak dapat melakukan check out setelah pukul 19:00',
       );
 
     const filename = await uploadFile(photo, nik, type);
@@ -280,6 +283,7 @@ export class AttendanceService extends BaseService {
           check_out_id: true,
           overtime_id: includeOvertime,
           checkIn: includeCheckIn ? { select: { id: true } } : false,
+          activities: { select: { id: true } },
         },
       });
     } catch (error) {

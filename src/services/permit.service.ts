@@ -22,9 +22,16 @@ export class PermitService extends BaseService {
     const startDate = getDate(getDateString(new Date(start_date)));
 
     const employee = await getEmployee(nik);
-    if (!employee) {
-      throw new NotFoundException('karyawan tidak ditemukan');
-    }
+    if (!employee) throw new NotFoundException('karyawan tidak ditemukan');
+
+    const existingPermit = await this.prisma.permit.findFirst({
+      where: { nik, checked: false },
+      select: { id: true },
+    });
+    if (existingPermit)
+      throw new ConflictException(
+        'anda masih memiliki izin yang belum disetujui',
+      );
 
     const currentDate = new Date(start_date);
 
