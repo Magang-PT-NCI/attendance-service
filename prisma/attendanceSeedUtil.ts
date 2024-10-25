@@ -6,10 +6,10 @@ const prisma: PrismaClient = new PrismaClient();
 const getDate = (date: string): string => `${date}T00:00:00.000Z`;
 const getTime = (time: string): string => `1970-01-01T${time}:00.000Z`;
 
-const photo: string = '17ZxcvViTexCuS_j_Vve2CKTyHG7iu0aY';
+const photo = '17ZxcvViTexCuS_j_Vve2CKTyHG7iu0aY';
 
-const year: number = 2024;
-const month: number = 10;
+const year = 2024;
+const month = 10;
 
 export const overtimeCheckOutTimes = [
   '17:01',
@@ -19,10 +19,17 @@ export const overtimeCheckOutTimes = [
   '15:43',
 ];
 
-const nextDate = (employee) => {
+export interface EmployeeGenerateItem {
+  nik: string;
+  name: string;
+  location: string;
+  dateCount: number;
+}
+
+const nextDate = (employee: EmployeeGenerateItem): string => {
   employee.dateCount++;
 
-  const dateString: string = `${year.toString().padStart(4, '0')}-${month.toString().padStart(2, '0')}-${employee.dateCount.toString().padStart(2, '0')}`;
+  const dateString = `${year.toString().padStart(4, '0')}-${month.toString().padStart(2, '0')}-${employee.dateCount.toString().padStart(2, '0')}`;
   const date: Date = new Date(dateString);
 
   if (date.getDay() === 6) employee.dateCount++;
@@ -31,9 +38,9 @@ const nextDate = (employee) => {
 };
 
 export const createAttendance = async (
-  employee,
-  checkInTime = null,
-  checkOutTime = null,
+  employee: EmployeeGenerateItem,
+  checkInTime: string = null,
+  checkOutTime: string = null,
 ) => {
   const { nik, location } = employee;
 
@@ -87,7 +94,7 @@ export const createAttendance = async (
   }
 };
 
-export const createPermit = async (employee) => {
+export const createPermit = async (employee: EmployeeGenerateItem) => {
   const reasons: Reason[] = [
     'sakit',
     'urusan_mendadak',
