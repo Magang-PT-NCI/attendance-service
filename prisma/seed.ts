@@ -1,5 +1,10 @@
 import { PrismaClient } from '@prisma/client';
-import { createAttendance, createPermit, overtimeCheckOutTimes } from './attendanceSeedUtil';
+import {
+  createAttendance,
+  createPermit,
+  EmployeeGenerateItem,
+  overtimeCheckOutTimes,
+} from './attendanceSeedUtil';
 
 const prisma = new PrismaClient();
 const dateStart = 1;
@@ -10,7 +15,7 @@ const locations = {
   cimahi: '-6.920744,107.607810',
 };
 
-const employees = [
+const employees: EmployeeGenerateItem[] = [
   {
     nik: '001230045600701',
     name: 'Aditya Wijaya Putra',
