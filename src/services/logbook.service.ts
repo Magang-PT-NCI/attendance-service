@@ -1,10 +1,8 @@
 import {
   BadRequestException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { $Enums } from '@prisma/client';
 import {
   LogbookResBody,
   LogbookReqBody,
@@ -13,6 +11,7 @@ import {
 import { PrismaActivity } from '../interfaces/logbook.interfaces';
 import { getDate, isValidTime } from '../utils/date.utils';
 import { BaseService } from './base.service';
+import { handleError } from '../utils/common.utils';
 
 @Injectable()
 export class LogbookService extends BaseService {
@@ -21,34 +20,24 @@ export class LogbookService extends BaseService {
   ): Promise<LogbookResBody> {
     const { attendance_id, description, status, start_time, end_time } = data;
 
-    let attendance: { id: number };
     try {
-      attendance = await this.prisma.attendance.findFirst({
+      const attendance = await this.prisma.attendance.findFirst({
         where: { id: attendance_id },
         select: { id: true },
       });
-    } catch (error) {
-      this.logger.error(error);
-      throw new InternalServerErrorException();
-    }
 
-    if (!attendance) {
-      throw new NotFoundException('data attendance tidak ditemukan');
-    }
+      if (!attendance)
+        throw new NotFoundException('data attendance tidak ditemukan');
 
-    if (!isValidTime(start_time)) {
-      throw new BadRequestException(
-        'start_time harus waktu yang valid dengan format HH:MM',
-      );
-    }
+      if (!isValidTime(start_time))
+        throw new BadRequestException(
+          'start_time harus waktu yang valid dengan format HH:MM',
+        );
+      if (!isValidTime(end_time))
+        throw new BadRequestException(
+          'end_time harus waktu yang valid dengan format HH:MM',
+        );
 
-    if (!isValidTime(end_time)) {
-      throw new BadRequestException(
-        'end_time harus waktu yang valid dengan format HH:MM',
-      );
-    }
-
-    try {
       const logbook: PrismaActivity = await this.prisma.activity.create({
         data: {
           attendance_id,
@@ -68,8 +57,7 @@ export class LogbookService extends BaseService {
 
       return new LogbookResBody(logbook);
     } catch (error) {
-      this.logger.error(error);
-      throw new InternalServerErrorException();
+      handleError(error, this.logger);
     }
   }
 
@@ -77,29 +65,14 @@ export class LogbookService extends BaseService {
     activityId: number,
     data: UpdateLogbookReqBody,
   ): Promise<LogbookResBody> {
-    let activity: {
-      id: number;
-      attendance_id: number;
-      description: string;
-      status: $Enums.ActivityStatus;
-      start_time: Date;
-      end_time: Date;
-    };
-
     try {
-      activity = await this.prisma.activity.findFirst({
+      const activity = await this.prisma.activity.findFirst({
         where: { id: activityId },
+        select: { id: true },
       });
-    } catch (error) {
-      this.logger.error(error);
-      throw new InternalServerErrorException();
-    }
 
-    if (!activity) {
-      throw new NotFoundException('logbook tidak ditemukan');
-    }
+      if (!activity) throw new NotFoundException('logbook tidak ditemukan');
 
-    try {
       const result: PrismaActivity = await this.prisma.activity.update({
         where: { id: activityId },
         data,
@@ -114,8 +87,7 @@ export class LogbookService extends BaseService {
 
       return new LogbookResBody(result);
     } catch (error) {
-      this.logger.error(error);
-      throw new InternalServerErrorException();
+      handleError(error, this.logger);
     }
   }
 }

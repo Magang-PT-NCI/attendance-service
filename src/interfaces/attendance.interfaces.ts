@@ -34,6 +34,7 @@ export interface PrismaCheckAttendance {
   check_out_id: number;
   overtime_id?: number;
   checkIn?: { id: number };
+  activities: { id: number }[];
 }
 
 export interface CurrentDate {

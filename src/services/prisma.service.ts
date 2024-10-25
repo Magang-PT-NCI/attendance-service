@@ -15,7 +15,13 @@ export class PrismaService
   public async onModuleInit() {
     await this.$connect();
     this.logger.info('Database is connected');
-    await this.synchronizeEmployeeCache();
+
+    try {
+      await this.synchronizeEmployeeCache();
+    } catch (error) {
+      this.logger.info('synchronize employee cache failed');
+      this.logger.error(error);
+    }
   }
 
   public async onModuleDestroy() {

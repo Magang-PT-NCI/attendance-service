@@ -243,11 +243,15 @@ export class NotificationService extends BaseService {
   }
 
   private async getEmployeeName(nik: string): Promise<string> {
-    const employee = await this.prisma.employeeCache.findUnique({
-      where: { nik },
-      select: { name: true },
-    });
-    return employee.name;
+    try {
+      const employee = await this.prisma.employeeCache.findUnique({
+        where: { nik },
+        select: { name: true },
+      });
+      return employee.name;
+    } catch (error) {
+      handleError(error, this.logger);
+    }
   }
 
   private getApprovalMessage(approved: boolean, checked: boolean): string {
