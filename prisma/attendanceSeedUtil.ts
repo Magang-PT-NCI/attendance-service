@@ -8,8 +8,11 @@ const getTime = (time: string): string => `1970-01-01T${time}:00.000Z`;
 
 const photo = '17ZxcvViTexCuS_j_Vve2CKTyHG7iu0aY';
 
-const year = 2024;
-const month = 10;
+const dateStart = process.env.DATE_START?.split('-');
+
+const year = dateStart ? parseInt(dateStart[0]) : 2024;
+const month = dateStart ? parseInt(dateStart[1]) : 10;
+export const date = dateStart ? parseInt(dateStart[2]) : 1;
 
 export const overtimeCheckOutTimes = [
   '17:01',

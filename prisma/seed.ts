@@ -2,13 +2,13 @@ import { PrismaClient } from '@prisma/client';
 import {
   createAttendance,
   createPermit,
+  date,
   EmployeeGenerateItem,
   overtimeCheckOutTimes,
 } from './attendanceSeedUtil';
 
 const prisma = new PrismaClient();
-const dateStart = 1;
-const dayCount = 27;
+const dayCount = process.env.DATE_COUNT ? parseInt(process.env.DATE_COUNT) : 25;
 
 const locations = {
   bandung: '-6.914744,107.609810',
@@ -20,31 +20,31 @@ const employees: EmployeeGenerateItem[] = [
     nik: '001230045600701',
     name: 'Aditya Wijaya Putra',
     location: locations.bandung,
-    dateCount: dateStart - 1,
+    dateCount: date - 1,
   },
   {
     nik: '001230045600702',
     name: 'Rina Andriani',
     location: locations.bandung,
-    dateCount: dateStart - 1,
+    dateCount: date - 1,
   },
   {
     nik: '001230045600703',
     name: 'Budi Santoso',
     location: locations.cimahi,
-    dateCount: dateStart - 1,
+    dateCount: date - 1,
   },
   {
     nik: '001230045600704',
     name: 'Maria Hadiyanti',
     location: locations.bandung,
-    dateCount: dateStart - 1,
+    dateCount: date - 1,
   },
   {
     nik: '001230045600705',
     name: 'Dewa Prasetyo',
     location: locations.cimahi,
-    dateCount: dateStart - 1,
+    dateCount: date - 1,
   },
 ];
 
