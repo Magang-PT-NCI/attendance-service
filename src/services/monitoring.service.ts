@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   ConfirmationPatchResBody,
   DashboardResBody,
@@ -13,7 +9,6 @@ import {
 import {
   DaySummary,
   PrismaAttendanceDashboard,
-  PrismaAttendanceReport,
 } from 'src/interfaces/monitoring.interfaces';
 import { getDate, getDateString } from '../utils/date.utils';
 import { handleError } from '../utils/common.utils';
@@ -43,44 +38,48 @@ export class MonitoringService extends BaseService {
     const saturday = new Date(monday);
     saturday.setDate(monday.getDate() + 5);
 
-    const attendances: PrismaAttendanceDashboard[] =
-      await this.prisma.attendance.findMany({
-        where: {
-          date: {
-            gte: monday, // greater than equal
-            lte: saturday, // less than equal
+    try {
+      const attendances: PrismaAttendanceDashboard[] =
+        await this.prisma.attendance.findMany({
+          where: {
+            date: {
+              gte: monday, // greater than equal
+              lte: saturday, // less than equal
+            },
           },
-        },
-        select: {
-          date: true,
-          status: true,
-        },
-      });
+          select: {
+            date: true,
+            status: true,
+          },
+        });
 
-    const todayData: PrismaAttendanceDashboard[] = attendances.filter(
-      (attendance) => attendance.date.toISOString() === today.toISOString(),
-    );
-    const {
-      presence: todayPresence,
-      permit: todayPermit,
-      absent: todayAbsent,
-    } = this.getSummaryCount(todayData);
-
-    const weeklySummary = {} as DashboardWeeklySummary;
-    for (let day = 1; day <= 6; day++) {
-      weeklySummary[MonitoringService.DAYS[day - 1]] = this.getDaySummary(
-        attendances,
-        day,
+      const todayData: PrismaAttendanceDashboard[] = attendances.filter(
+        (attendance) => attendance.date.toISOString() === today.toISOString(),
       );
-    }
+      const {
+        presence: todayPresence,
+        permit: todayPermit,
+        absent: todayAbsent,
+      } = this.getSummaryCount(todayData);
 
-    return {
-      date: getDateString(today),
-      total_presence: todayPresence,
-      total_permit: todayPermit,
-      total_absent: todayAbsent,
-      weekly_summary: weeklySummary,
-    };
+      const weeklySummary = {} as DashboardWeeklySummary;
+      for (let day = 1; day <= 6; day++) {
+        weeklySummary[MonitoringService.DAYS[day - 1]] = this.getDaySummary(
+          attendances,
+          day,
+        );
+      }
+
+      return {
+        date: getDateString(today),
+        total_presence: todayPresence,
+        total_permit: todayPermit,
+        total_absent: todayAbsent,
+        weekly_summary: weeklySummary,
+      };
+    } catch (error) {
+      handleError(error, this.logger);
+    }
   }
 
   public async handleReport(
@@ -104,21 +103,19 @@ export class MonitoringService extends BaseService {
       checkOut: checkSelect,
     };
 
-    let attendances: PrismaAttendanceReport[];
     try {
-      attendances = await this.prisma.attendance.findMany({
+      const attendances = await this.prisma.attendance.findMany({
         where: {
           date: dateCondition,
           OR: [nikCondition, nameCondition],
         },
         include,
       });
-    } catch (error) {
-      this.logger.error(error);
-      throw new InternalServerErrorException();
-    }
 
-    return ReportResBody.getReport(attendances);
+      return ReportResBody.getReport(attendances);
+    } catch (error) {
+      handleError(error, this.logger);
+    }
   }
 
   public async handleUpdateOvertime(

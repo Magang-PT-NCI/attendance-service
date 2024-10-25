@@ -8,8 +8,8 @@ import { google } from 'googleapis';
 import { Readable } from 'stream';
 import { getDateString } from './date.utils';
 import { LoggerUtil } from './logger.utils';
-import { InternalServerErrorException } from '@nestjs/common';
 import { FILE_DESTINATION } from '../config/app.config';
+import { handleError } from './common.utils';
 
 const drive = google.drive({
   version: 'v3',
@@ -45,8 +45,7 @@ const uploadToDrive = async (
 
     return response.data.id;
   } catch (error) {
-    LoggerUtil.getInstance('UploadCloudFile').error(error);
-    throw new InternalServerErrorException();
+    handleError(error, LoggerUtil.getInstance('UploadCloudFile'));
   }
 };
 
@@ -67,8 +66,7 @@ const uploadToLocal = (
     writeFileSync(folderName + filename, file.buffer);
     return filename;
   } catch (error) {
-    LoggerUtil.getInstance('UploadLocalFile').error(error);
-    throw new InternalServerErrorException();
+    handleError(error, LoggerUtil.getInstance('UploadCloudFile'));
   }
 };
 

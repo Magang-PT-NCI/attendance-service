@@ -13,7 +13,10 @@ export const getToken = async (
   password: string,
 ): Promise<LoginResBody> => {
   try {
-    const response = await axios.post(`${EMPLOYEE_SERVICE_URL}/login`, { nik, password });
+    const response = await axios.post(`${EMPLOYEE_SERVICE_URL}/login`, {
+      nik,
+      password,
+    });
     return response.data;
   } catch {
     return null;

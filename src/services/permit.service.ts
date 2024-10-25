@@ -1,7 +1,6 @@
 import {
   ConflictException,
   Injectable,
-  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import {
@@ -14,6 +13,7 @@ import { getEmployee } from '../utils/api.utils';
 import { getDate, getDateString } from '../utils/date.utils';
 import { uploadFile } from '../utils/upload.utils';
 import { BaseService } from './base.service';
+import { handleError } from '../utils/common.utils';
 
 @Injectable()
 export class PermitService extends BaseService {
@@ -24,40 +24,39 @@ export class PermitService extends BaseService {
     const employee = await getEmployee(nik);
     if (!employee) throw new NotFoundException('karyawan tidak ditemukan');
 
-    const existingPermit = await this.prisma.permit.findFirst({
-      where: { nik, checked: false },
-      select: { id: true },
-    });
-    if (existingPermit)
-      throw new ConflictException(
-        'anda masih memiliki izin yang belum disetujui',
-      );
+    try {
+      const existingPermit = await this.prisma.permit.findFirst({
+        where: { nik, checked: false },
+        select: { id: true },
+      });
 
-    const currentDate = new Date(start_date);
+      if (existingPermit)
+        throw new ConflictException(
+          'anda masih memiliki izin yang belum disetujui',
+        );
 
-    for (let i = 0; i < duration; i++) {
-      if (currentDate.getDay() === 0) {
+      const currentDate = new Date(start_date);
+      for (let i = 0; i < duration; i++) {
+        if (currentDate.getDay() === 0) {
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        const attendance = await this.prisma.attendance.findFirst({
+          where: {
+            nik,
+            date: currentDate,
+          },
+        });
+
+        if (attendance)
+          throw new ConflictException(
+            `karyawan telah melakukan check in atau memiliki izin yang telah disetujui pada ${getDateString(currentDate)}`,
+          );
+
         currentDate.setDate(currentDate.getDate() + 1);
       }
 
-      const attendance = await this.prisma.attendance.findFirst({
-        where: {
-          nik,
-          date: currentDate,
-        },
-      });
-
-      if (attendance) {
-        throw new ConflictException(
-          `karyawan telah melakukan check in atau memiliki izin yang telah disetujui pada ${getDateString(currentDate)}`,
-        );
-      }
-
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    const filename = await uploadFile(permission_letter, nik, 'permit');
-    try {
+      const filename = await uploadFile(permission_letter, nik, 'permit');
       const result = await this.prisma.permit.create({
         data: {
           nik,
@@ -72,8 +71,7 @@ export class PermitService extends BaseService {
 
       return new PermitResBody(result);
     } catch (error) {
-      this.logger.error(error);
-      throw new InternalServerErrorException();
+      handleError(error, this.logger);
     }
   }
 
@@ -81,44 +79,47 @@ export class PermitService extends BaseService {
     id: number,
     approved: boolean,
   ): Promise<PermitPatchResBody> {
-    const existingPermit = await this.prisma.permit.findUnique({
-      where: { id },
-      select: { id: true },
-    });
+    try {
+      const existingPermit = await this.prisma.permit.findUnique({
+        where: { id },
+        select: { id: true },
+      });
 
-    if (!existingPermit) {
-      throw new NotFoundException('data permit tidak ditemukan');
-    }
+      if (!existingPermit)
+        throw new NotFoundException('data permit tidak ditemukan');
 
-    const permit = await this.prisma.permit.update({
-      where: { id },
-      data: { approved, checked: true },
-    });
+      const permit = await this.prisma.permit.update({
+        where: { id },
+        data: { approved, checked: true },
+      });
 
-    if (approved) {
-      const currentDate = permit.start_date;
+      if (approved) {
+        const currentDate = permit.start_date;
 
-      for (let i = 0; i < permit.duration; i++) {
-        if (currentDate.getDay() === 0) {
+        for (let i = 0; i < permit.duration; i++) {
+          if (currentDate.getDay() === 0) {
+            currentDate.setDate(currentDate.getDate() + 1);
+          }
+
+          await this.prisma.attendance.create({
+            data: {
+              nik: permit.nik,
+              permit_id: permit.id,
+              date: currentDate,
+              status: 'permit',
+            },
+          });
+
           currentDate.setDate(currentDate.getDate() + 1);
         }
-
-        await this.prisma.attendance.create({
-          data: {
-            nik: permit.nik,
-            permit_id: permit.id,
-            date: currentDate,
-            status: 'permit',
-          },
-        });
-
-        currentDate.setDate(currentDate.getDate() + 1);
       }
-    }
 
-    return {
-      id: permit.id,
-      approved,
-    };
+      return {
+        id: permit.id,
+        approved,
+      };
+    } catch (error) {
+      handleError(error, this.logger);
+    }
   }
 }

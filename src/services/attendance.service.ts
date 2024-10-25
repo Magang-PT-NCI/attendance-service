@@ -37,10 +37,13 @@ export class AttendanceService extends BaseService {
     const where: Prisma.AttendanceWhereInput = { nik, date: getDate(date) };
     const select = this.buildSelectGetAttendance(filter);
 
-    const attendance: PrismaAttendance = await this.prisma.attendance.findFirst(
-      { where, select },
-    );
-    return attendance ? new AttendanceResBody(attendance) : null;
+    try {
+      const attendance: PrismaAttendance =
+        await this.prisma.attendance.findFirst({ where, select });
+      return attendance ? new AttendanceResBody(attendance) : null;
+    } catch (error) {
+      handleError(error, this.logger);
+    }
   }
 
   public async handleCheckIn(
@@ -55,28 +58,33 @@ export class AttendanceService extends BaseService {
     const filename = await uploadFile(photo, nik, type);
 
     try {
-      const checkIn = await this.prisma.check.create({
-        data: {
-          type: 'in',
-          time: currentTimeIso,
-          location: `${location.latitude},${location.longitude}`,
-          photo: filename,
-        },
-      });
+      const result: PrismaAttendancePost = await this.prisma.$transaction(
+        async (prisma) => {
+          const checkIn = await prisma.check.create({
+            data: {
+              type: 'in',
+              time: currentTimeIso,
+              location: `${location.latitude},${location.longitude}`,
+              photo: filename,
+            },
+          });
 
-      const result: PrismaAttendancePost = await this.prisma.attendance.create({
-        data: {
-          nik,
-          check_in_id: checkIn.id,
-          date: currentDateIso,
-          status: 'presence',
+          return prisma.attendance.create({
+            data: {
+              nik,
+              check_in_id: checkIn.id,
+              date: currentDateIso,
+              status: 'presence',
+            },
+            select: {
+              id: true,
+              checkIn: { select: { time: true, photo: true } },
+              checkOut: { select: { time: true, photo: true } },
+            },
+          });
         },
-        select: {
-          id: true,
-          checkIn: { select: { time: true, photo: true } },
-          checkOut: { select: { time: true, photo: true } },
-        },
-      });
+      );
+
       return new AttendancePostResBody(data, result);
     } catch (error) {
       handleError(error, this.logger);
@@ -117,27 +125,36 @@ export class AttendanceService extends BaseService {
         'tidak dapat melakukan check out setelah pukul 19:00',
       );
 
-    const filename = await uploadFile(photo, nik, type);
-    const checkOut = await this.prisma.check.create({
-      data: {
-        type: 'out',
-        time: currentTimeIso,
-        location: `${location.latitude},${location.longitude}`,
-        photo: filename,
-      },
-    });
+    try {
+      const filename = await uploadFile(photo, nik, type);
 
-    const result: PrismaAttendancePost = await this.prisma.attendance.update({
-      where: { id: attendance.id },
-      data: { check_out_id: checkOut.id },
-      select: {
-        id: true,
-        checkIn: { select: { time: true, photo: true } },
-        checkOut: { select: { time: true, photo: true } },
-      },
-    });
+      const result: PrismaAttendancePost = await this.prisma.$transaction(
+        async (prisma) => {
+          const checkOut = await prisma.check.create({
+            data: {
+              type: 'out',
+              time: currentTimeIso,
+              location: `${location.latitude},${location.longitude}`,
+              photo: filename,
+            },
+          });
 
-    return new AttendancePostResBody(data, result);
+          return prisma.attendance.update({
+            where: { id: attendance.id },
+            data: { check_out_id: checkOut.id },
+            select: {
+              id: true,
+              checkIn: { select: { time: true, photo: true } },
+              checkOut: { select: { time: true, photo: true } },
+            },
+          });
+        },
+      );
+
+      return new AttendancePostResBody(data, result);
+    } catch (error) {
+      handleError(error, this.logger);
+    }
   }
 
   public async handleOvertime(nik: string): Promise<OvertimeResBody> {

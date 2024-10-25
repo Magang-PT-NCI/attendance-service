@@ -14,9 +14,14 @@ export class CronJobService extends BaseService {
 
   @Cron('1 9 * * *', { timeZone: 'Asia/Jakarta' })
   public async handleCron() {
-    await this.prisma.synchronizeEmployeeCache();
+    try {
+      await this.prisma.synchronizeEmployeeCache();
+    } catch (error) {
+      this.logger.info('synchronize employee cache failed');
+      this.logger.error(error);
+    }
 
-    this.logger.info('cron job is start');
+    this.logger.info('cron job is started');
     const currentDate = getDate(getDateString(new Date()));
 
     try {
