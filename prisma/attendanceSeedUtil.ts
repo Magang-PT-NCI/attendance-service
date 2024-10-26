@@ -8,8 +8,11 @@ const getTime = (time: string): string => `1970-01-01T${time}:00.000Z`;
 
 const photo = '17ZxcvViTexCuS_j_Vve2CKTyHG7iu0aY';
 
-const year = 2024;
-const month = 10;
+export const dateStart = process.env.DATE_START?.split('-');
+
+const year = dateStart ? parseInt(dateStart[0]) : 2024;
+const month = dateStart ? parseInt(dateStart[1]) : 10;
+export const date = dateStart ? parseInt(dateStart[2]) : 1;
 
 export const overtimeCheckOutTimes = [
   '17:01',
@@ -41,13 +44,13 @@ export const createAttendance = async (
   employee: EmployeeGenerateItem,
   checkInTime: string = null,
   checkOutTime: string = null,
-) => {
+): Promise<number> => {
   const { nik, location } = employee;
 
   let checkInId = null;
   let checkOutId = null;
 
-  if (checkInTime && checkOutTime) {
+  if (checkInTime) {
     const checkIn = await prisma.check.create({
       data: { type: 'in', time: getTime(checkInTime), location, photo },
       select: {
@@ -59,7 +62,9 @@ export const createAttendance = async (
       },
     });
     checkInId = checkIn.id;
+  }
 
+  if (checkOutTime) {
     const checkOut = await prisma.check.create({
       data: { type: 'out', time: getTime(checkOutTime), location, photo },
       select: {
@@ -73,7 +78,7 @@ export const createAttendance = async (
     checkOutId = checkOut.id;
   }
 
-  const status = checkInTime && checkOutTime ? 'presence' : 'absent';
+  const status = checkInTime ? 'presence' : 'absent';
   const overtime = overtimeCheckOutTimes.includes(checkOutTime)
     ? await prisma.overtime.create({ data: { approved: true, checked: true } })
     : undefined;
@@ -92,6 +97,8 @@ export const createAttendance = async (
   if (status === 'presence') {
     await createLogbook(attendance.id);
   }
+
+  return attendance.id;
 };
 
 export const createPermit = async (employee: EmployeeGenerateItem) => {

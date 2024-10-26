@@ -19,7 +19,9 @@ import { handleError } from '../utils/common.utils';
 export class PermitService extends BaseService {
   public async handlePermit(data: PermitPostReqBody): Promise<PermitResBody> {
     const { nik, reason, start_date, duration, permission_letter } = data;
-    const startDate = getDate(getDateString(new Date(start_date)));
+    const startDate = getDate(start_date);
+
+    this.validatePermitDate(startDate, duration);
 
     const employee = await getEmployee(nik);
     if (!employee) throw new NotFoundException('karyawan tidak ditemukan');
@@ -101,14 +103,28 @@ export class PermitService extends BaseService {
             currentDate.setDate(currentDate.getDate() + 1);
           }
 
-          await this.prisma.attendance.create({
-            data: {
-              nik: permit.nik,
-              permit_id: permit.id,
-              date: currentDate,
-              status: 'permit',
-            },
+          const attendance = await this.prisma.attendance.findFirst({
+            where: { nik: permit.nik, date: currentDate },
+            select: { id: true },
           });
+
+          if (attendance) {
+            await this.prisma.attendance.update({
+              where: { id: attendance.id },
+              data: { permit_id: permit.id, status: 'permit' },
+              select: { id: true },
+            });
+          } else {
+            await this.prisma.attendance.create({
+              data: {
+                nik: permit.nik,
+                permit_id: permit.id,
+                date: currentDate,
+                status: 'permit',
+              },
+              select: { id: true },
+            });
+          }
 
           currentDate.setDate(currentDate.getDate() + 1);
         }
@@ -121,5 +137,19 @@ export class PermitService extends BaseService {
     } catch (error) {
       handleError(error, this.logger);
     }
+  }
+
+  private validatePermitDate(startDate: Date, duration: number) {
+    const today = getDate(getDateString(new Date()));
+
+    if (startDate.getTime() < today.getTime())
+      throw new ConflictException(
+        `tidak dapat melakukan permit untuk ${getDateString(startDate)}`,
+      );
+
+    if (startDate.getTime() === today.getTime() && duration !== 1)
+      throw new ConflictException(
+        'hanya dapat mengajukan izin 1 hari untuk pengajuan izin di hari ini',
+      );
   }
 }

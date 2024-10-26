@@ -194,9 +194,10 @@ export class NotificationService extends BaseService {
         if (confirmation.type === 'permit') {
           message += `\n\nJika disetujui, data izin untuk OnSite dengan alasan '${confirmation.reason}' akan dibuat untuk hari ini.`;
         } else {
-          const initialTime = attendance.checkIn
-            ? getTimeString(attendance.checkIn.time, true)
-            : null;
+          const initialTime =
+            confirmation.type === 'check_in' && attendance.checkIn
+              ? getTimeString(attendance.checkIn.time, true)
+              : null;
           const actualTime =
             confirmation.type === 'check_in' ? '07:00' : '15:00';
 

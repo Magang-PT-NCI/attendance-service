@@ -1,14 +1,15 @@
-import { PrismaClient } from '@prisma/client';
+import { ConfirmationType, PrismaClient, Reason } from '@prisma/client';
 import {
   createAttendance,
   createPermit,
+  date,
+  dateStart,
   EmployeeGenerateItem,
   overtimeCheckOutTimes,
 } from './attendanceSeedUtil';
 
 const prisma = new PrismaClient();
-const dateStart = 1;
-const dayCount = 27;
+const dayCount = process.env.DATE_COUNT ? parseInt(process.env.DATE_COUNT) : 25;
 
 const locations = {
   bandung: '-6.914744,107.609810',
@@ -20,31 +21,61 @@ const employees: EmployeeGenerateItem[] = [
     nik: '001230045600701',
     name: 'Aditya Wijaya Putra',
     location: locations.bandung,
-    dateCount: dateStart - 1,
+    dateCount: date - 1,
   },
   {
     nik: '001230045600702',
     name: 'Rina Andriani',
     location: locations.bandung,
-    dateCount: dateStart - 1,
+    dateCount: date - 1,
   },
   {
     nik: '001230045600703',
     name: 'Budi Santoso',
     location: locations.cimahi,
-    dateCount: dateStart - 1,
+    dateCount: date - 1,
   },
   {
     nik: '001230045600704',
     name: 'Maria Hadiyanti',
     location: locations.bandung,
-    dateCount: dateStart - 1,
+    dateCount: date - 1,
   },
   {
     nik: '001230045600705',
     name: 'Dewa Prasetyo',
     location: locations.cimahi,
-    dateCount: dateStart - 1,
+    dateCount: date - 1,
+  },
+  {
+    nik: '001230045600706',
+    name: 'Dini Kusuma Wardani',
+    location: locations.bandung,
+    dateCount: date - 1,
+  },
+  {
+    nik: '001230045600707',
+    name: 'Arif Rahman Hakim',
+    location: locations.cimahi,
+    dateCount: date - 1,
+  },
+  {
+    nik: '001230045600709',
+    name: 'Indra Gunawan',
+    location: locations.bandung,
+    dateCount: date - 1,
+  },
+  {
+    nik: '001230045600710',
+    name: 'Siti Fatimah',
+    location: locations.bandung,
+    dateCount: date - 1,
+  },
+  {
+    nik: '001230045600711',
+    name: 'Agus Supriadi',
+    location: locations.cimahi,
+    dateCount: date - 1,
   },
 ];
 
@@ -73,17 +104,61 @@ const checkOutTimes = [
   '14:04',
 ];
 
+const createConfirmation = async (
+  attendance_id: number,
+  type: ConfirmationType,
+  description: string,
+  reason?: Reason,
+) => {
+  await prisma.attendanceConfirmation.create({
+    data: {
+      attendance_id,
+      type,
+      description,
+      attachment: '1xsCxPCsNJfoG7FPgO6nYXH2KHCgTQ-B8',
+      checked: false,
+      approved: false,
+      reason,
+    },
+  });
+};
+
+const createUncheckedOvertime = async (attendance_id: number) => {
+  const overtime = await prisma.overtime.create({
+    data: { approved: false, checked: false },
+    select: { id: true },
+  });
+  await prisma.attendance.update({
+    where: { id: attendance_id },
+    data: { overtime_id: overtime.id },
+    select: { id: true },
+  });
+};
+
+const createLaterPermit = async (
+  nik: string,
+  reason: Reason,
+  start_date: Date,
+  duration: number,
+) => {
+  await prisma.permit.create({
+    data: {
+      nik,
+      reason,
+      start_date,
+      duration,
+      permission_letter: '1xsCxPCsNJfoG7FPgO6nYXH2KHCgTQ-B8',
+      checked: false,
+      approved: false,
+    },
+  });
+};
+
 const main = async () => {
   await prisma.employeeCache.createMany({ data: employeeCacheData });
 
-  await createAttendance(employees[0], '06:20', '14:05');
-  await createAttendance(employees[1], '06:55', '16:02');
-  await createAttendance(employees[2]);
-  await createPermit(employees[3]);
-  await createAttendance(employees[4], '07:20', '14:10');
-
   for (const employee of employees) {
-    for (let i = 0; i < dayCount - 2; i++) {
+    for (let i = 0; i < dayCount - 1; i++) {
       const rand = Math.random();
 
       if (rand < 0.03) {
@@ -112,11 +187,40 @@ const main = async () => {
     }
   }
 
-  await createAttendance(employees[0], '06:53', '14:01');
+  await createAttendance(employees[0], '06:53', overtimeCheckOutTimes[0]);
   await createAttendance(employees[1], '06:50', '14:00');
   await createAttendance(employees[2]);
   await createPermit(employees[3]);
   await createAttendance(employees[4], '07:22', '14:05');
+
+  let id = await createAttendance(employees[5]);
+  await createConfirmation(id, 'check_in', 'saya lupa check in');
+
+  id = await createAttendance(employees[6]);
+  await createConfirmation(
+    id,
+    'permit',
+    'saya ada keperluan mendesak',
+    'urusan_mendadak',
+  );
+
+  id = await createAttendance(employees[7], '07:30', null);
+  await createConfirmation(id, 'check_in', 'saya lupa check in tepat waktu');
+
+  id = await createAttendance(employees[8], '06:55', null);
+  await createConfirmation(id, 'check_out', 'saya lupa check out');
+
+  id = await createAttendance(employees[9], '06:53', null);
+  await createUncheckedOvertime(id);
+
+  await createLaterPermit(
+    employees[0].nik,
+    'cuti',
+    new Date(
+      `${dateStart[0]}-${dateStart[1]}-${`${date + dayCount + 3}`.padStart(2, '0')}`,
+    ),
+    2,
+  );
 };
 
 main()

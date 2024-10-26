@@ -37,7 +37,13 @@ export class NotificationBuilder {
   }
 
   public getNotifications(): NotificationResBody[] {
-    return this.notifications.sort((a, b) => a.priority - b.priority);
+    return this.notifications
+      .sort((a, b) => a.priority - b.priority)
+      .map((notificationItem) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { priority, ...notification } = notificationItem;
+        return notification;
+      });
   }
 
   public setPriority(priority: number): NotificationBuilder {
