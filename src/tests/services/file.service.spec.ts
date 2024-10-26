@@ -8,7 +8,7 @@ jest.mock('serve-static', () => ({
   mime: { lookup: jest.fn() },
 }));
 
-describe('FileService', () => {
+describe('file service test', () => {
   let service: FileService;
 
   beforeEach(async () => {
