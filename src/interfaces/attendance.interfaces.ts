@@ -18,13 +18,11 @@ export interface PrismaCommonAttendance {
   id: number;
   date: Date;
   status: AttendanceStatus;
-  checkIn: { time: Date };
-  checkOut: { time: Date };
+  checkIn: Check;
+  checkOut: Check;
 }
 
 export interface PrismaAttendance extends PrismaCommonAttendance {
-  checkIn: Check;
-  checkOut: Check;
   activities: PrismaActivity[];
   permit: Permit;
 }

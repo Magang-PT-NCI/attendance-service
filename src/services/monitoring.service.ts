@@ -95,7 +95,7 @@ export class MonitoringService extends BaseService {
     const nikCondition = { nik: { contains: keyword } };
     const nameCondition = { employee: { name: { contains: keyword } } };
 
-    const checkSelect = { select: { time: true } };
+    const checkSelect = { select: { time: true, photo: true, location: true } };
 
     const include = {
       employee: { select: { nik: true, name: true } },
