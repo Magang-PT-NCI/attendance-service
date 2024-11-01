@@ -174,9 +174,15 @@ export class AttendanceService extends BaseService {
       true,
       true,
     );
+
     if (!attendance?.checkIn)
       throw new ConflictException(
         'tidak dapat melakukan konfirmasi lembur karena belum melakukan check in',
+      );
+
+    if (attendance?.check_out_id)
+      throw new ConflictException(
+        'tidak dapat melakukan konfirmasi lembur karena telah melakukan check out',
       );
 
     if (attendance.overtime_id)

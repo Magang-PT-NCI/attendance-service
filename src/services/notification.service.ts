@@ -28,63 +28,69 @@ export class NotificationService extends BaseService {
         },
       });
 
-      const confirmations = await this.prisma.attendanceConfirmation.findMany({
-        where: { attendance_id: attendance.id },
-        select: {
-          approved: true,
-          checked: true,
-          created_at: true,
-          attachment: true,
-          type: true,
-          description: true,
-        },
-      });
-      confirmations.forEach((confirmation) => {
-        const message =
-          `Konfirmasi kehadiran ${this.getConfirmationType(confirmation.type)} Anda hari ini ` +
-          `${this.getApprovalMessage(confirmation.approved, confirmation.checked)}.` +
-          `\nDeskripsi konfirmasi kehadiran:\n${confirmation.description}`;
+      if (attendance) {
+        const confirmations = await this.prisma.attendanceConfirmation.findMany(
+          {
+            where: { attendance_id: attendance.id },
+            select: {
+              approved: true,
+              checked: true,
+              created_at: true,
+              attachment: true,
+              type: true,
+              description: true,
+            },
+          },
+        );
+        confirmations.forEach((confirmation) => {
+          const message =
+            `Konfirmasi kehadiran ${this.getConfirmationType(confirmation.type)} Anda hari ini ` +
+            `${this.getApprovalMessage(confirmation.approved, confirmation.checked)}.` +
+            `\nDeskripsi konfirmasi kehadiran:\n${confirmation.description}`;
 
-        notificationBuilder
-          .setMessage(message)
-          .setDate(getTimeString(confirmation.created_at))
-          .setFile(getFileUrl(confirmation.attachment, 'confirmation', 'file'))
-          .setPriority(2)
-          .push();
-      });
+          notificationBuilder
+            .setMessage(message)
+            .setDate(getTimeString(confirmation.created_at))
+            .setFile(
+              getFileUrl(confirmation.attachment, 'confirmation', 'file'),
+            )
+            .setPriority(2)
+            .push();
+        });
 
-      notificationBuilder.setPriority(3);
+        notificationBuilder.setPriority(3);
 
-      const late = getLate(attendance?.checkIn?.time);
-      if (late) {
-        notificationBuilder
-          .setMessage(`Anda terlambat ${late} hari ini.`)
-          .setDate(getTimeString(attendance.checkIn.time, true))
-          .push();
-      } else if (attendance?.status === 'absent') {
-        notificationBuilder
-          .setMessage('Anda tidak masuk hari ini.')
-          .setDate('09:01')
-          .push();
-      } else if (attendance?.status === 'permit') {
-        notificationBuilder
-          .setMessage('Izin Anda hari ini telah disetujui oleh Koordinator.')
-          .setDate(getDateString(current))
-          .push();
-      }
+        const late = getLate(attendance?.checkIn?.time);
+        if (late) {
+          notificationBuilder
+            .setMessage(`Anda terlambat ${late} hari ini.`)
+            .setDate(getTimeString(attendance.checkIn.time, true))
+            .push();
+        } else if (attendance?.status === 'absent') {
+          notificationBuilder
+            .setMessage('Anda tidak masuk hari ini.')
+            .setDate('09:01')
+            .push();
+        } else if (attendance?.status === 'permit') {
+          notificationBuilder
+            .setMessage('Izin Anda hari ini telah disetujui oleh Koordinator.')
+            .setDate(getDateString(current))
+            .push();
+        }
 
-      if (attendance?.overtime) {
-        notificationBuilder
-          .setMessage(
-            `Pengajuan lembur Anda hari ini ${this.getApprovalMessage(attendance.overtime.approved, attendance.overtime.checked)}.`,
-          )
-          .setDate(getTimeString(attendance.overtime.created_at))
-          .setPriority(1)
-          .push();
+        if (attendance?.overtime) {
+          notificationBuilder
+            .setMessage(
+              `Pengajuan lembur Anda hari ini ${this.getApprovalMessage(attendance.overtime.approved, attendance.overtime.checked)}.`,
+            )
+            .setDate(getTimeString(attendance.overtime.created_at))
+            .setPriority(1)
+            .push();
+        }
       }
 
       const permit = await this.prisma.permit.findFirst({
-        where: { nik, start_date: { gt: current } },
+        where: { nik, start_date: { gte: current } },
         select: {
           start_date: true,
           duration: true,

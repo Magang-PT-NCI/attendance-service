@@ -3,16 +3,12 @@ import { createLogbook } from './logbookSeedUtil';
 
 const prisma: PrismaClient = new PrismaClient();
 
-const getDate = (date: string): string => `${date}T00:00:00.000Z`;
 const getTime = (time: string): string => `1970-01-01T${time}:00.000Z`;
 
 const photo = '17ZxcvViTexCuS_j_Vve2CKTyHG7iu0aY';
 
 export const dateStart = process.env.DATE_START?.split('-');
-
-const year = dateStart ? parseInt(dateStart[0]) : 2024;
-const month = dateStart ? parseInt(dateStart[1]) : 10;
-export const date = dateStart ? parseInt(dateStart[2]) : 1;
+export const date = dateStart ? process.env.DATE_START : '2024-01-01';
 
 export const overtimeCheckOutTimes = [
   '17:01',
@@ -26,18 +22,15 @@ export interface EmployeeGenerateItem {
   nik: string;
   name: string;
   location: string;
-  dateCount: number;
+  date: Date;
 }
 
 const nextDate = (employee: EmployeeGenerateItem): string => {
-  employee.dateCount++;
+  employee.date.setDate(employee.date.getDate() + 1);
+  if (employee.date.getDay() === 0)
+    employee.date.setDate(employee.date.getDate() + 1);
 
-  const dateString = `${year.toString().padStart(4, '0')}-${month.toString().padStart(2, '0')}-${employee.dateCount.toString().padStart(2, '0')}`;
-  const date: Date = new Date(dateString);
-
-  if (date.getDay() === 6) employee.dateCount++;
-
-  return dateString;
+  return employee.date.toISOString();
 };
 
 export const createAttendance = async (
@@ -88,7 +81,7 @@ export const createAttendance = async (
       check_in_id: checkInId,
       check_out_id: checkOutId,
       nik: nik,
-      date: getDate(nextDate(employee)),
+      date: nextDate(employee),
       status,
       overtime_id: overtime?.id,
     },
@@ -110,7 +103,7 @@ export const createPermit = async (employee: EmployeeGenerateItem) => {
     'melahirkan',
     'lainnya',
   ];
-  const date = getDate(nextDate(employee));
+  const date = nextDate(employee);
 
   const permit = await prisma.permit.create({
     data: {

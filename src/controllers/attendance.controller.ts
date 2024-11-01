@@ -166,6 +166,8 @@ export class AttendanceController extends BaseController {
       ];
       if (!validReason.includes(body.reason))
         throw new BadRequestException('reason tidak valid!');
+    } else {
+      body.reason = undefined;
     }
 
     return this.service.handleAttendanceConfirmation(body);

@@ -14,6 +14,8 @@ export class CronJobService extends BaseService {
 
   @Cron('1 9 * * *', { timeZone: 'Asia/Jakarta' })
   public async handleCron() {
+    this.logger.info('cron job is started');
+
     try {
       await this.prisma.synchronizeEmployeeCache();
     } catch (error) {
@@ -21,7 +23,6 @@ export class CronJobService extends BaseService {
       this.logger.error(error);
     }
 
-    this.logger.info('cron job is started');
     const currentDate = getDate(getDateString(new Date()));
 
     try {
@@ -47,6 +48,20 @@ export class CronJobService extends BaseService {
       this.logger.info(
         `${absentAttendanceData.length} OnSite marked as 'absent' for today.`,
       );
+
+      const current = getDate(getDateString(new Date()));
+
+      await this.prisma.permit.deleteMany({
+        where: { start_date: { lt: current }, checked: false },
+      });
+
+      await this.prisma.overtime.deleteMany({
+        where: { created_at: { lt: current }, checked: false },
+      });
+
+      await this.prisma.attendanceConfirmation.deleteMany({
+        where: { created_at: { lt: current }, checked: false },
+      });
     } catch (error) {
       this.logger.error(error);
     }

@@ -128,8 +128,8 @@ export class AttendancePostResBody {
     this.type = body.type;
     this.time =
       body.type === 'check_in'
-        ? getTimeString(result.checkIn.time)
-        : getTimeString(result.checkOut.time);
+        ? getTimeString(result.checkIn.time, true)
+        : getTimeString(result.checkOut.time, true);
     this.photo =
       body.type === 'check_in'
         ? getFileUrl(result.checkIn.photo, body.type)

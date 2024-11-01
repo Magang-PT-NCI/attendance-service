@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Attendance } from './attendance.dto';
 import { PrismaAttendanceReport } from '../interfaces/monitoring.interfaces';
+import { getTimeString } from 'src/utils/date.utils';
 
 export class ReportQuery {
   @ApiProperty({ example: 'ucup', description: 'nik or name', required: false })
@@ -28,11 +29,40 @@ export class ReportResBody extends Attendance {
   @ApiProperty({ example: 'Ucup' })
   public readonly name: string;
 
+  @ApiProperty({ example: '06:30' })
+  public readonly checkInTime: string;
+
+  @ApiProperty({ example: '14:02' })
+  public readonly checkOutTime: string;
+
+  @ApiProperty({ example: 'Tidak ada photo dan lokasi check out' })
+  public readonly notes: string;
+
   public constructor(attendance: PrismaAttendanceReport) {
     super(attendance);
 
     this.nik = attendance.employee.nik;
     this.name = attendance.employee.name;
+    this.checkInTime = attendance.checkIn
+      ? getTimeString(attendance.checkIn.time, true)
+      : '-';
+    this.checkOutTime = attendance.checkOut
+      ? getTimeString(attendance.checkOut.time, true)
+      : '-';
+    this.notes = '';
+
+    if (attendance.status !== 'absent' && attendance.status !== 'permit') {
+      if (!attendance.checkIn?.location)
+        this.notes += 'tidak ada lokasi check in\n';
+      if (!attendance.checkIn?.photo)
+        this.notes += 'tidak ada photo check in\n';
+      if (!attendance.checkOut?.location)
+        this.notes += 'tidak ada lokasi check out\n';
+      if (!attendance.checkOut?.photo)
+        this.notes += 'tidak ada photo check out\n';
+    }
+
+    if (this.notes === '') this.notes = '-';
   }
 
   public static getReport(
