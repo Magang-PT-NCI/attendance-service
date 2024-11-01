@@ -3,7 +3,6 @@ import {
   createAttendance,
   createPermit,
   date,
-  dateStart,
   EmployeeGenerateItem,
   overtimeCheckOutTimes,
 } from './attendanceSeedUtil';
@@ -21,67 +20,85 @@ const employees: EmployeeGenerateItem[] = [
     nik: '001230045600701',
     name: 'Aditya Wijaya Putra',
     location: locations.bandung,
-    dateCount: date - 1,
+    date: new Date(date),
   },
   {
     nik: '001230045600702',
     name: 'Rina Andriani',
     location: locations.bandung,
-    dateCount: date - 1,
+    date: new Date(date),
   },
   {
     nik: '001230045600703',
     name: 'Budi Santoso',
     location: locations.cimahi,
-    dateCount: date - 1,
+    date: new Date(date),
   },
   {
     nik: '001230045600704',
     name: 'Maria Hadiyanti',
     location: locations.bandung,
-    dateCount: date - 1,
+    date: new Date(date),
   },
   {
     nik: '001230045600705',
     name: 'Dewa Prasetyo',
     location: locations.cimahi,
-    dateCount: date - 1,
+    date: new Date(date),
   },
   {
     nik: '001230045600706',
     name: 'Dini Kusuma Wardani',
     location: locations.bandung,
-    dateCount: date - 1,
+    date: new Date(date),
   },
   {
     nik: '001230045600707',
     name: 'Arif Rahman Hakim',
     location: locations.cimahi,
-    dateCount: date - 1,
+    date: new Date(date),
   },
   {
     nik: '001230045600709',
     name: 'Indra Gunawan',
     location: locations.bandung,
-    dateCount: date - 1,
+    date: new Date(date),
   },
   {
     nik: '001230045600710',
     name: 'Siti Fatimah',
     location: locations.bandung,
-    dateCount: date - 1,
+    date: new Date(date),
   },
   {
     nik: '001230045600711',
     name: 'Agus Supriadi',
     location: locations.cimahi,
-    dateCount: date - 1,
+    date: new Date(date),
+  },
+  {
+    nik: '001230045600712',
+    name: 'Retno Maharani',
+    location: locations.cimahi,
+    date: new Date(date),
+  },
+  {
+    nik: '001230045600713',
+    name: 'Eko Saputro',
+    location: locations.cimahi,
+    date: new Date(date),
+  },
+  {
+    nik: '001230045600714',
+    name: 'Yuli Kartika Sari',
+    location: locations.cimahi,
+    date: new Date(date),
   },
 ];
 
 const employeeCacheData = employees.map((employee) => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { location, dateCount, ...employeeCache } = employee;
+  const { location, date, ...employeeCache } = employee;
   return employeeCache;
 });
 
@@ -138,7 +155,7 @@ const createUncheckedOvertime = async (attendance_id: number) => {
 const createLaterPermit = async (
   nik: string,
   reason: Reason,
-  start_date: Date,
+  start_date,
   duration: number,
 ) => {
   await prisma.permit.create({
@@ -187,40 +204,16 @@ const main = async () => {
     }
   }
 
-  await createAttendance(employees[0], '06:53', overtimeCheckOutTimes[0]);
-  await createAttendance(employees[1], '06:50', '14:00');
-  await createAttendance(employees[2]);
-  await createPermit(employees[3]);
-  await createAttendance(employees[4], '07:22', '14:05');
-
-  let id = await createAttendance(employees[5]);
-  await createConfirmation(id, 'check_in', 'saya lupa check in');
-
-  id = await createAttendance(employees[6]);
-  await createConfirmation(
-    id,
-    'permit',
-    'saya ada keperluan mendesak',
-    'urusan_mendadak',
-  );
-
-  id = await createAttendance(employees[7], '07:30', null);
+  let id = await createAttendance(employees[6], '07:10', null);
   await createConfirmation(id, 'check_in', 'saya lupa check in tepat waktu');
 
-  id = await createAttendance(employees[8], '06:55', null);
-  await createConfirmation(id, 'check_out', 'saya lupa check out');
-
-  id = await createAttendance(employees[9], '06:53', null);
+  id = await createAttendance(employees[7], '06:53', null);
   await createUncheckedOvertime(id);
 
-  await createLaterPermit(
-    employees[0].nik,
-    'cuti',
-    new Date(
-      `${dateStart[0]}-${dateStart[1]}-${`${date + dayCount + 3}`.padStart(2, '0')}`,
-    ),
-    2,
-  );
+  const permitDate = new Date(employees[8].date);
+  permitDate.setDate(permitDate.getDate() + 3);
+
+  await createLaterPermit(employees[8].nik, 'cuti', permitDate, 2);
 };
 
 main()
