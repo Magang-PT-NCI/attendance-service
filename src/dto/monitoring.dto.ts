@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Attendance } from './attendance.dto';
-import { PrismaAttendanceReport } from '../interfaces/monitoring.interfaces';
+import { Attendance } from '../interfaces/attendance.interfaces';
 import { getTimeString } from '../utils/date.utils';
+import { AttendanceCommon } from './attendance.dto';
 
 export class ReportQuery {
   @ApiProperty({ example: 'ucup', description: 'nik or name', required: false })
@@ -22,7 +22,7 @@ export class ReportQuery {
   public readonly to: string;
 }
 
-export class ReportResBody extends Attendance {
+export class ReportResBody extends AttendanceCommon {
   @ApiProperty({ example: '123456789' })
   public readonly nik: string;
 
@@ -38,7 +38,7 @@ export class ReportResBody extends Attendance {
   @ApiProperty({ example: 'Tidak ada photo dan lokasi check out' })
   public readonly notes: string;
 
-  public constructor(attendance: PrismaAttendanceReport) {
+  public constructor(attendance: Attendance) {
     super(attendance);
 
     this.nik = attendance.employee.nik;
@@ -65,12 +65,10 @@ export class ReportResBody extends Attendance {
     if (this.notes === '') this.notes = '-';
   }
 
-  public static getReport(
-    attendances: PrismaAttendanceReport[],
-  ): ReportResBody[] {
+  public static getReport(attendances: Attendance[]): ReportResBody[] {
     const report: ReportResBody[] = [];
 
-    attendances.forEach((attendance: PrismaAttendanceReport) => {
+    attendances.forEach((attendance: Attendance) => {
       report.push(new ReportResBody(attendance));
     });
 

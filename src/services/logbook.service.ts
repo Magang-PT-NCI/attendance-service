@@ -8,10 +8,10 @@ import {
   LogbookReqBody,
   UpdateLogbookReqBody,
 } from '../dto/logbook.dto';
-import { PrismaActivity } from '../interfaces/logbook.interfaces';
 import { getDate, isValidTime } from '../utils/date.utils';
 import { BaseService } from './base.service';
 import { handleError } from '../utils/common.utils';
+import { Activity } from '@prisma/client';
 
 @Injectable()
 export class LogbookService extends BaseService {
@@ -38,20 +38,13 @@ export class LogbookService extends BaseService {
           'end_time harus waktu yang valid dengan format HH:MM',
         );
 
-      const logbook: PrismaActivity = await this.prisma.activity.create({
+      const logbook: Activity = await this.prisma.activity.create({
         data: {
           attendance_id,
           description,
           status,
           start_time: getDate(start_time),
           end_time: getDate(end_time),
-        },
-        select: {
-          id: true,
-          description: true,
-          status: true,
-          start_time: true,
-          end_time: true,
         },
       });
 
@@ -73,16 +66,9 @@ export class LogbookService extends BaseService {
 
       if (!activity) throw new NotFoundException('logbook tidak ditemukan');
 
-      const result: PrismaActivity = await this.prisma.activity.update({
+      const result: Activity = await this.prisma.activity.update({
         where: { id: activityId },
         data,
-        select: {
-          id: true,
-          description: true,
-          status: true,
-          start_time: true,
-          end_time: true,
-        },
       });
 
       return new LogbookResBody(result);

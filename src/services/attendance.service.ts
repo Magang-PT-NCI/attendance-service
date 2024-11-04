@@ -11,12 +11,7 @@ import {
   AttendanceResBody,
   OvertimeResBody,
 } from '../dto/attendance.dto';
-import {
-  CurrentDate,
-  PrismaAttendance,
-  PrismaAttendancePost,
-  PrismaCheckAttendance,
-} from '../interfaces/attendance.interfaces';
+import { Attendance, CurrentDate } from '../interfaces/attendance.interfaces';
 import { getEmployee } from '../utils/api.utils';
 import { getDate, getDateString, getTimeString } from '../utils/date.utils';
 import { uploadFile } from '../utils/upload.utils';
@@ -38,8 +33,10 @@ export class AttendanceService extends BaseService {
     const select = this.buildSelectGetAttendance(filter);
 
     try {
-      const attendance: PrismaAttendance =
-        await this.prisma.attendance.findFirst({ where, select });
+      const attendance: Attendance = await this.prisma.attendance.findFirst({
+        where,
+        select,
+      });
       return attendance ? new AttendanceResBody(attendance) : null;
     } catch (error) {
       handleError(error, this.logger);
@@ -58,7 +55,7 @@ export class AttendanceService extends BaseService {
     const filename = await uploadFile(photo, nik, type);
 
     try {
-      const result: PrismaAttendancePost = await this.prisma.$transaction(
+      const result: Attendance = await this.prisma.$transaction(
         async (prisma) => {
           const checkIn = await prisma.check.create({
             data: {
@@ -78,8 +75,8 @@ export class AttendanceService extends BaseService {
             },
             select: {
               id: true,
-              checkIn: { select: { time: true, photo: true } },
-              checkOut: { select: { time: true, photo: true } },
+              checkIn: true,
+              checkOut: true,
             },
           });
         },
@@ -128,7 +125,7 @@ export class AttendanceService extends BaseService {
     try {
       const filename = await uploadFile(photo, nik, type);
 
-      const result: PrismaAttendancePost = await this.prisma.$transaction(
+      const result: Attendance = await this.prisma.$transaction(
         async (prisma) => {
           const checkOut = await prisma.check.create({
             data: {
@@ -144,8 +141,8 @@ export class AttendanceService extends BaseService {
             data: { check_out_id: checkOut.id },
             select: {
               id: true,
-              checkIn: { select: { time: true, photo: true } },
-              checkOut: { select: { time: true, photo: true } },
+              checkIn: true,
+              checkOut: true,
             },
           });
         },
@@ -294,7 +291,7 @@ export class AttendanceService extends BaseService {
     date: string,
     includeCheckIn: boolean = false,
     includeOvertime: boolean = false,
-  ): Promise<PrismaCheckAttendance> {
+  ): Promise<Attendance> {
     try {
       return await this.prisma.attendance.findFirst({
         where: {
@@ -305,8 +302,8 @@ export class AttendanceService extends BaseService {
           id: true,
           check_out_id: true,
           overtime_id: includeOvertime,
-          checkIn: includeCheckIn ? { select: { id: true } } : false,
-          activities: { select: { id: true } },
+          checkIn: includeCheckIn,
+          activities: true,
         },
       });
     } catch (error) {

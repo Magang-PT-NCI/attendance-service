@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Reason } from '@prisma/client';
-import { Permit } from '../interfaces/permit.interfaces';
+import { Permit, Reason } from '@prisma/client';
 import { getDate, getDateString } from '../utils/date.utils';
 import { getFileUrl } from '../utils/common.utils';
 
