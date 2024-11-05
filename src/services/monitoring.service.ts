@@ -110,6 +110,7 @@ export class MonitoringService extends BaseService {
           OR: [nikCondition, nameCondition],
         },
         include,
+        orderBy: [{ date: 'asc' }, { employee: { name: 'asc' } }],
       });
 
       return ReportResBody.getReport(attendances);
