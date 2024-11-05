@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Attendance } from './attendance.dto';
 import { PrismaAttendanceReport } from '../interfaces/monitoring.interfaces';
-import { getTimeString } from 'src/utils/date.utils';
+import { getTimeString } from '../utils/date.utils';
 
 export class ReportQuery {
   @ApiProperty({ example: 'ucup', description: 'nik or name', required: false })
