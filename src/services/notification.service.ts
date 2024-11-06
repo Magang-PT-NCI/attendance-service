@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { getDate, getDateString, getTimeString } from '../utils/date.utils';
 import { getFileUrl, getLate, handleError } from '../utils/common.utils';
 import { NotificationBuilder } from '../builders/notification.builder';
@@ -12,6 +12,11 @@ export class NotificationService extends BaseService {
     nik: string,
   ): Promise<NotificationResBody[]> {
     const name = await this.getEmployeeName(nik);
+
+    if (!name) {
+      throw new NotFoundException('Karyawan tidak ditemukan!');
+    }
+
     const notificationBuilder = new NotificationBuilder(nik, name);
     const current = getDate(getDateString(new Date()));
 
@@ -172,20 +177,18 @@ export class NotificationService extends BaseService {
         where: { attendance: { date: current }, checked: false },
         include: {
           attendance: {
-            select: { employee: { select: { nik: true, name: true } } },
+            select: {
+              employee: { select: { nik: true, name: true } },
+              status: true,
+              check_out_id: true,
+              checkIn: { select: { time: true } },
+            },
           },
         },
       });
 
       for (const confirmation of confirmations) {
-        const attendance = await this.prisma.attendance.findUnique({
-          where: { id: confirmation.attendance_id },
-          select: {
-            status: true,
-            check_out_id: true,
-            checkIn: { select: { time: true } },
-          },
-        });
+        const attendance = confirmation.attendance;
 
         let initialStatus = 'hadir';
         if (attendance.status === 'absent') initialStatus = 'tidak hadir';
@@ -255,7 +258,7 @@ export class NotificationService extends BaseService {
         where: { nik },
         select: { name: true },
       });
-      return employee.name;
+      return employee?.name;
     } catch (error) {
       handleError(error, this.logger);
     }
