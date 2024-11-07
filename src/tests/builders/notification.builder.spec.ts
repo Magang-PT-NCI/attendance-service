@@ -18,7 +18,7 @@ describe('NotificationBuilder', () => {
       .setName('John Doe')
       .setMessage('Attendance notification')
       .setDate('2024-10-19')
-      .setLevel('attendance')
+      .setPriority(1)
       .push();
 
     const notifications = builder.getNotifications();
@@ -39,7 +39,7 @@ describe('NotificationBuilder', () => {
       .setName('Jane Doe')
       .setMessage('Permit notification')
       .setDate('2024-10-19')
-      .setLevel('permit')
+      .setPriority(1)
       .push();
 
     const notifications = builder.getNotifications();
@@ -60,7 +60,7 @@ describe('NotificationBuilder', () => {
       .setName('Bob Smith')
       .setMessage('Overtime notification')
       .setDate('2024-10-19')
-      .setLevel('overtime')
+      .setPriority(1)
       .push();
 
     const notifications = builder.getNotifications();
@@ -95,7 +95,7 @@ describe('NotificationBuilder', () => {
       .setName('User A')
       .setMessage('Attendance')
       .setDate('2024-10-19')
-      .setLevel('attendance')
+      .setPriority(3)
       .push();
 
     builder
@@ -103,7 +103,7 @@ describe('NotificationBuilder', () => {
       .setName('User B')
       .setMessage('Permit')
       .setDate('2024-10-19')
-      .setLevel('permit')
+      .setPriority(2)
       .push();
 
     builder
@@ -111,7 +111,7 @@ describe('NotificationBuilder', () => {
       .setName('User C')
       .setMessage('Overtime')
       .setDate('2024-10-19')
-      .setLevel('overtime')
+      .setPriority(1)
       .push();
 
     const notifications = builder.getNotifications();

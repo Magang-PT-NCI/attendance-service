@@ -5,7 +5,7 @@ describe('CronJobService', () => {
   let cronJobService: CronJobService;
   let prismaService: PrismaService;
 
-  beforeEach(() => {
+  beforeAll(() => {
     prismaService = new PrismaService();
     cronJobService = new CronJobService(prismaService);
 

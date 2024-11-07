@@ -10,7 +10,7 @@ describe('http middleware test', () => {
   let mockNext: NextFunction;
   let sendMock: jest.Mock;
 
-  beforeEach(() => {
+  beforeAll(() => {
     middleware = new HttpMiddleware();
     mockRequest = {
       method: 'GET',
