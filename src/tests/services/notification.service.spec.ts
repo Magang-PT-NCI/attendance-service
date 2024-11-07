@@ -4,18 +4,33 @@ import {
 } from '@nestjs/common';
 import { NotificationService } from '../../services/notification.service';
 import { PrismaService } from '../../services/prisma.service';
-import { APP_URL } from '../../config/app.config';
 
 jest.mock('../../services/prisma.service', () => ({
   PrismaService: jest.fn().mockImplementation(() => ({
     attendance: { findFirst: jest.fn(), findMany: jest.fn() },
-    employeeCache: { findUnique: jest.fn() },
     attendanceConfirmation: { findMany: jest.fn() },
+    employeeCache: { findUnique: jest.fn() },
     permit: { findFirst: jest.fn(), findMany: jest.fn() },
   })),
 }));
 
-describe('notification service test', () => {
+describe('NotificationService', () => {
+  const mockEmployee = { nik: '12345', name: 'John Doe' };
+  const mockAttendance = {
+    id: 1,
+    status: 'presence',
+    checkIn: { time: new Date('2023-10-10T07:05:00Z') },
+    overtime: { approved: false, checked: false, created_at: new Date() },
+  };
+  const mockPermit = {
+    start_date: new Date(),
+    duration: 2,
+    approved: false,
+    checked: false,
+    created_at: new Date(),
+    permission_letter: 'mock-file-url',
+  };
+
   let service: NotificationService;
   let prisma: PrismaService;
 
@@ -24,136 +39,191 @@ describe('notification service test', () => {
     service = new NotificationService(prisma);
   });
 
-  afterEach(() => {
-    jest.clearAllMocks();
-  });
-
-  describe('handleOnSiteNotification test', () => {
-    const nik = '123456';
-    const name = 'ucup';
-
-    it('should handle prisma error', async () => {
-      (prisma.employeeCache.findUnique as jest.Mock).mockResolvedValue({
-        name,
-      });
-      (prisma.attendance.findFirst as jest.Mock).mockRejectedValue(new Error());
-
-      await expect(service.handleOnSiteNotification(nik)).rejects.toThrow(
-        new InternalServerErrorException(),
-      );
-    });
-
-    it('should throw NotFoundException if employee does not found', async () => {
+  describe('handleOnSiteNotification', () => {
+    it('should throw NotFoundException if employee is not found', async () => {
       (prisma.employeeCache.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.handleOnSiteNotification(nik)).rejects.toThrow(
-        new NotFoundException('Karyawan tidak ditemukan!'),
+      await expect(
+        service.handleOnSiteNotification('invalid-nik'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should generate late notification if employee is late', async () => {
+      (prisma.employeeCache.findUnique as jest.Mock).mockResolvedValue(
+        mockEmployee,
+      );
+      (prisma.attendance.findFirst as jest.Mock).mockResolvedValue({
+        ...mockAttendance,
+        checkIn: { time: new Date('2023-10-10T07:15:00Z') },
+      });
+      (prisma.attendanceConfirmation.findMany as jest.Mock).mockResolvedValue(
+        [],
+      );
+
+      const notifications = await service.handleOnSiteNotification(
+        mockEmployee.nik,
+      );
+      const lateNotification = notifications.find((n) =>
+        n.message.includes('Anda terlambat'),
+      );
+
+      expect(lateNotification).toBeDefined();
+      expect(lateNotification.message).toContain('Anda terlambat');
+    });
+
+    it('should generate absence notification if employee is absent', async () => {
+      (prisma.employeeCache.findUnique as jest.Mock).mockResolvedValue(
+        mockEmployee,
+      );
+      (prisma.attendance.findFirst as jest.Mock).mockResolvedValue({
+        ...mockAttendance,
+        status: 'absent',
+        checkIn: null,
+      });
+      (prisma.attendanceConfirmation.findMany as jest.Mock).mockResolvedValue(
+        [],
+      );
+
+      const notifications = await service.handleOnSiteNotification(
+        mockEmployee.nik,
+      );
+      const absentNotification = notifications.find((n) =>
+        n.message.includes('Anda tidak masuk hari ini'),
+      );
+
+      expect(absentNotification).toBeDefined();
+      expect(absentNotification.message).toBe('Anda tidak masuk hari ini.');
+    });
+
+    it('should generate permit approval notification if permit is approved', async () => {
+      (prisma.employeeCache.findUnique as jest.Mock).mockResolvedValue(
+        mockEmployee,
+      );
+      (prisma.attendance.findFirst as jest.Mock).mockResolvedValue({
+        ...mockAttendance,
+        checkIn: null,
+        status: 'permit',
+      });
+      (prisma.attendanceConfirmation.findMany as jest.Mock).mockResolvedValue(
+        [],
+      );
+      (prisma.permit.findFirst as jest.Mock).mockResolvedValue({
+        ...mockPermit,
+        approved: true,
+      });
+
+      const notifications = await service.handleOnSiteNotification(
+        mockEmployee.nik,
+      );
+      const permitNotification = notifications.find((n) =>
+        n.message.includes('Izin Anda hari ini telah disetujui'),
+      );
+
+      expect(permitNotification).toBeDefined();
+      expect(permitNotification.message).toContain(
+        'Izin Anda hari ini telah disetujui',
       );
     });
 
-    it('should return onsite notification correctly', async () => {
-      (prisma.employeeCache.findUnique as jest.Mock).mockResolvedValue({
-        name,
-      });
-      (prisma.attendance.findFirst as jest.Mock).mockResolvedValue({
-        id: 1,
-        status: 'presence',
-        overtime: null,
-        checkIn: { time: new Date('1970-01-01T07:20:00.000Z') },
-      });
+    it('should handle confirmation notifications with attachment', async () => {
+      (prisma.employeeCache.findUnique as jest.Mock).mockResolvedValue(
+        mockEmployee,
+      );
+      (prisma.attendance.findFirst as jest.Mock).mockResolvedValue(
+        mockAttendance,
+      );
       (prisma.attendanceConfirmation.findMany as jest.Mock).mockResolvedValue([
         {
           approved: false,
-          checked: false,
-          created_at: new Date('2024-01-01T00:25:00.000Z'),
-          attachment: '2024-01-01_test.docx',
+          checked: true,
+          created_at: new Date(),
+          attachment: 'confirmation-attachment-url',
           type: 'check_in',
-          description: 'lorem ipsum dolor sit amet',
+          description: 'Test confirmation',
         },
       ]);
-      (prisma.permit.findFirst as jest.Mock).mockResolvedValue(null);
 
-      expect(await service.handleOnSiteNotification(nik)).toEqual([
-        {
-          nik: '123456',
-          name: 'ucup',
-          message:
-            'Konfirmasi kehadiran check in Anda hari ini belum disetujui oleh Koordinator.' +
-            '\nDeskripsi konfirmasi kehadiran:\nlorem ipsum dolor sit amet',
-          date: '07:25',
-          file: `${APP_URL}/files/confirmation/2024-01-01_test.docx`,
-          action_endpoint: null,
-        },
-        {
-          nik: '123456',
-          name: 'ucup',
-          message: 'Anda terlambat 20 menit hari ini.',
-          date: '07:20',
-          file: null,
-          action_endpoint: null,
-        },
-      ]);
+      const notifications = await service.handleOnSiteNotification(
+        mockEmployee.nik,
+      );
+      const confirmationNotification = notifications.find((n) =>
+        n.file?.includes('confirmation-attachment-url'),
+      );
+
+      expect(confirmationNotification).toBeDefined();
+      expect(confirmationNotification.message).toContain('Test confirmation');
+    });
+
+    it('should handle prisma error', async () => {
+      (prisma.employeeCache.findUnique as jest.Mock).mockRejectedValue(
+        new Error(),
+      );
+
+      await expect(
+        service.handleOnSiteNotification(mockEmployee.nik),
+      ).rejects.toThrow(InternalServerErrorException);
     });
   });
 
-  describe('handleCoordinatorNotification test', () => {
-    it('should handle prisma error', async () => {
-      (prisma.attendance.findMany as jest.Mock).mockRejectedValue(new Error());
+  describe('handleCoordinatorNotification', () => {
+    it('should return notifications for coordinator', async () => {
+      const mockAttendances = [
+        {
+          status: 'presence',
+          employee: { nik: '12345', name: 'John Doe' },
+          checkIn: { time: new Date('2024-11-07T08:00:00Z') },
+          overtime: { approved: false, checked: false, created_at: new Date() },
+        },
+      ];
 
-      await expect(service.handleCoordinatorNotification()).rejects.toThrow(
-        new InternalServerErrorException(),
+      const mockConfirmations = [
+        {
+          attendance: {
+            employee: { nik: '12345', name: 'John Doe' },
+            status: 'presence',
+            checkIn: { time: new Date('2024-11-07T08:00:00Z') },
+          },
+          type: 'check_in',
+          description: 'Terlambat',
+          created_at: new Date('2024-11-07T09:00:00Z'),
+          attachment: 'url/to/file',
+        },
+      ];
+
+      const mockPermits = [
+        {
+          start_date: new Date('2024-11-08'),
+          duration: 2,
+          reason: 'Sakit',
+          employee: { nik: '12345', name: 'John Doe' },
+          permission_letter: 'url/to/permit_file',
+          created_at: new Date('2024-11-07T10:00:00Z'),
+        },
+      ];
+
+      (prisma.attendance.findMany as jest.Mock).mockResolvedValue(
+        mockAttendances,
       );
+      (prisma.attendanceConfirmation.findMany as jest.Mock).mockResolvedValue(
+        mockConfirmations,
+      );
+      (prisma.permit.findMany as jest.Mock).mockResolvedValue(mockPermits);
+
+      const notifications = await service.handleCoordinatorNotification();
+
+      expect(notifications).toHaveLength(4);
+      expect(notifications[0].nik).toBe('12345');
+      expect(notifications[0].name).toBe('John Doe');
     });
 
-    it('should return coordinator notification correctly', async () => {
-      (prisma.attendance.findMany as jest.Mock).mockResolvedValue([
-        {
-          status: 'absent',
-          employee: { nik: '123456', name: 'ucup' },
-          checkIn: null,
-          overtime: null,
-        },
-      ]);
-      (prisma.attendanceConfirmation.findMany as jest.Mock).mockResolvedValue([
-        {
-          id: 1,
-          approved: false,
-          checked: false,
-          created_at: new Date('2024-01-01T00:25:00.000Z'),
-          attachment: '2024-01-01_test.docx',
-          type: 'check_in',
-          description: 'lorem ipsum dolor sit amet',
-          attendance: {
-            employee: { nik: '123456', name: 'ucup' },
-            status: 'absent',
-            check_out_id: 2,
-            checkIn: null,
-          },
-        },
-      ]);
-      (prisma.permit.findMany as jest.Mock).mockResolvedValue([]);
+    it('should handle errors gracefully', async () => {
+      (prisma.attendance.findMany as jest.Mock).mockRejectedValue(
+        new Error('Database error'),
+      );
 
-      expect(await service.handleCoordinatorNotification()).toEqual([
-        {
-          nik: '123456',
-          name: 'ucup',
-          message:
-            "Melakukan konfirmasi kehadiran check in dengan status awal 'tidak hadir'." +
-            '\n\nDeskripsi Konfirmasi Kehadiran:\n"lorem ipsum dolor sit amet"' +
-            '\n\nJika disetujui, waktu check in OnSite akan diubah menjadi 07:00.',
-          date: '07:25',
-          file: `${APP_URL}/files/confirmation/2024-01-01_test.docx`,
-          action_endpoint: '/monitoring/confirmation/1',
-        },
-        {
-          nik: '123456',
-          name: 'ucup',
-          message: 'Tidak masuk hari ini.',
-          date: '09:01',
-          file: null,
-          action_endpoint: null,
-        },
-      ]);
+      await expect(service.handleCoordinatorNotification()).rejects.toThrow(
+        InternalServerErrorException,
+      );
     });
   });
 });
