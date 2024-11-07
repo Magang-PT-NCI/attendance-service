@@ -6,7 +6,7 @@ describe('logger utility test', () => {
   const dataObject = { key: 'value' };
   let loggerUtil: LoggerUtil;
 
-  beforeEach(() => {
+  beforeAll(() => {
     loggerUtil = new LoggerUtil(classname);
   });
 

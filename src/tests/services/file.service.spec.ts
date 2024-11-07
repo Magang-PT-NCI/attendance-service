@@ -11,7 +11,7 @@ jest.mock('serve-static', () => ({
 describe('file service test', () => {
   let service: FileService;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     service = new FileService();
   });
 

@@ -17,9 +17,12 @@ describe('api utility test', () => {
     error: jest.fn(),
   };
 
-  beforeEach(() => {
-    jest.clearAllMocks();
+  beforeAll(() => {
     (LoggerUtil.getInstance as jest.Mock).mockReturnValue(mockLogger);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
   describe('sendRequest test', () => {
