@@ -81,11 +81,11 @@ describe('upload utility test', () => {
 
     beforeAll(() => {
       (FILE_DESTINATION as any) = 'local';
-      (writeFileSync as jest.Mock).mockImplementation(() => {});
     });
 
-    afterEach(() => {
+    beforeEach(() => {
       jest.clearAllMocks();
+      (writeFileSync as jest.Mock).mockImplementation(() => {});
     });
 
     it('should throw InternalServerError when local upload failed', async () => {
