@@ -81,6 +81,14 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
+    "coveragePathIgnorePatterns": [
+      "<rootDir>/app.module.ts",
+      "<rootDir>/dto",
+      "<rootDir>/interceptors",
+      "<rootDir>/interfaces",
+      "<rootDir>/decorators",
+      "<rootDir>/services/prisma.service.ts"
+    ],
     "testEnvironment": "node"
   }
 }
