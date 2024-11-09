@@ -16,7 +16,7 @@ describe('post attendance e2e test', () => {
   const endpoint = '/attendance';
   const nik = '001230045600701';
   const location = { latitude: -6.914744, longitude: 107.60981 };
-  const photo = __dirname + '/image/user.png';
+  const photo = __dirname + '/files/user.png';
 
   let token: string;
   let app: INestApplication;

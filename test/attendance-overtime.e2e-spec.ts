@@ -81,17 +81,17 @@ describe('attendance overtime e2e test', () => {
   });
 
   it('should success to request overtime', async () => {
-    const location = { latitude: -6.914744, longitude: 107.60981 };
-    const photo = __dirname + '/image/user.png';
-
     changeDate(date, '06:20');
     const attendance = await request(app.getHttpServer())
       .post('/attendance')
       .set('authorization', `bearer ${token}`)
       .field('nik', nik)
-      .field('location', JSON.stringify(location))
+      .field(
+        'location',
+        JSON.stringify({ latitude: -6.914744, longitude: 107.60981 }),
+      )
       .field('type', 'check_in')
-      .attach('photo', photo)
+      .attach('photo', __dirname + '/files/user.png')
       .expect(201);
 
     changeDate(date, '14:20');
