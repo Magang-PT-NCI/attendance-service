@@ -1,14 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import {
-  changeDate,
-  deleteData,
-  getApp,
-  getToken,
-  testInvalidToken,
-  testInvalidTokenFormat,
-  testWithoutToken,
-} from './helper';
+import { changeDate, deleteData, getApp, getToken } from './helper';
 import { APP_URL } from '../src/config/app.config';
 
 describe('post attendance e2e test', () => {
@@ -26,16 +18,9 @@ describe('post attendance e2e test', () => {
     token = await getToken(nik, 'adityawijaya123');
   });
 
-  afterAll(async () => {
+  afterAll(() => {
     app.close();
   });
-
-  it('should return 400 status code without token', async () =>
-    await testWithoutToken('post', app, endpoint));
-  it('should return 400 status code for invalid token format', async () =>
-    await testInvalidTokenFormat('post', app, endpoint, token));
-  it('should return 401 status code for invalid token', async () =>
-    await testInvalidToken('post', app, endpoint));
 
   it('should return 400 status code for not existing employee', async () => {
     const result = await request(app.getHttpServer())

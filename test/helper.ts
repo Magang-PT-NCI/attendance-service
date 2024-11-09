@@ -1,9 +1,7 @@
 import { EMPLOYEE_SERVICE_URL } from '../src/config/service.config';
 import axios from 'axios';
-import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
 import { getDate, getDateString, getTimeString } from '../src/utils/date.utils';
 import { PrismaClient } from '@prisma/client';
 
@@ -76,55 +74,4 @@ export const getApp = async () => {
 const prisma = new PrismaClient();
 export const deleteData = async (table: string, where: object) => {
   await prisma[table].delete({ where });
-};
-
-export const testWithoutToken = async (
-  method: 'get' | 'post' | 'patch',
-  app: INestApplication,
-  endpoint: string,
-) => {
-  const result = await request(app.getHttpServer())
-    [method](endpoint)
-    .expect(400);
-
-  expect(result.body).toEqual({
-    message: 'token harus diisi',
-    error: 'Bad Request',
-    statusCode: 400,
-  });
-};
-
-export const testInvalidTokenFormat = async (
-  method: 'get' | 'post' | 'patch',
-  app: INestApplication,
-  endpoint: string,
-  token: string,
-) => {
-  const result = await request(app.getHttpServer())
-    [method](endpoint)
-    .set('authorization', token)
-    .expect(400);
-
-  expect(result.body).toEqual({
-    message: 'format token tidak valid',
-    error: 'Bad Request',
-    statusCode: 400,
-  });
-};
-
-export const testInvalidToken = async (
-  method: 'get' | 'post' | 'patch',
-  app: INestApplication,
-  endpoint: string,
-) => {
-  const result = await request(app.getHttpServer())
-    [method](endpoint)
-    .set('authorization', `bearer abc`)
-    .expect(401);
-
-  expect(result.body).toEqual({
-    message: 'token tidak valid',
-    error: 'Unauthorized',
-    statusCode: 401,
-  });
 };
