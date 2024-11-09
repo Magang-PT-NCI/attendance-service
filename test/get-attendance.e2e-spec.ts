@@ -9,17 +9,19 @@ import {
 } from './helper';
 import { getDateString } from '../src/utils/date.utils';
 
-describe('attendance e2e test', () => {
+describe('get attendance e2e test', () => {
   const nik = '001230045600701';
   const timeRegex = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
   const dateRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/;
 
+  let endpoint: string;
   let token: string;
   let app: INestApplication;
 
   beforeAll(async () => {
     app = await getApp();
     token = await getToken(nik, 'adityawijaya123');
+    endpoint = `/attendance/${nik}`;
   });
 
   afterAll(async () => {
@@ -27,11 +29,11 @@ describe('attendance e2e test', () => {
   });
 
   it('should return 400 status code without token', async () =>
-    await testWithoutToken(app, `/attendance/${nik}`));
+    await testWithoutToken('get', app, endpoint));
   it('should return 400 status code for invalid token format', async () =>
-    await testInvalidTokenFormat(app, `/attendance/${nik}`, token));
+    await testInvalidTokenFormat('get', app, endpoint, token));
   it('should return 401 status code for invalid token', async () =>
-    await testInvalidToken(app, `/attendance/${nik}`));
+    await testInvalidToken('get', app, endpoint));
 
   it('should return 404 status code for not existing employee', async () => {
     const result = await request(app.getHttpServer())
@@ -48,7 +50,7 @@ describe('attendance e2e test', () => {
 
   it('should success get attendance', async () => {
     const result = await request(app.getHttpServer())
-      .get(`/attendance/${nik}`)
+      .get(endpoint)
       .set('authorization', `bearer ${token}`)
       .expect(200);
 
@@ -113,7 +115,7 @@ describe('attendance e2e test', () => {
 
   it('should success get no content attendance', async () => {
     await request(app.getHttpServer())
-      .get(`/attendance/${nik}`)
+      .get(endpoint)
       .set('authorization', `bearer ${token}`)
       .query({ date: '2024-01-01' })
       .expect(204);
@@ -121,7 +123,7 @@ describe('attendance e2e test', () => {
 
   it('should success get attendance with correct activity filter', async () => {
     let result = await request(app.getHttpServer())
-      .get(`/attendance/${nik}`)
+      .get(endpoint)
       .set('authorization', `bearer ${token}`)
       .query({ filter: 'all' })
       .expect(200);
@@ -131,7 +133,7 @@ describe('attendance e2e test', () => {
     });
 
     result = await request(app.getHttpServer())
-      .get(`/attendance/${nik}`)
+      .get(endpoint)
       .set('authorization', `bearer ${token}`)
       .query({ filter: 'progress' })
       .expect(200);
@@ -141,7 +143,7 @@ describe('attendance e2e test', () => {
     });
 
     result = await request(app.getHttpServer())
-      .get(`/attendance/${nik}`)
+      .get(endpoint)
       .set('authorization', `bearer ${token}`)
       .query({ filter: 'done' })
       .expect(200);
