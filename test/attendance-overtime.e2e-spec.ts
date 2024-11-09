@@ -9,14 +9,11 @@ import {
   testInvalidTokenFormat,
   testWithoutToken,
 } from './helper';
-import { APP_URL } from '../src/config/app.config';
 
-describe('post attendance e2e test', () => {
-  const date = '2023-01-01';
-  const endpoint = '/attendance';
+describe('attendance overtime e2e test', () => {
+  const date = '2023-01-02';
+  const endpoint = '/attendance/overtime';
   const nik = '001230045600701';
-  const location = { latitude: -6.914744, longitude: 107.60981 };
-  const photo = __dirname + '/image/user.png';
 
   let token: string;
   let app: INestApplication;
@@ -41,27 +38,22 @@ describe('post attendance e2e test', () => {
     const result = await request(app.getHttpServer())
       .post(endpoint)
       .set('authorization', `bearer ${token}`)
-      .field('nik', nik)
-      .field('location', JSON.stringify(location))
-      .field('type', 'check in')
-      .attach('photo', photo)
       .expect(400);
 
     expect(result.body).toEqual({
-      message: 'type tidak valid',
+      message: 'nik harus diisi!',
       error: 'Bad Request',
       statusCode: 400,
     });
   });
 
   it('should return 404 status code for not existing employee', async () => {
+    changeDate(date, '14:10');
+
     const result = await request(app.getHttpServer())
       .post(endpoint)
       .set('authorization', `bearer ${token}`)
-      .field('nik', '123')
-      .field('location', JSON.stringify(location))
-      .field('type', 'check_in')
-      .attach('photo', photo)
+      .send({ nik: '123' })
       .expect(404);
 
     expect(result.body).toEqual({
@@ -72,29 +64,29 @@ describe('post attendance e2e test', () => {
   });
 
   it('should return 409 status code for invalid time', async () => {
-    changeDate(date, '05:00');
+    changeDate(date, '07:00');
 
     const result = await request(app.getHttpServer())
       .post(endpoint)
       .set('authorization', `bearer ${token}`)
-      .field('nik', nik)
-      .field('location', JSON.stringify(location))
-      .field('type', 'check_in')
-      .attach('photo', photo)
+      .send({ nik })
       .expect(409);
 
     expect(result.body).toEqual({
-      message: 'tidak dapat melakukan check in sebelum pukul 06:00',
+      message:
+        'konfirmasi lembur hanya dapat dilakukan pada pukul 14:00 hingga 15:00',
       error: 'Conflict',
       statusCode: 409,
     });
   });
 
-  it('should success to perform attendance', async () => {
-    changeDate(date, '06:20');
+  it('should success to request overtime', async () => {
+    const location = { latitude: -6.914744, longitude: 107.60981 };
+    const photo = __dirname + '/image/user.png';
 
-    let result = await request(app.getHttpServer())
-      .post(endpoint)
+    changeDate(date, '06:20');
+    const attendance = await request(app.getHttpServer())
+      .post('/attendance')
       .set('authorization', `bearer ${token}`)
       .field('nik', nik)
       .field('location', JSON.stringify(location))
@@ -102,48 +94,21 @@ describe('post attendance e2e test', () => {
       .attach('photo', photo)
       .expect(201);
 
-    expect(result.body).toEqual({
-      attendance_id: expect.any(Number),
-      nik,
-      type: 'check_in',
-      time: '06:20',
-      photo: `${APP_URL}/files/check_in/${nik}_${date}.png`,
-      location,
-    });
-
-    const logbook = await request(app.getHttpServer())
-      .post('/logbook')
-      .set('authorization', `bearer ${token}`)
-      .send({
-        attendance_id: result.body.attendance_id,
-        description: 'lorem ipsum dolor sit amet',
-        status: 'progress',
-        start_time: '08:00',
-        end_time: '09:00',
-      })
-      .expect(201);
-
     changeDate(date, '14:20');
-
-    result = await request(app.getHttpServer())
+    const result = await request(app.getHttpServer())
       .post(endpoint)
       .set('authorization', `bearer ${token}`)
-      .field('nik', nik)
-      .field('location', JSON.stringify(location))
-      .field('type', 'check_out')
-      .attach('photo', photo)
+      .send({ nik })
       .expect(201);
 
     expect(result.body).toEqual({
-      attendance_id: expect.any(Number),
-      nik,
-      type: 'check_out',
-      time: '14:20',
-      photo: `${APP_URL}/files/check_out/${nik}_${date}.png`,
-      location,
+      id: expect.any(Number),
+      approved: false,
+      attendance_id: attendance.body.attendance_id,
+      date,
     });
 
-    await deleteData('activity', { id: logbook.body.id });
-    await deleteData('attendance', { id: result.body.attendance_id });
+    await deleteData('overtime', { id: result.body.id });
+    await deleteData('attendance', { id: attendance.body.attendance_id });
   });
 });
