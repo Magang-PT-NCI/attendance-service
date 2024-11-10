@@ -4,7 +4,7 @@ import { changeDate, deleteData, getApp, getToken } from './helper';
 import { APP_URL } from '../src/config/app.config';
 
 describe('attendance confirmation e2e test', () => {
-  const date = '2023-01-08';
+  const date = '2023-01-03';
   const endpoint = '/attendance/confirmation';
   const nik = '001230045600701';
   const attachment = __dirname + '/files/test.txt';
