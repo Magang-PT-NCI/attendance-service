@@ -1,12 +1,12 @@
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { getApp, getToken } from './helper';
-import { getDateString } from '../src/utils/date.utils';
 
 describe('get attendance e2e test', () => {
   const nik = '001230045600701';
   const timeRegex = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
   const dateRegex = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/;
+  const date = process.env.DATE_START;
 
   let endpoint: string;
   let token: string;
@@ -39,6 +39,7 @@ describe('get attendance e2e test', () => {
     const result = await request(app.getHttpServer())
       .get(endpoint)
       .set('authorization', `bearer ${token}`)
+      .query({ date })
       .expect(200);
 
     const body = result.body;
@@ -48,7 +49,7 @@ describe('get attendance e2e test', () => {
 
     expect(body).toEqual({
       id: expect.any(Number),
-      date: getDateString(new Date()),
+      date,
       status: expect.stringMatching(/(presence)|(permit)|(absent)/),
       overtime: body.overtime ? expect.any(String) : null,
       late: body.late ? expect.any(String) : null,
@@ -104,7 +105,7 @@ describe('get attendance e2e test', () => {
     await request(app.getHttpServer())
       .get(endpoint)
       .set('authorization', `bearer ${token}`)
-      .query({ date: '2024-01-01' })
+      .query({ date: '2023-01-02' })
       .expect(204);
   });
 
@@ -112,7 +113,7 @@ describe('get attendance e2e test', () => {
     let result = await request(app.getHttpServer())
       .get(endpoint)
       .set('authorization', `bearer ${token}`)
-      .query({ filter: 'all' })
+      .query({ filter: 'all', date })
       .expect(200);
 
     result.body.activities.forEach((activity) => {
@@ -122,7 +123,7 @@ describe('get attendance e2e test', () => {
     result = await request(app.getHttpServer())
       .get(endpoint)
       .set('authorization', `bearer ${token}`)
-      .query({ filter: 'progress' })
+      .query({ filter: 'progress', date })
       .expect(200);
 
     result.body.activities.forEach((activity) => {
@@ -132,7 +133,7 @@ describe('get attendance e2e test', () => {
     result = await request(app.getHttpServer())
       .get(endpoint)
       .set('authorization', `bearer ${token}`)
-      .query({ filter: 'done' })
+      .query({ filter: 'done', date })
       .expect(200);
 
     result.body.activities.forEach((activity) => {
