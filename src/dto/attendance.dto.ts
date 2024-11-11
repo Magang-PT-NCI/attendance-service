@@ -18,7 +18,7 @@ import {
   getWorkingHour,
 } from '../utils/common.utils';
 import { BadRequestException } from '@nestjs/common';
-import { Attendance } from 'src/interfaces/attendance.interfaces';
+import { Attendance } from '../interfaces/attendance.interfaces';
 
 export class Location {
   @ApiProperty({ example: '-6.914744' })

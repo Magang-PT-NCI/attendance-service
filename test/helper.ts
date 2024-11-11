@@ -72,6 +72,12 @@ export const getApp = async () => {
 };
 
 const prisma = new PrismaClient();
-export const deleteData = async (table: string, where: object) => {
-  await prisma[table].delete({ where });
+
+export const deleteData = async (table: string, where: any) => {
+  if (where?.id) await prisma[table].delete({ where });
+};
+
+export const findAndDeleteData = async (table: string, where: object) => {
+  const data = prisma[table].findFirst({ where, select: { id: true } });
+  if (data?.id) await prisma[table].delete({ where: { id: data.id } });
 };

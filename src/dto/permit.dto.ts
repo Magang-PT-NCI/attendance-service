@@ -82,21 +82,3 @@ export class PermitPostReqBody {
   })
   public readonly permission_letter: Express.Multer.File;
 }
-
-export class PermitPatchParam {
-  @ApiProperty({ example: 4, description: 'permit id' })
-  public readonly id: number;
-}
-
-export class PermitPatchReqBody {
-  @ApiProperty({ example: true })
-  public readonly approved: boolean;
-}
-
-export class PermitPatchResBody {
-  @ApiProperty({ example: 5 })
-  public readonly id: number;
-
-  @ApiProperty({ example: true })
-  public readonly approved: boolean;
-}

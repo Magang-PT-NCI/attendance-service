@@ -1,6 +1,12 @@
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { changeDate, deleteData, getApp, getToken } from './helper';
+import {
+  changeDate,
+  deleteData,
+  findAndDeleteData,
+  getApp,
+  getToken,
+} from './helper';
 
 describe('patch permit e2e test', () => {
   const date = '2023-02-03';
@@ -15,6 +21,7 @@ describe('patch permit e2e test', () => {
     app = await getApp();
     token = await getToken(nik, 'adityawijaya123');
 
+    await findAndDeleteData('permit', { nik, start_date: date });
     changeDate(date, '06:05');
     const permit = await request(app.getHttpServer())
       .post('/permit')

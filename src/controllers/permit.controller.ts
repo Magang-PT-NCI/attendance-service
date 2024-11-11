@@ -11,18 +11,17 @@ import { PermitService } from '../services/permit.service';
 import { ApiTags } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { RequestPostPermit } from '../decorators/request-permit.decorator';
-import {
-  PermitPatchParam,
-  PermitPatchReqBody,
-  PermitPatchResBody,
-  PermitPostReqBody,
-  PermitResBody,
-} from '../dto/permit.dto';
+import { PermitPostReqBody, PermitResBody } from '../dto/permit.dto';
 import {
   ApiPatchPermit,
   ApiPostPermit,
 } from '../decorators/api-permit.decorator';
 import { BaseController } from './base.controller';
+import {
+  PatchReqBody,
+  PatchReqParam,
+  PatchResBody,
+} from '../dto/monitoring.dto';
 
 @Controller('permit')
 @ApiTags('Permit')
@@ -51,9 +50,9 @@ export class PermitController extends BaseController {
   @Patch(':id')
   @ApiPatchPermit()
   public async updatePermit(
-    @Param() param: PermitPatchParam,
-    @Body() body: PermitPatchReqBody,
-  ): Promise<PermitPatchResBody> {
+    @Param() param: PatchReqParam,
+    @Body() body: PatchReqBody,
+  ): Promise<PatchResBody> {
     this.logger.debug('request body: ', body);
 
     const id = parseInt(`${param.id}`);

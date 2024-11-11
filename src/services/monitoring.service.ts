@@ -10,7 +10,7 @@ import { getDate, getDateString } from '../utils/date.utils';
 import { handleError } from '../utils/common.utils';
 import { AttendanceStatus } from '@prisma/client';
 import { BaseService } from './base.service';
-import { Attendance } from 'src/interfaces/attendance.interfaces';
+import { Attendance } from '../interfaces/attendance.interfaces';
 
 @Injectable()
 export class MonitoringService extends BaseService {
