@@ -26,11 +26,13 @@ export interface EmployeeGenerateItem {
 }
 
 const nextDate = (employee: EmployeeGenerateItem): string => {
+  const current = employee.date.toISOString();
+
   employee.date.setDate(employee.date.getDate() + 1);
   if (employee.date.getDay() === 0)
     employee.date.setDate(employee.date.getDate() + 1);
 
-  return employee.date.toISOString();
+  return current;
 };
 
 export const createAttendance = async (

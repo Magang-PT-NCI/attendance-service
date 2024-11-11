@@ -124,7 +124,6 @@ describe('permit service test', () => {
         start_date: getDate(data.start_date),
         duration: data.duration,
       };
-      console.log(result);
       (prisma.permit.create as jest.Mock).mockResolvedValue(result);
 
       expect(await service.handlePermit(data)).toEqual(
