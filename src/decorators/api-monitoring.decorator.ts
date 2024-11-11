@@ -2,9 +2,8 @@ import { applyDecorators } from '@nestjs/common';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ServerErrorResBody } from '../dto/api-error.dto';
 import {
-  ConfirmationPatchResBody,
+  PatchResBody,
   DashboardResBody,
-  OvertimePatchResBody,
   ReportResBody,
 } from '../dto/monitoring.dto';
 import { ApiToken } from './api-token.decorator';
@@ -60,7 +59,7 @@ export const ApiUpdateOvertime = (): MethodDecorator => {
     ApiResponse({
       status: 200,
       description: 'success update overtime',
-      type: OvertimePatchResBody,
+      type: PatchResBody,
     }),
     ApiBadRequest(
       'approved harus berisi nilai boolean yang valid!',
@@ -85,7 +84,7 @@ export const ApiUpdateAttendanceConfirmation = (): MethodDecorator => {
     ApiResponse({
       status: 200,
       description: 'success update attendance confirmation',
-      type: ConfirmationPatchResBody,
+      type: PatchResBody,
     }),
     ApiBadRequest(
       'approved harus berisi nilai boolean yang valid!',

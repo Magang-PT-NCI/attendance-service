@@ -1,19 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
-  ConfirmationPatchResBody,
+  PatchResBody,
   DashboardResBody,
   DashboardWeeklySummary,
-  OvertimePatchResBody,
   ReportResBody,
 } from '../dto/monitoring.dto';
-import {
-  DaySummary,
-  PrismaAttendanceDashboard,
-} from 'src/interfaces/monitoring.interfaces';
+import { DaySummary } from '../interfaces/monitoring.interfaces';
 import { getDate, getDateString } from '../utils/date.utils';
 import { handleError } from '../utils/common.utils';
 import { AttendanceStatus } from '@prisma/client';
 import { BaseService } from './base.service';
+import { Attendance } from '../interfaces/attendance.interfaces';
 
 @Injectable()
 export class MonitoringService extends BaseService {
@@ -39,21 +36,20 @@ export class MonitoringService extends BaseService {
     saturday.setDate(monday.getDate() + 5);
 
     try {
-      const attendances: PrismaAttendanceDashboard[] =
-        await this.prisma.attendance.findMany({
-          where: {
-            date: {
-              gte: monday, // greater than equal
-              lte: saturday, // less than equal
-            },
+      const attendances: Attendance[] = await this.prisma.attendance.findMany({
+        where: {
+          date: {
+            gte: monday, // greater than equal
+            lte: saturday, // less than equal
           },
-          select: {
-            date: true,
-            status: true,
-          },
-        });
+        },
+        select: {
+          date: true,
+          status: true,
+        },
+      });
 
-      const todayData: PrismaAttendanceDashboard[] = attendances.filter(
+      const todayData: Attendance[] = attendances.filter(
         (attendance) => attendance.date.toISOString() === today.toISOString(),
       );
       const {
@@ -95,12 +91,10 @@ export class MonitoringService extends BaseService {
     const nikCondition = { nik: { contains: keyword } };
     const nameCondition = { employee: { name: { contains: keyword } } };
 
-    const checkSelect = { select: { time: true, photo: true, location: true } };
-
     const include = {
-      employee: { select: { nik: true, name: true } },
-      checkIn: checkSelect,
-      checkOut: checkSelect,
+      employee: true,
+      checkIn: true,
+      checkOut: true,
     };
 
     try {
@@ -122,7 +116,7 @@ export class MonitoringService extends BaseService {
   public async handleUpdateOvertime(
     id: number,
     approved: boolean,
-  ): Promise<OvertimePatchResBody> {
+  ): Promise<PatchResBody> {
     try {
       const existingOvertime = await this.prisma.overtime.findUnique({
         where: { id },
@@ -145,7 +139,7 @@ export class MonitoringService extends BaseService {
   public async handleUpdateAttendanceConfirmation(
     id: number,
     approved: boolean,
-  ): Promise<ConfirmationPatchResBody> {
+  ): Promise<PatchResBody> {
     try {
       const confirmation = await this.prisma.attendanceConfirmation.findUnique({
         where: { id },
@@ -242,18 +236,13 @@ export class MonitoringService extends BaseService {
     }
   }
 
-  private getSummaryCount(
-    attendances: PrismaAttendanceDashboard[],
-  ): DaySummary {
+  private getSummaryCount(attendances: Attendance[]): DaySummary {
     const summary: DaySummary = { presence: 0, permit: 0, absent: 0 };
     attendances.forEach(({ status }) => summary[status]++);
     return summary;
   }
 
-  private getDaySummary(
-    attendances: PrismaAttendanceDashboard[],
-    day: number,
-  ): DaySummary {
+  private getDaySummary(attendances: Attendance[], day: number): DaySummary {
     const dayData = attendances.filter(
       (attendance) => attendance.date.getDay() === day,
     );

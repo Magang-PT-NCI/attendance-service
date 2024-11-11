@@ -3,10 +3,8 @@ import { MonitoringController } from '../../controllers/monitoring.controller';
 import { MonitoringService } from '../../services/monitoring.service';
 import { BadRequestException } from '@nestjs/common';
 import {
-  ConfirmationPatchReqBody,
-  ConfirmationPatchReqParam,
-  OvertimePatchReqBody,
-  OvertimePatchReqParam,
+  PatchReqBody,
+  PatchReqParam,
   ReportQuery,
 } from '../../dto/monitoring.dto';
 import { getDate, getDateString } from '../../utils/date.utils';
@@ -87,8 +85,8 @@ describe('monitoring controller test', () => {
 
   describe('updateOvertime test', () => {
     it('should throw BadRequestException if approved is not a boolean', async () => {
-      const param: OvertimePatchReqParam = { id: 1 };
-      const body: OvertimePatchReqBody = { approved: 'not_boolean' as any };
+      const param: PatchReqParam = { id: 1 };
+      const body: PatchReqBody = { approved: 'not_boolean' as any };
 
       await expect(controller.updateOvertime(param, body)).rejects.toThrow(
         BadRequestException,
@@ -96,8 +94,8 @@ describe('monitoring controller test', () => {
     });
 
     it('should throw BadRequestException if id is not a valid number', async () => {
-      const param = { id: 'invalid_id' } as unknown as OvertimePatchReqParam;
-      const body: OvertimePatchReqBody = { approved: true };
+      const param = { id: 'invalid_id' } as unknown as PatchReqParam;
+      const body: PatchReqBody = { approved: true };
 
       await expect(controller.updateOvertime(param, body)).rejects.toThrow(
         BadRequestException,
@@ -105,8 +103,8 @@ describe('monitoring controller test', () => {
     });
 
     it('should call handleUpdateOvertime with valid data', async () => {
-      const param: OvertimePatchReqParam = { id: 1 };
-      const body: OvertimePatchReqBody = { approved: true };
+      const param: PatchReqParam = { id: 1 };
+      const body: PatchReqBody = { approved: true };
 
       await controller.updateOvertime(param, body);
       expect(monitoringService.handleUpdateOvertime).toHaveBeenCalledWith(
@@ -118,8 +116,8 @@ describe('monitoring controller test', () => {
 
   describe('updateAttendanceConfirmation test', () => {
     it('should throw BadRequestException if approved is not a boolean', async () => {
-      const param: ConfirmationPatchReqParam = { id: 1 };
-      const body: ConfirmationPatchReqBody = { approved: 'not_boolean' as any };
+      const param: PatchReqParam = { id: 1 };
+      const body: PatchReqBody = { approved: 'not_boolean' as any };
 
       await expect(
         controller.updateAttendanceConfirmation(param, body),
@@ -129,8 +127,8 @@ describe('monitoring controller test', () => {
     it('should throw BadRequestException if id is not a valid number', async () => {
       const param = {
         id: 'invalid_id',
-      } as unknown as ConfirmationPatchReqParam;
-      const body: ConfirmationPatchReqBody = { approved: true };
+      } as unknown as PatchReqParam;
+      const body: PatchReqBody = { approved: true };
 
       await expect(
         controller.updateAttendanceConfirmation(param, body),
@@ -139,7 +137,7 @@ describe('monitoring controller test', () => {
 
     it('should call handleUpdateAttendanceConfirmation with valid data', async () => {
       const param = { id: 1 };
-      const body: ConfirmationPatchReqBody = { approved: true };
+      const body: PatchReqBody = { approved: true };
 
       await controller.updateAttendanceConfirmation(param, body);
       expect(

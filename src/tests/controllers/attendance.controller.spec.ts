@@ -1,11 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AttendanceController } from '../../controllers/attendance.controller';
 import { AttendanceService } from '../../services/attendance.service';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   AttendanceQuery,
   AttendanceParam,
-  AttendancePostReqBody,
   AttendanceConfirmationReqBody,
   OvertimeReqBody,
   AttendancePostResBody,
@@ -14,13 +17,12 @@ import {
   AttendanceConfirmationResBody,
 } from '../../dto/attendance.dto';
 import { getEmployee } from '../../utils/api.utils';
+import * as sharp from 'sharp';
 
 jest.mock('../../utils/api.utils', () => ({
   getEmployee: jest.fn().mockResolvedValue({ nik: '123456' }),
 }));
-jest.mock('sharp', () => () => ({
-  metadata: jest.fn().mockResolvedValue({ width: 100, height: 100 }),
-}));
+jest.mock('sharp');
 
 describe('attendance controller test', () => {
   let controller: AttendanceController;
@@ -76,7 +78,7 @@ describe('attendance controller test', () => {
   });
 
   describe('postAttendance test', () => {
-    const body: AttendancePostReqBody = {
+    const body = {
       nik: '123',
       type: 'check_in',
       location: { latitude: 123, longitude: 123 },
@@ -87,7 +89,7 @@ describe('attendance controller test', () => {
       } as Express.Multer.File,
     };
 
-    it('should return correct response', async () => {
+    it('should return correct check in response', async () => {
       const response: AttendancePostResBody = {
         attendance_id: 1,
         nik: '123456',
@@ -97,9 +99,70 @@ describe('attendance controller test', () => {
         location: { latitude: 123, longitude: 123 },
       };
       jest.spyOn(service, 'handleCheckIn').mockResolvedValue(response);
+      (sharp as unknown as jest.Mock).mockImplementation(() => ({
+        metadata: jest.fn().mockResolvedValue({ width: 100, height: 100 }),
+      }));
 
+      body.type = 'check_in';
       const result = await controller.postAttendance(body);
       expect(result).toEqual(response);
+    });
+
+    it('should return correct check out response', async () => {
+      const response: AttendancePostResBody = {
+        attendance_id: 1,
+        nik: '123456',
+        type: 'check_out',
+        time: '14:30',
+        photo: 'image.png',
+        location: { latitude: 123, longitude: 123 },
+      };
+      jest.spyOn(service, 'handleCheckOut').mockResolvedValue(response);
+      (sharp as unknown as jest.Mock).mockImplementation(() => ({
+        metadata: jest.fn().mockResolvedValue({ width: 100, height: 100 }),
+      }));
+
+      body.type = 'check_out';
+      const result = await controller.postAttendance(body);
+      expect(result).toEqual(response);
+    });
+
+    it('should throw BadRequestException for invalid image size', async () => {
+      const response: AttendancePostResBody = {
+        attendance_id: 1,
+        nik: '123456',
+        type: 'check_in',
+        time: '06:30',
+        photo: 'image.png',
+        location: { latitude: 123, longitude: 123 },
+      };
+      jest.spyOn(service, 'handleCheckIn').mockResolvedValue(response);
+      (sharp as unknown as jest.Mock).mockImplementation(() => ({
+        metadata: jest.fn().mockResolvedValue({ width: 90, height: 100 }),
+      }));
+
+      await expect(controller.postAttendance(body)).rejects.toThrow(
+        new BadRequestException('photo harus gambar dengan rasio 1:1'),
+      );
+    });
+
+    it('should throw InternalServerErrorException for sharp error', async () => {
+      const response: AttendancePostResBody = {
+        attendance_id: 1,
+        nik: '123456',
+        type: 'check_in',
+        time: '06:30',
+        photo: 'image.png',
+        location: { latitude: 123, longitude: 123 },
+      };
+      jest.spyOn(service, 'handleCheckIn').mockResolvedValue(response);
+      (sharp as unknown as jest.Mock).mockImplementation(() => {
+        throw new Error();
+      });
+
+      await expect(controller.postAttendance(body)).rejects.toThrow(
+        InternalServerErrorException,
+      );
     });
 
     it('should throw NotFoundException if employee not found', async () => {
@@ -107,6 +170,9 @@ describe('attendance controller test', () => {
       jest.spyOn(service, 'handleCheckIn').mockImplementation(() => {
         throw new NotFoundException('karyawan tidak ditemukan');
       });
+      (sharp as unknown as jest.Mock).mockImplementation(() => ({
+        metadata: jest.fn().mockResolvedValue({ width: 100, height: 100 }),
+      }));
 
       await expect(controller.postAttendance(body)).rejects.toThrow(
         NotFoundException,

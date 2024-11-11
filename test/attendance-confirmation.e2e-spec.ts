@@ -1,7 +1,14 @@
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { changeDate, deleteData, getApp, getToken } from './helper';
+import {
+  changeDate,
+  deleteData,
+  findAndDeleteData,
+  getApp,
+  getToken,
+} from './helper';
 import { APP_URL } from '../src/config/app.config';
+import { getDate } from '../src/utils/date.utils';
 
 describe('attendance confirmation e2e test', () => {
   const date = '2023-01-03';
@@ -17,6 +24,7 @@ describe('attendance confirmation e2e test', () => {
     app = await getApp();
     token = await getToken(nik, 'adityawijaya123');
 
+    await findAndDeleteData('attendance', { nik, date: getDate(date) });
     changeDate(date, '06:20');
     const attendance = await request(app.getHttpServer())
       .post('/attendance')

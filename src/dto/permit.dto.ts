@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Reason } from '@prisma/client';
-import { Permit } from '../interfaces/permit.interfaces';
+import { Permit, Reason } from '@prisma/client';
 import { getDate, getDateString } from '../utils/date.utils';
 import { getFileUrl } from '../utils/common.utils';
 
@@ -82,22 +81,4 @@ export class PermitPostReqBody {
     format: 'buffer',
   })
   public readonly permission_letter: Express.Multer.File;
-}
-
-export class PermitPatchParam {
-  @ApiProperty({ example: 4, description: 'permit id' })
-  public readonly id: number;
-}
-
-export class PermitPatchReqBody {
-  @ApiProperty({ example: true })
-  public readonly approved: boolean;
-}
-
-export class PermitPatchResBody {
-  @ApiProperty({ example: 5 })
-  public readonly id: number;
-
-  @ApiProperty({ example: true })
-  public readonly approved: boolean;
 }

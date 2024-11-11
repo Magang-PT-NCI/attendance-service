@@ -1,11 +1,17 @@
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { changeDate, deleteData, getApp, getToken } from './helper';
+import {
+  changeDate,
+  deleteData,
+  findAndDeleteData,
+  getApp,
+  getToken,
+} from './helper';
 import { getDateString } from '../src/utils/date.utils';
 import { APP_URL } from '../src/config/app.config';
 
 describe('notification e2e test', () => {
-  const date = '2023-05-01';
+  const date = '2020-05-01';
   const nik = '001230045600701';
   const endpoint = '/notification';
 
@@ -23,6 +29,7 @@ describe('notification e2e test', () => {
     startDate = new Date(date);
     startDate.setDate(startDate.getDate() + 1);
 
+    await findAndDeleteData('permit', { nik, start_date: startDate });
     changeDate(date, '07:00');
     const permit = await request(app.getHttpServer())
       .post('/permit')

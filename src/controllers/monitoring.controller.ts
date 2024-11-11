@@ -9,13 +9,10 @@ import {
 } from '@nestjs/common';
 import { MonitoringService } from '../services/monitoring.service';
 import {
-  ConfirmationPatchReqBody,
-  ConfirmationPatchReqParam,
-  ConfirmationPatchResBody,
+  PatchReqBody,
+  PatchReqParam,
+  PatchResBody,
   DashboardResBody,
-  OvertimePatchReqBody,
-  OvertimePatchReqParam,
-  OvertimePatchResBody,
   ReportQuery,
   ReportResBody,
 } from '../dto/monitoring.dto';
@@ -65,9 +62,9 @@ export class MonitoringController extends BaseController {
   @Patch('overtime/:id')
   @ApiUpdateOvertime()
   public async updateOvertime(
-    @Param() param: OvertimePatchReqParam,
-    @Body() body: OvertimePatchReqBody,
-  ): Promise<OvertimePatchResBody> {
+    @Param() param: PatchReqParam,
+    @Body() body: PatchReqBody,
+  ): Promise<PatchResBody> {
     this.validateUpdate(body.approved);
     const id = this.getNumberId(`${param.id}`);
     return await this.service.handleUpdateOvertime(id, body.approved);
@@ -76,9 +73,9 @@ export class MonitoringController extends BaseController {
   @Patch('confirmation/:id')
   @ApiUpdateAttendanceConfirmation()
   public async updateAttendanceConfirmation(
-    @Param() param: ConfirmationPatchReqParam,
-    @Body() body: ConfirmationPatchReqBody,
-  ): Promise<ConfirmationPatchResBody> {
+    @Param() param: PatchReqParam,
+    @Body() body: PatchReqBody,
+  ): Promise<PatchResBody> {
     this.validateUpdate(body.approved);
     const id = this.getNumberId(`${param.id}`);
     return await this.service.handleUpdateAttendanceConfirmation(

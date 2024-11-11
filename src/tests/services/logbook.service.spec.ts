@@ -71,7 +71,6 @@ describe('logbook service test', () => {
           start_time: DateUtils.getDate(data.start_time),
           end_time: DateUtils.getDate(data.end_time),
         },
-        select: expect.any(Object),
       });
     });
 
@@ -166,7 +165,6 @@ describe('logbook service test', () => {
       expect(prisma.activity.update).toHaveBeenCalledWith({
         where: { id: activityId },
         data,
-        select: expect.any(Object),
       });
     });
 

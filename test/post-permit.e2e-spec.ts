@@ -5,7 +5,7 @@ import { APP_URL } from '../src/config/app.config';
 import { getDateString } from '../src/utils/date.utils';
 
 describe('post permit e2e test', () => {
-  const date = '2023-02-01';
+  const date = '2021-02-01';
   const endpoint = '/permit';
   const nik = '001230045600701';
   const permission_letter = __dirname + '/files/test.txt';

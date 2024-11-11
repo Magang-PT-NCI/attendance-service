@@ -3,17 +3,14 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  PermitPatchResBody,
-  PermitPostReqBody,
-  PermitResBody,
-} from '../dto/permit.dto';
+import { PermitPostReqBody, PermitResBody } from '../dto/permit.dto';
 import { Reason } from '@prisma/client';
 import { getEmployee } from '../utils/api.utils';
 import { getDate, getDateString } from '../utils/date.utils';
 import { uploadFile } from '../utils/upload.utils';
 import { BaseService } from './base.service';
 import { handleError } from '../utils/common.utils';
+import { PatchResBody } from '../dto/monitoring.dto';
 
 @Injectable()
 export class PermitService extends BaseService {
@@ -80,7 +77,7 @@ export class PermitService extends BaseService {
   public async handleUpdatePermit(
     id: number,
     approved: boolean,
-  ): Promise<PermitPatchResBody> {
+  ): Promise<PatchResBody> {
     try {
       const existingPermit = await this.prisma.permit.findUnique({
         where: { id },

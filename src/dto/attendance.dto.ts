@@ -2,18 +2,13 @@ import { ApiProperty } from '@nestjs/swagger';
 import { LogbookResBody } from './logbook.dto';
 import { PermitResBody } from './permit.dto';
 import {
-  Check,
-  PrismaAttendance,
-  PrismaAttendancePost,
-  PrismaCommonAttendance,
-} from '../interfaces/attendance.interfaces';
-import {
   AttendanceConfirmation,
   AttendanceStatus,
   Attendance as PrismaAttendanceFields,
   Overtime,
   ConfirmationType,
   Reason,
+  Check,
 } from '@prisma/client';
 import { getDateString, getTimeString } from '../utils/date.utils';
 import {
@@ -23,6 +18,7 @@ import {
   getWorkingHour,
 } from '../utils/common.utils';
 import { BadRequestException } from '@nestjs/common';
+import { Attendance } from '../interfaces/attendance.interfaces';
 
 export class Location {
   @ApiProperty({ example: '-6.914744' })
@@ -118,10 +114,7 @@ export class AttendancePostResBody {
   @ApiProperty()
   public readonly location: Location;
 
-  public constructor(
-    body: AttendancePostReqBody,
-    result: PrismaAttendancePost,
-  ) {
+  public constructor(body: AttendancePostReqBody, result: Attendance) {
     this.attendance_id = result.id;
     this.nik = body.nik;
     this.location = body.location;
@@ -158,7 +151,7 @@ export class AttendanceCheck {
   }
 }
 
-export class Attendance {
+export class AttendanceCommon {
   @ApiProperty({ example: 10 })
   public readonly id: number;
 
@@ -177,7 +170,7 @@ export class Attendance {
   @ApiProperty({ description: 'may be null', example: '7 jam 34 detik' })
   public readonly working_hours?: string;
 
-  public constructor(attendance: PrismaCommonAttendance) {
+  public constructor(attendance: Attendance) {
     this.id = attendance.id;
     this.date = getDateString(attendance.date);
     this.status = attendance.status;
@@ -191,7 +184,7 @@ export class Attendance {
   }
 }
 
-export class AttendanceResBody extends Attendance {
+export class AttendanceResBody extends AttendanceCommon {
   @ApiProperty({ description: 'may be null' })
   public readonly checkIn?: AttendanceCheck;
 
@@ -208,7 +201,7 @@ export class AttendanceResBody extends Attendance {
   })
   public readonly activities: LogbookResBody[];
 
-  public constructor(attendance: PrismaAttendance) {
+  public constructor(attendance: Attendance) {
     super(attendance);
 
     this.checkIn = attendance.checkIn

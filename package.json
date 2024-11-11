@@ -85,10 +85,19 @@
       "<rootDir>/app.module.ts",
       "<rootDir>/dto",
       "<rootDir>/interceptors",
+      "<rootDir>/config",
       "<rootDir>/interfaces",
       "<rootDir>/decorators",
       "<rootDir>/services/prisma.service.ts"
     ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 70,
+        "functions": 70,
+        "lines": 70,
+        "statements": 70
+      }
+    },
     "testEnvironment": "node"
   }
 }
