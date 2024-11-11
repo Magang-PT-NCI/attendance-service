@@ -174,6 +174,12 @@ describe('NotificationService', () => {
           checkIn: { time: new Date('2024-11-07T08:00:00Z') },
           overtime: { approved: false, checked: false, created_at: new Date() },
         },
+        {
+          status: 'absent',
+          employee: { nik: '12346', name: 'Ucup' },
+          checkIn: null,
+          overtime: null,
+        },
       ];
 
       const mockConfirmations = [
@@ -185,6 +191,17 @@ describe('NotificationService', () => {
           },
           type: 'check_in',
           description: 'Terlambat',
+          created_at: new Date('2024-11-07T09:00:00Z'),
+          attachment: 'url/to/file',
+        },
+        {
+          attendance: {
+            employee: { nik: '12346', name: 'Ucup' },
+            status: 'absent',
+            checkIn: null,
+          },
+          type: 'check_in',
+          description: 'Lupa presensi',
           created_at: new Date('2024-11-07T09:00:00Z'),
           attachment: 'url/to/file',
         },
@@ -211,9 +228,24 @@ describe('NotificationService', () => {
 
       const notifications = await service.handleCoordinatorNotification();
 
-      expect(notifications).toHaveLength(4);
-      expect(notifications[0].nik).toBe('12345');
-      expect(notifications[0].name).toBe('John Doe');
+      console.log(notifications);
+
+      expect(notifications).toContainEqual({
+        nik: '12345',
+        name: 'John Doe',
+        message: expect.any(String),
+        date: expect.any(String),
+        file: expect.any(String),
+        action_endpoint: expect.any(String),
+      });
+      expect(notifications).toContainEqual({
+        nik: '12346',
+        name: 'Ucup',
+        message: expect.any(String),
+        date: expect.any(String),
+        file: expect.any(String),
+        action_endpoint: expect.any(String),
+      });
     });
 
     it('should handle errors gracefully', async () => {
