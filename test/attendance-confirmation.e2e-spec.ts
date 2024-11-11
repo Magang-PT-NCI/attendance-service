@@ -38,7 +38,7 @@ describe('attendance confirmation e2e test', () => {
     await deleteData('attendance', { id: attendanceId });
   });
 
-  it('should return 400 status code for not existing employee', async () => {
+  it('should return 400 status code for invalid request', async () => {
     const result = await request(app.getHttpServer())
       .post(endpoint)
       .set('authorization', `bearer ${token}`)
