@@ -126,35 +126,17 @@ export class DashboardResBody {
   public readonly weekly_summary: DashboardWeeklySummary;
 }
 
-export class OvertimePatchReqParam {
-  @ApiProperty({ example: 5, description: 'overtime id' })
-  public readonly id: number;
-}
-
-export class OvertimePatchReqBody {
-  @ApiProperty({ example: true })
-  public readonly approved: boolean;
-}
-
-export class OvertimePatchResBody {
+export class PatchReqParam {
   @ApiProperty({ example: 5 })
   public readonly id: number;
+}
 
+export class PatchReqBody {
   @ApiProperty({ example: true })
   public readonly approved: boolean;
 }
 
-export class ConfirmationPatchReqParam {
-  @ApiProperty({ example: 5, description: 'attendance confirmation id' })
-  public readonly id: number;
-}
-
-export class ConfirmationPatchReqBody {
-  @ApiProperty({ example: true })
-  public readonly approved: boolean;
-}
-
-export class ConfirmationPatchResBody {
+export class PatchResBody {
   @ApiProperty({ example: 5 })
   public readonly id: number;
 

@@ -1,9 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
-  ConfirmationPatchResBody,
+  PatchResBody,
   DashboardResBody,
   DashboardWeeklySummary,
-  OvertimePatchResBody,
   ReportResBody,
 } from '../dto/monitoring.dto';
 import {
@@ -122,7 +121,7 @@ export class MonitoringService extends BaseService {
   public async handleUpdateOvertime(
     id: number,
     approved: boolean,
-  ): Promise<OvertimePatchResBody> {
+  ): Promise<PatchResBody> {
     try {
       const existingOvertime = await this.prisma.overtime.findUnique({
         where: { id },
@@ -145,7 +144,7 @@ export class MonitoringService extends BaseService {
   public async handleUpdateAttendanceConfirmation(
     id: number,
     approved: boolean,
-  ): Promise<ConfirmationPatchResBody> {
+  ): Promise<PatchResBody> {
     try {
       const confirmation = await this.prisma.attendanceConfirmation.findUnique({
         where: { id },

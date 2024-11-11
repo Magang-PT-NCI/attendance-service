@@ -13,7 +13,6 @@ import {
 } from './api-response.decorator';
 import { ServerErrorResBody } from '../dto/api-error.dto';
 import { PermitPostReqBody, PermitResBody } from '../dto/permit.dto';
-import { LogbookResBody } from '../dto/logbook.dto';
 
 export const ApiPostPermit = (): MethodDecorator => {
   return applyDecorators(
