@@ -4,7 +4,6 @@ import { PermitResBody } from './permit.dto';
 import {
   AttendanceConfirmation,
   AttendanceStatus,
-  Attendance as PrismaAttendanceFields,
   Overtime,
   ConfirmationType,
   Reason,
@@ -235,7 +234,7 @@ export class OvertimeResBody {
   @ApiProperty({ example: '2024-01-01' })
   public readonly date: string;
 
-  public constructor(overtime: Overtime, attendance: PrismaAttendanceFields) {
+  public constructor(overtime: Overtime, attendance: Attendance) {
     this.id = overtime.id;
     this.approved = overtime.approved;
     this.attendance_id = attendance.id;
