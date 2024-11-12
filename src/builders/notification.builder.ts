@@ -8,8 +8,8 @@ export class NotificationBuilder {
   private name: string;
   private message: string;
   private date: string;
-  private file: string | null = null;
-  private action_endpoint: string | null = null;
+  private file?: string = null;
+  private action_endpoint?: string = null;
   private priority: number;
 
   public constructor(nik?: string, name?: string) {
