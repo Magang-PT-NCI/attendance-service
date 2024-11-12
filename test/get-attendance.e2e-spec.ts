@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
-import { getApp, getToken } from './helper';
+import { changeDate, getApp, getToken } from './helper';
 
 describe('get attendance e2e test', () => {
   const nik = '001230045600701';
@@ -16,6 +16,8 @@ describe('get attendance e2e test', () => {
     app = await getApp();
     token = await getToken(nik, 'adityawijaya123');
     endpoint = `/attendance/${nik}`;
+
+    changeDate(date, '07:00');
   });
 
   afterAll(() => {

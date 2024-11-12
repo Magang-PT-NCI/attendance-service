@@ -11,10 +11,10 @@ import {
 export interface Attendance {
   id?: number;
   nik?: string;
-  check_in_id?: number | null;
-  check_out_id?: number | null;
-  permit_id?: number | null;
-  overtime_id?: number | null;
+  check_in_id?: number;
+  check_out_id?: number;
+  permit_id?: number;
+  overtime_id?: number;
   date?: Date;
   status?: AttendanceStatus;
   checkIn?: Check;
