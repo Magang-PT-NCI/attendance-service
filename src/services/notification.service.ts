@@ -55,7 +55,7 @@ export class NotificationService extends BaseService {
 
           notificationBuilder
             .setMessage(message)
-            .setDate(getTimeString(confirmation.created_at))
+            .setDateString(getTimeString(confirmation.created_at))
             .setFile(
               getFileUrl(confirmation.attachment, 'confirmation', 'file'),
             )
@@ -69,17 +69,17 @@ export class NotificationService extends BaseService {
         if (late) {
           notificationBuilder
             .setMessage(`Anda terlambat ${late} hari ini.`)
-            .setDate(getTimeString(attendance.checkIn.time, true))
+            .setDateString(getTimeString(attendance.checkIn.time, true))
             .push();
         } else if (attendance?.status === 'absent') {
           notificationBuilder
             .setMessage('Anda tidak masuk hari ini.')
-            .setDate('09:01')
+            .setDateString('09:01')
             .push();
         } else if (attendance?.status === 'permit') {
           notificationBuilder
             .setMessage('Izin Anda hari ini telah disetujui oleh Koordinator.')
-            .setDate(getDateString(current))
+            .setDateString(getDateString(current))
             .push();
         }
 
@@ -88,7 +88,7 @@ export class NotificationService extends BaseService {
             .setMessage(
               `Pengajuan lembur Anda hari ini ${this.getApprovalMessage(attendance.overtime.approved, attendance.overtime.checked)}.`,
             )
-            .setDate(getTimeString(attendance.overtime.created_at))
+            .setDateString(getTimeString(attendance.overtime.created_at))
             .setPriority(1)
             .push();
         }
@@ -111,7 +111,7 @@ export class NotificationService extends BaseService {
           .setMessage(
             `Pengajuan izin Anda untuk tanggal ${getDateString(permit.start_date)} selama ${permit.duration} hari ${this.getApprovalMessage(permit.approved, permit.checked)}.`,
           )
-          .setDate(getDateString(permit.created_at))
+          .setDateString(getDateString(permit.created_at))
           .setFile(getFileUrl(permit.permission_letter, 'permit', 'file'))
           .setPriority(1)
           .push();
@@ -155,18 +155,21 @@ export class NotificationService extends BaseService {
         if (late)
           notificationBuilder
             .setMessage(`Terlambat ${late} hari ini.`)
-            .setDate(getTimeString(attendance.checkIn.time, true))
+            .setDate(attendance.checkIn.time)
+            .setDateString(getTimeString(attendance.checkIn.time, true))
             .push();
         else if (attendance?.status === 'absent')
           notificationBuilder
             .setMessage('Tidak masuk hari ini.')
-            .setDate('09:01')
+            .setDate(new Date('1970-01-01T09:01:00.000Z'))
+            .setDateString('09:01')
             .push();
 
         if (attendance?.overtime?.checked === false)
           notificationBuilder
             .setMessage('Mengajukan lembur hari ini.')
-            .setDate(getTimeString(attendance.overtime.created_at))
+            .setDate(attendance.overtime.created_at)
+            .setDateString(getTimeString(attendance.overtime.created_at))
             .setPriority(1)
             .setActionEndpoint(`/monitoring/overtime/${attendance.overtime.id}`)
             .push();
@@ -218,7 +221,8 @@ export class NotificationService extends BaseService {
         notificationBuilder
           .setNik(confirmation.attendance.employee.nik)
           .setName(confirmation.attendance.employee.name)
-          .setDate(getTimeString(confirmation.created_at))
+          .setDate(confirmation.created_at)
+          .setDateString(getTimeString(confirmation.created_at))
           .setFile(getFileUrl(confirmation.attachment, 'confirmation', 'file'))
           .setMessage(message)
           .setActionEndpoint(`/monitoring/confirmation/${confirmation.id}`)
@@ -237,7 +241,8 @@ export class NotificationService extends BaseService {
         notificationBuilder
           .setNik(permit.employee.nik)
           .setName(permit.employee.name)
-          .setDate(getDateString(permit.created_at))
+          .setDate(permit.created_at)
+          .setDateString(getDateString(permit.created_at))
           .setFile(getFileUrl(permit.permission_letter, 'permit', 'file'))
           .setMessage(
             `Mengajukan izin pada ${getDateString(permit.start_date)} selama ${permit.duration} hari dengan alasan "${permit.reason}".`,

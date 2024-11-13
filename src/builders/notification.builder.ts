@@ -7,7 +7,8 @@ export class NotificationBuilder {
   private nik: string;
   private name: string;
   private message: string;
-  private date: string;
+  private dateString: string;
+  private date: Date;
   private file?: string = null;
   private action_endpoint?: string = null;
   private priority: number;
@@ -17,6 +18,7 @@ export class NotificationBuilder {
     this.name = name;
     this.priority = 1;
     this.notifications = [];
+    this.date = new Date();
   }
 
   public push() {
@@ -24,6 +26,7 @@ export class NotificationBuilder {
       nik: this.nik,
       name: this.name,
       message: this.message,
+      dateString: this.dateString,
       date: this.date,
       file: this.file,
       action_endpoint: this.action_endpoint,
@@ -31,18 +34,25 @@ export class NotificationBuilder {
     });
 
     this.message = '';
-    this.date = '';
+    this.dateString = '';
     this.file = null;
     this.action_endpoint = null;
   }
 
   public getNotifications(): NotificationResBody[] {
     return this.notifications
-      .sort((a, b) => a.priority - b.priority)
+      .sort((a, b) => {
+        if (a.priority !== b.priority) return a.priority - b.priority;
+        return b.date.getTime() - a.date.getTime();
+      })
       .map((notificationItem) => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { priority, ...notification } = notificationItem;
-        return notification;
+        const { priority, date, dateString, ...notification } =
+          notificationItem;
+        return {
+          ...notification,
+          date: dateString,
+        };
       });
   }
 
@@ -66,7 +76,12 @@ export class NotificationBuilder {
     return this;
   }
 
-  public setDate(date: string): NotificationBuilder {
+  public setDateString(dateString: string): NotificationBuilder {
+    this.dateString = dateString;
+    return this;
+  }
+
+  public setDate(date: Date): NotificationBuilder {
     this.date = date;
     return this;
   }
