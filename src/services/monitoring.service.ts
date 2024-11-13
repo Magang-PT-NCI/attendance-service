@@ -152,7 +152,12 @@ export class MonitoringService extends BaseService {
 
       return this.prisma.overtime.update({
         where: { id },
-        data: { approved, checked: true, deniedDescription: description },
+        data: {
+          approved,
+          checked: true,
+          deniedDescription: description,
+          approvalNik,
+        },
         select: { id: true, approved: true },
       });
     } catch (error) {
@@ -204,7 +209,12 @@ export class MonitoringService extends BaseService {
       if (!approved)
         return this.prisma.attendanceConfirmation.update({
           where: { id },
-          data: { approved, checked: true, deniedDescription: description },
+          data: {
+            approved,
+            checked: true,
+            deniedDescription: description,
+            approvalNik,
+          },
           select: { id: true, approved: true },
         });
 
@@ -270,7 +280,12 @@ export class MonitoringService extends BaseService {
 
         return prisma.attendanceConfirmation.update({
           where: { id },
-          data: { approved, checked: true, deniedDescription: description },
+          data: {
+            approved,
+            checked: true,
+            deniedDescription: description,
+            approvalNik,
+          },
           select: { id: true, approved: true },
         });
       });
