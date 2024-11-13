@@ -34,6 +34,7 @@ model Attendance {
 model EmployeeCache {
   nik         String       @id @db.VarChar(20)
   name        String       @db.VarChar(50)
+  area        String       @db.VarChar(50)
   attendances Attendance[] @relation("Employee")
   permits     Permit[]     @relation("EmployeePermit")
 }

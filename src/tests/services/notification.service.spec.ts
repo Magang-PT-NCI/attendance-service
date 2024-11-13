@@ -15,7 +15,7 @@ jest.mock('../../services/prisma.service', () => ({
 }));
 
 describe('NotificationService', () => {
-  const mockEmployee = { nik: '12345', name: 'John Doe' };
+  const mockEmployee = { nik: '12345', name: 'John Doe', area: 'Bandung' };
   const mockAttendance = {
     id: 1,
     status: 'presence',
@@ -167,6 +167,8 @@ describe('NotificationService', () => {
 
   describe('handleCoordinatorNotification', () => {
     it('should return notifications for coordinator', async () => {
+      const mockEmployee = { name: 'ucup', nik: '12346', area: 'Bandung' };
+
       const mockAttendances = [
         {
           status: 'presence',
@@ -218,6 +220,9 @@ describe('NotificationService', () => {
         },
       ];
 
+      (prisma.employeeCache.findUnique as jest.Mock).mockResolvedValue(
+        mockEmployee,
+      );
       (prisma.attendance.findMany as jest.Mock).mockResolvedValue(
         mockAttendances,
       );
@@ -226,9 +231,9 @@ describe('NotificationService', () => {
       );
       (prisma.permit.findMany as jest.Mock).mockResolvedValue(mockPermits);
 
-      const notifications = await service.handleCoordinatorNotification();
-
-      console.log(notifications);
+      const notifications = await service.handleCoordinatorNotification(
+        mockEmployee.nik,
+      );
 
       expect(notifications).toContainEqual({
         nik: '12345',
@@ -253,9 +258,9 @@ describe('NotificationService', () => {
         new Error('Database error'),
       );
 
-      await expect(service.handleCoordinatorNotification()).rejects.toThrow(
-        InternalServerErrorException,
-      );
+      await expect(
+        service.handleCoordinatorNotification('12346'),
+      ).rejects.toThrow(InternalServerErrorException);
     });
   });
 });

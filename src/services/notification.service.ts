@@ -11,16 +11,20 @@ export class NotificationService extends BaseService {
   public async handleOnSiteNotification(
     nik: string,
   ): Promise<NotificationResBody[]> {
-    const name = await this.getEmployeeName(nik);
-
-    if (!name) {
-      throw new NotFoundException('Karyawan tidak ditemukan!');
-    }
-
-    const notificationBuilder = new NotificationBuilder(nik, name);
-    const current = getDate(getDateString(new Date()));
-
     try {
+      const employee = await this.prisma.employeeCache.findUnique({
+        where: { nik },
+        select: { name: true },
+      });
+      const name = employee?.name;
+
+      if (!name) {
+        throw new NotFoundException('Karyawan tidak ditemukan!');
+      }
+
+      const notificationBuilder = new NotificationBuilder(nik, name);
+      const current = getDate(getDateString(new Date()));
+
       const attendance = await this.prisma.attendance.findFirst({
         where: { nik, date: current },
         select: {
@@ -104,6 +108,7 @@ export class NotificationService extends BaseService {
           created_at: true,
           permission_letter: true,
         },
+        orderBy: [{ start_date: 'asc' }],
       });
 
       if (permit) {
@@ -116,21 +121,28 @@ export class NotificationService extends BaseService {
           .setPriority(1)
           .push();
       }
+
+      return notificationBuilder.getNotifications();
     } catch (error) {
       handleError(error, this.logger);
     }
-
-    return notificationBuilder.getNotifications();
   }
 
-  public async handleCoordinatorNotification(): Promise<NotificationResBody[]> {
+  public async handleCoordinatorNotification(
+    nik: string,
+  ): Promise<NotificationResBody[]> {
     const notificationBuilder = new NotificationBuilder();
     const current = getDate(getDateString(new Date()));
 
     try {
+      const employee = await this.prisma.employeeCache.findUnique({
+        where: { nik },
+      });
+
       const attendances = await this.prisma.attendance.findMany({
         where: {
           date: current,
+          employee: { area: employee.area },
           OR: [
             { status: 'absent' },
             { status: 'presence' },
@@ -177,7 +189,10 @@ export class NotificationService extends BaseService {
 
       notificationBuilder.setPriority(2);
       const confirmations = await this.prisma.attendanceConfirmation.findMany({
-        where: { attendance: { date: current }, checked: false },
+        where: {
+          attendance: { date: current, employee: { area: employee.area } },
+          checked: false,
+        },
         include: {
           attendance: {
             select: {
@@ -231,7 +246,11 @@ export class NotificationService extends BaseService {
 
       notificationBuilder.setPriority(3);
       const permits = await this.prisma.permit.findMany({
-        where: { start_date: { gt: current }, checked: false },
+        where: {
+          start_date: { gt: current },
+          checked: false,
+          employee: { area: employee.area },
+        },
         include: {
           employee: { select: { nik: true, name: true } },
         },
@@ -255,18 +274,6 @@ export class NotificationService extends BaseService {
     }
 
     return notificationBuilder.getNotifications();
-  }
-
-  private async getEmployeeName(nik: string): Promise<string> {
-    try {
-      const employee = await this.prisma.employeeCache.findUnique({
-        where: { nik },
-        select: { name: true },
-      });
-      return employee?.name;
-    } catch (error) {
-      handleError(error, this.logger);
-    }
   }
 
   private getApprovalMessage(approved: boolean, checked: boolean): string {

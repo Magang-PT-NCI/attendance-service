@@ -78,6 +78,6 @@ export const deleteData = async (table: string, where: any) => {
 };
 
 export const findAndDeleteData = async (table: string, where: object) => {
-  const data = prisma[table].findFirst({ where, select: { id: true } });
+  const data = await prisma[table].findFirst({ where, select: { id: true } });
   if (data?.id) await prisma[table].delete({ where: { id: data.id } });
 };

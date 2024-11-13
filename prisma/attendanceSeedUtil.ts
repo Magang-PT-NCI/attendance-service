@@ -21,6 +21,7 @@ export const overtimeCheckOutTimes = [
 export interface EmployeeGenerateItem {
   nik: string;
   name: string;
+  area: string;
   location: string;
   date: Date;
 }

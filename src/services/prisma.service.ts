@@ -30,20 +30,27 @@ export class PrismaService
   }
 
   public async updateEmployeeCache(employee: EmployeeResData) {
-    const { nik, name } = employee;
+    const { nik, name, area } = employee;
     const cachedEmployee = await this.employeeCache.findUnique({
       where: { nik },
     });
 
     try {
-      if (cachedEmployee && name !== cachedEmployee.name)
-        await this.employeeCache.update({
-          where: { nik },
-          data: { name },
-        });
-      else if (!cachedEmployee)
+      if (cachedEmployee) {
+        let updateName: string = undefined;
+        let updateArea: string = undefined;
+
+        if (name !== cachedEmployee.name) updateName = name;
+        if (area !== cachedEmployee.area) updateArea = area;
+
+        if (updateName || updateArea)
+          await this.employeeCache.update({
+            where: { nik },
+            data: { name: updateName, area: updateArea },
+          });
+      } else
         await this.employeeCache.create({
-          data: { nik, name },
+          data: { nik, name, area },
         });
     } catch (error) {
       handleError(error, this.logger);
@@ -54,13 +61,10 @@ export class PrismaService
     this.logger.info('Synchronizing employee cache');
 
     const employees = await getAllEmployee();
-    const filteredEmployees = employees.filter(
-      (employee) => employee.position === 'OnSite',
-    );
-
-    for (const employee of filteredEmployees) {
+    for (const employee of employees) {
       await this.updateEmployeeCache(employee);
     }
+
     this.logger.info('Employee cache synchronized');
   }
 }

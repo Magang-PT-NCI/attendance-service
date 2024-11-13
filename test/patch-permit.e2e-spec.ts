@@ -7,6 +7,7 @@ import {
   getApp,
   getToken,
 } from './helper';
+import { getDate } from '../src/utils/date.utils';
 
 describe('patch permit e2e test', () => {
   const date = '2023-02-03';
@@ -21,7 +22,7 @@ describe('patch permit e2e test', () => {
     app = await getApp();
     token = await getToken(nik, 'adityawijaya123');
 
-    await findAndDeleteData('permit', { nik, start_date: date });
+    await findAndDeleteData('permit', { nik, start_date: getDate(date) });
     changeDate(date, '06:05');
     const permit = await request(app.getHttpServer())
       .post('/permit')
