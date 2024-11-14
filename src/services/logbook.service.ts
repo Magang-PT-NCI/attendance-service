@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -23,11 +24,18 @@ export class LogbookService extends BaseService {
     try {
       const attendance = await this.prisma.attendance.findFirst({
         where: { id: attendance_id },
-        select: { id: true },
+        select: {
+          id: true,
+          checkIn: { select: { time: true } },
+          checkOut: { select: { time: true } },
+        },
       });
 
       if (!attendance)
         throw new NotFoundException('data attendance tidak ditemukan');
+
+      if (!attendance.checkIn)
+        throw new ConflictException('anda belum melakukan check in');
 
       if (!isValidTime(start_time))
         throw new BadRequestException(
@@ -38,13 +46,32 @@ export class LogbookService extends BaseService {
           'end_time harus waktu yang valid dengan format HH:MM',
         );
 
+      const startTime = getDate(start_time);
+      const endTime = getDate(end_time);
+
+      if (startTime.getTime() < attendance.checkIn.time.getTime())
+        throw new ConflictException(
+          'start time tidak bisa kurang dari waktu check in',
+        );
+
+      if (endTime.getTime() < startTime.getTime())
+        throw new ConflictException(
+          'end time tidak boleh kurang dari start time',
+        );
+
+      const checkOutTime = attendance.checkOut?.time;
+      if (checkOutTime && endTime.getTime() > checkOutTime.getTime())
+        throw new ConflictException(
+          'end time tidak boleh melebihi waktu check out',
+        );
+
       const logbook: Activity = await this.prisma.activity.create({
         data: {
           attendance_id,
           description,
           status,
-          start_time: getDate(start_time),
-          end_time: getDate(end_time),
+          start_time: startTime,
+          end_time: endTime,
         },
       });
 

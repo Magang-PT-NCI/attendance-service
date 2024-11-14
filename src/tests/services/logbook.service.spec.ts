@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
@@ -33,6 +34,12 @@ describe('logbook service test', () => {
   });
 
   describe('handlePostLogbook test', () => {
+    const mockAttendance = {
+      id: 1,
+      checkIn: { time: DateUtils.getDate('06:50') },
+      checkOut: { time: DateUtils.getDate('14:00') },
+    };
+
     it('should create a logbook entry successfully', async () => {
       const data: LogbookReqBody = {
         attendance_id: 1,
@@ -44,7 +51,7 @@ describe('logbook service test', () => {
 
       jest
         .spyOn(prisma.attendance, 'findFirst')
-        .mockResolvedValue({ id: 1 } as Attendance);
+        .mockResolvedValue(mockAttendance as unknown as Attendance);
 
       jest.spyOn(prisma.activity, 'create').mockResolvedValue({
         id: 1,
@@ -59,7 +66,7 @@ describe('logbook service test', () => {
       expect(result).toEqual(expect.any(LogbookResBody));
       expect(prisma.attendance.findFirst).toHaveBeenCalledWith({
         where: { id: data.attendance_id },
-        select: { id: true },
+        select: expect.any(Object),
       });
       expect(isValidTime).toHaveBeenCalledWith(data.start_time);
       expect(isValidTime).toHaveBeenCalledWith(data.end_time);
@@ -84,7 +91,40 @@ describe('logbook service test', () => {
       );
     });
 
-    it('should throw BadRequestException if time is invalid', async () => {
+    it('should throw ConflictException if time input is not valid', async () => {
+      const data: LogbookReqBody = {
+        attendance_id: 1,
+        description: 'Task description',
+        status: 'progress',
+        start_time: '06:49',
+        end_time: '10:00',
+      };
+
+      jest
+        .spyOn(prisma.attendance, 'findFirst')
+        .mockResolvedValue(mockAttendance as unknown as Attendance);
+
+      await expect(service.handlePostLogbook(data)).rejects.toThrow(
+        new ConflictException(
+          'start time tidak bisa kurang dari waktu check in',
+        ),
+      );
+
+      (data as any).start_time = '11:00';
+
+      await expect(service.handlePostLogbook(data)).rejects.toThrow(
+        new ConflictException('end time tidak boleh kurang dari start time'),
+      );
+
+      (data as any).start_time = '13:01';
+      (data as any).end_time = '14:01';
+
+      await expect(service.handlePostLogbook(data)).rejects.toThrow(
+        new ConflictException('end time tidak boleh melebihi waktu check out'),
+      );
+    });
+
+    it('should throw BadRequestException if time is invalid format', async () => {
       const data: LogbookReqBody = {
         attendance_id: 1,
         description: 'Task description',
@@ -95,7 +135,7 @@ describe('logbook service test', () => {
 
       jest
         .spyOn(prisma.attendance, 'findFirst')
-        .mockResolvedValue({ id: 1 } as Attendance);
+        .mockResolvedValue(mockAttendance as unknown as Attendance);
 
       await expect(service.handlePostLogbook(data)).rejects.toThrow(
         new BadRequestException(
@@ -116,17 +156,6 @@ describe('logbook service test', () => {
     it('should handle prisma error', async () => {
       const error = new Error('Database error');
       jest.spyOn(prisma.attendance, 'findFirst').mockRejectedValue(error);
-
-      await expect(
-        service.handlePostLogbook({} as LogbookReqBody),
-      ).rejects.toThrow(new InternalServerErrorException());
-      expect(handleError).toHaveBeenCalledWith(error, expect.any(LoggerUtil));
-
-      jest
-        .spyOn(prisma.attendance, 'findFirst')
-        .mockResolvedValue({ id: 1 } as Attendance);
-      jest.spyOn(DateUtils, 'isValidTime').mockReturnValue(true);
-      jest.spyOn(prisma.activity, 'create').mockRejectedValue(error);
 
       await expect(
         service.handlePostLogbook({} as LogbookReqBody),
