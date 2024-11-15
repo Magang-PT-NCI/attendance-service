@@ -37,6 +37,9 @@ model EmployeeCache {
   area        String       @db.VarChar(50)
   attendances Attendance[] @relation("Employee")
   permits     Permit[]     @relation("EmployeePermit")
+  approvalPermits     Permit[]     @relation("CoordinatorPermit")
+  approvalOvertimes     Overtime[]     @relation("CoordinatorOvertime")
+  approvalConfirmations     AttendanceConfirmation[]     @relation("CoordinatorConfirmation")
 }
 
 model Check {
@@ -62,27 +65,34 @@ model Activity {
 model Permit {
   id                Int           @id @default(autoincrement())
   nik               String        @db.VarChar(20)
+  approvalNik   String?           @db.VarChar(50)
   reason            Reason
   start_date        DateTime      @db.Date
   duration          Int
   permission_letter String        @db.VarChar(255)
   checked           Boolean       @default(false)
   approved          Boolean       @default(false)
+  deniedDescription String? @db.VarChar(255)
   attendances       Attendance[]  @relation("Permit")
   employee          EmployeeCache @relation("EmployeePermit", fields: [nik], references: [nik])
+  coordinator          EmployeeCache? @relation("CoordinatorPermit", fields: [approvalNik], references: [nik])
   created_at        DateTime      @default(now())
 }
 
 model Overtime {
   id          Int          @id @default(autoincrement())
+  approvalNik   String?           @db.VarChar(50)
   checked     Boolean      @default(false)
   approved    Boolean      @default(false)
+  deniedDescription String? @db.VarChar(255)
   created_at  DateTime     @default(now())
   attendances Attendance[] @relation("Overtime")
+  coordinator          EmployeeCache? @relation("CoordinatorOvertime", fields: [approvalNik], references: [nik])
 }
 
 model AttendanceConfirmation {
   id            Int              @id @default(autoincrement())
+  approvalNik   String?           @db.VarChar(50)
   attendance_id Int
   type          ConfirmationType
   description   String           @db.Text
@@ -91,7 +101,9 @@ model AttendanceConfirmation {
   approved      Boolean          @default(false)
   created_at    DateTime         @default(now())
   reason        Reason?
+  deniedDescription String? @db.VarChar(255)
   attendance    Attendance       @relation(fields: [attendance_id], references: [id])
+  coordinator          EmployeeCache? @relation("CoordinatorConfirmation", fields: [approvalNik], references: [nik])
 }
 
 enum AttendanceStatus {

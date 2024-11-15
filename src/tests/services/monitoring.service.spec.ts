@@ -5,7 +5,7 @@ import {
 import { MonitoringService } from '../../services/monitoring.service';
 import { PrismaService } from '../../services/prisma.service';
 import { getDate, getDateString } from '../../utils/date.utils';
-import { ReportResBody } from '../../dto/monitoring.dto';
+import { PatchReqBody, ReportResBody } from '../../dto/monitoring.dto';
 
 jest.mock('../../services/prisma.service', () => ({
   PrismaService: jest.fn().mockImplementation(() => ({
@@ -14,6 +14,9 @@ jest.mock('../../services/prisma.service', () => ({
     attendanceConfirmation: { findUnique: jest.fn(), update: jest.fn() },
     check: { update: jest.fn(), create: jest.fn() },
     permit: { create: jest.fn() },
+    employeeCache: {
+      findUnique: jest.fn().mockResolvedValue({ nik: '123456' }),
+    },
     $transaction: jest.fn(),
   })),
 }));
@@ -128,17 +131,23 @@ describe('monitoring service test', () => {
     it('should handle prisma error', async () => {
       (prisma.overtime.findUnique as jest.Mock).mockRejectedValue(new Error());
 
-      await expect(service.handleUpdateOvertime(1, true)).rejects.toThrow(
-        new InternalServerErrorException(),
-      );
+      await expect(
+        service.handleUpdateOvertime(1, {
+          approved: true,
+          approval_nik: '123456',
+        } as PatchReqBody),
+      ).rejects.toThrow(new InternalServerErrorException());
     });
 
     it('should throw NotFound if overtime does not exist', async () => {
       (prisma.overtime.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.handleUpdateOvertime(1, true)).rejects.toThrow(
-        new NotFoundException('data lembur tidak ditemukan'),
-      );
+      await expect(
+        service.handleUpdateOvertime(1, {
+          approved: true,
+          approval_nik: '123456',
+        } as PatchReqBody),
+      ).rejects.toThrow(new NotFoundException('data lembur tidak ditemukan'));
     });
 
     it('should return overtime update data', async () => {
@@ -146,9 +155,12 @@ describe('monitoring service test', () => {
       (prisma.overtime.findUnique as jest.Mock).mockResolvedValue({ id: 1 });
       (prisma.overtime.update as jest.Mock).mockResolvedValue(updatedOvertime);
 
-      expect(await service.handleUpdateOvertime(1, true)).toEqual(
-        updatedOvertime,
-      );
+      expect(
+        await service.handleUpdateOvertime(1, {
+          approved: true,
+          approval_nik: '123456',
+        } as PatchReqBody),
+      ).toEqual(updatedOvertime);
     });
   });
 
@@ -180,7 +192,10 @@ describe('monitoring service test', () => {
       );
 
       await expect(
-        service.handleUpdateAttendanceConfirmation(1, true),
+        service.handleUpdateAttendanceConfirmation(1, {
+          approved: true,
+          approval_nik: '123456',
+        } as PatchReqBody),
       ).rejects.toThrow(new InternalServerErrorException());
     });
 
@@ -190,7 +205,10 @@ describe('monitoring service test', () => {
       );
 
       await expect(
-        service.handleUpdateAttendanceConfirmation(1, true),
+        service.handleUpdateAttendanceConfirmation(1, {
+          approved: true,
+          approval_nik: '123456',
+        } as PatchReqBody),
       ).rejects.toThrow(
         new NotFoundException('data konfirmasi kehadiran tidak ditemukan'),
       );
@@ -207,7 +225,11 @@ describe('monitoring service test', () => {
       );
 
       expect(
-        await service.handleUpdateAttendanceConfirmation(1, false),
+        await service.handleUpdateAttendanceConfirmation(1, {
+          approved: false,
+          approval_nik: '123456',
+          denied_description: 'lorem ipsum',
+        } as PatchReqBody),
       ).toEqual(updatedConfirmation);
       expect(prisma.$transaction).not.toHaveBeenCalled();
     });
@@ -225,9 +247,12 @@ describe('monitoring service test', () => {
       (prisma.check.update as jest.Mock).mockImplementation(() => {});
       (prisma.attendance.update as jest.Mock).mockImplementation(() => {});
 
-      expect(await service.handleUpdateAttendanceConfirmation(1, true)).toEqual(
-        updatedConfirmation,
-      );
+      expect(
+        await service.handleUpdateAttendanceConfirmation(1, {
+          approved: true,
+          approval_nik: '123456',
+        } as PatchReqBody),
+      ).toEqual(updatedConfirmation);
       expect(prisma.$transaction).toHaveBeenCalled();
       expect(prisma.check.update).toHaveBeenCalledWith({
         where: { id: 1 },
@@ -252,9 +277,12 @@ describe('monitoring service test', () => {
       (prisma.check.create as jest.Mock).mockResolvedValue({ id: 2 });
       (prisma.attendance.update as jest.Mock).mockImplementation(() => {});
 
-      expect(await service.handleUpdateAttendanceConfirmation(1, true)).toEqual(
-        updatedConfirmation,
-      );
+      expect(
+        await service.handleUpdateAttendanceConfirmation(1, {
+          approved: true,
+          approval_nik: '123456',
+        } as PatchReqBody),
+      ).toEqual(updatedConfirmation);
       expect(prisma.$transaction).toHaveBeenCalled();
       expect(prisma.check.create).toHaveBeenCalledWith({
         data: {
@@ -283,9 +311,12 @@ describe('monitoring service test', () => {
       (prisma.permit.create as jest.Mock).mockResolvedValue({ id: 1 });
       (prisma.attendance.update as jest.Mock).mockImplementation(() => {});
 
-      expect(await service.handleUpdateAttendanceConfirmation(1, true)).toEqual(
-        updatedConfirmation,
-      );
+      expect(
+        await service.handleUpdateAttendanceConfirmation(1, {
+          approved: true,
+          approval_nik: '123456',
+        } as PatchReqBody),
+      ).toEqual(updatedConfirmation);
       expect(prisma.$transaction).toHaveBeenCalled();
       expect(prisma.permit.create).toHaveBeenCalledWith({
         data: {

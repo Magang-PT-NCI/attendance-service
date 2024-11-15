@@ -78,7 +78,7 @@ describe('permit controller test', () => {
 
   describe('updatePermit test', () => {
     const param = { id: 1 };
-    const body = { approved: true };
+    const body = { approved: true, approval_nik: '123456' };
     const response = { approved: true };
 
     it('should call handleUpdatePermit when id and approved are valid', async () => {
@@ -89,7 +89,7 @@ describe('permit controller test', () => {
       body.approved = true;
 
       const result = await controller.updatePermit(param, body);
-      expect(permitService.handleUpdatePermit).toHaveBeenCalledWith(1, true);
+      expect(permitService.handleUpdatePermit).toHaveBeenCalledWith(1, body);
       expect(result).toEqual(response);
     });
 

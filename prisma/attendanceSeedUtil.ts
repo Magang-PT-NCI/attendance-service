@@ -76,7 +76,13 @@ export const createAttendance = async (
 
   const status = checkInTime ? 'presence' : 'absent';
   const overtime = overtimeCheckOutTimes.includes(checkOutTime)
-    ? await prisma.overtime.create({ data: { approved: true, checked: true } })
+    ? await prisma.overtime.create({
+        data: {
+          approved: true,
+          checked: true,
+          approvalNik: '001230045600708',
+        },
+      })
     : undefined;
 
   const attendance = await prisma.attendance.create({
@@ -107,6 +113,8 @@ export const createPermit = async (employee: EmployeeGenerateItem) => {
     'lainnya',
   ];
   const date = nextDate(employee);
+  const approvalNik =
+    '0012300456007' + (employee.area === 'Surabaya' ? '08' : '15');
 
   const permit = await prisma.permit.create({
     data: {
@@ -117,6 +125,7 @@ export const createPermit = async (employee: EmployeeGenerateItem) => {
       permission_letter: '1xsCxPCsNJfoG7FPgO6nYXH2KHCgTQ-B8',
       approved: true,
       checked: true,
+      approvalNik,
     },
   });
 

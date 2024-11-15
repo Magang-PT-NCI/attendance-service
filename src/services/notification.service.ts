@@ -11,6 +11,19 @@ export class NotificationService extends BaseService {
   public async handleOnSiteNotification(
     nik: string,
   ): Promise<NotificationResBody[]> {
+    const coordinators: any = {};
+    const getCoordinator = async (nik: string) => {
+      if (!coordinators[nik]) {
+        const coordinator = await this.prisma.employeeCache.findUnique({
+          where: { nik },
+          select: { name: true },
+        });
+        coordinators[nik] = coordinator.name;
+      }
+
+      return coordinators[nik];
+    };
+
     try {
       const employee = await this.prisma.employeeCache.findUnique({
         where: { nik },
@@ -30,42 +43,46 @@ export class NotificationService extends BaseService {
         select: {
           id: true,
           status: true,
-          overtime: {
-            select: { approved: true, checked: true, created_at: true },
-          },
+          overtime: true,
           checkIn: { select: { time: true } },
         },
       });
 
       if (attendance) {
         const confirmations = await this.prisma.attendanceConfirmation.findMany(
-          {
-            where: { attendance_id: attendance.id },
-            select: {
-              approved: true,
-              checked: true,
-              created_at: true,
-              attachment: true,
-              type: true,
-              description: true,
-            },
-          },
+          { where: { attendance_id: attendance.id } },
         );
-        confirmations.forEach((confirmation) => {
-          const message =
-            `Konfirmasi kehadiran ${this.getConfirmationType(confirmation.type)} Anda hari ini ` +
-            `${this.getApprovalMessage(confirmation.approved, confirmation.checked)}.` +
-            `\nDeskripsi konfirmasi kehadiran:\n${confirmation.description}`;
+
+        for (const confirmation of confirmations) {
+          const {
+            approved,
+            type,
+            checked,
+            description,
+            created_at,
+            approvalNik,
+            deniedDescription,
+            attachment,
+          } = confirmation;
+
+          let message =
+            `Konfirmasi kehadiran ${this.getConfirmationType(type)} Anda hari ini ` +
+            `${this.getApprovalMessage(approved, checked)}` +
+            (checked && approvalNik
+              ? ` (${await getCoordinator(approvalNik)})`
+              : '');
+
+          if (checked && !approved)
+            message += ` karena alasan:\n"${deniedDescription}"`;
+          message += `\nDeskripsi konfirmasi kehadiran:\n${description}`;
 
           notificationBuilder
             .setMessage(message)
-            .setDateString(getTimeString(confirmation.created_at))
-            .setFile(
-              getFileUrl(confirmation.attachment, 'confirmation', 'file'),
-            )
+            .setDateString(getTimeString(created_at))
+            .setFile(getFileUrl(attachment, 'confirmation', 'file'))
             .setPriority(2)
             .push();
-        });
+        }
 
         notificationBuilder.setPriority(3);
 
@@ -88,34 +105,55 @@ export class NotificationService extends BaseService {
         }
 
         if (attendance?.overtime) {
+          const {
+            approved,
+            checked,
+            created_at,
+            approvalNik,
+            deniedDescription,
+          } = attendance.overtime;
+
+          let message =
+            `Pengajuan lembur Anda hari ini ${this.getApprovalMessage(approved, checked)}` +
+            (checked && approvalNik
+              ? ` (${await getCoordinator(approvalNik)})`
+              : '');
+          if (checked && !approved)
+            message += ` karena alasan:\n"${deniedDescription}"`;
+
           notificationBuilder
-            .setMessage(
-              `Pengajuan lembur Anda hari ini ${this.getApprovalMessage(attendance.overtime.approved, attendance.overtime.checked)}.`,
-            )
-            .setDateString(getTimeString(attendance.overtime.created_at))
+            .setMessage(message)
+            .setDateString(getTimeString(created_at))
             .setPriority(1)
             .push();
         }
       }
 
-      const permit = await this.prisma.permit.findFirst({
+      const permits = await this.prisma.permit.findMany({
         where: { nik, start_date: { gte: current } },
-        select: {
-          start_date: true,
-          duration: true,
-          approved: true,
-          checked: true,
-          created_at: true,
-          permission_letter: true,
-        },
-        orderBy: [{ start_date: 'asc' }],
+        orderBy: [{ start_date: 'desc' }],
       });
 
-      if (permit) {
+      for (const permit of permits) {
+        const {
+          start_date,
+          approved,
+          deniedDescription,
+          approvalNik,
+          duration,
+          checked,
+        } = permit;
+
+        let message =
+          `Pengajuan izin Anda untuk tanggal ${getDateString(start_date)} selama ${duration} hari ${this.getApprovalMessage(approved, checked)}` +
+          (checked && approvalNik
+            ? ` (${await getCoordinator(approvalNik)})`
+            : '');
+        if (checked && !approved)
+          message += ` karena alasan:\n"${deniedDescription}"`;
+
         notificationBuilder
-          .setMessage(
-            `Pengajuan izin Anda untuk tanggal ${getDateString(permit.start_date)} selama ${permit.duration} hari ${this.getApprovalMessage(permit.approved, permit.checked)}.`,
-          )
+          .setMessage(message)
           .setDateString(getDateString(permit.created_at))
           .setFile(getFileUrl(permit.permission_letter, 'permit', 'file'))
           .setPriority(1)
@@ -277,9 +315,9 @@ export class NotificationService extends BaseService {
   }
 
   private getApprovalMessage(approved: boolean, checked: boolean): string {
-    const approvedMessage = approved ? 'telah' : 'tidak';
-    const message = !checked ? 'belum' : approvedMessage;
-    return `${message} disetujui oleh Koordinator`;
+    const approvedMessage = (approved ? 'telah' : 'TIDAK') + ' DISETUJUI';
+    const message = !checked ? 'belum diperiksa' : approvedMessage;
+    return `${message} oleh Koordinator`;
   }
 
   private getConfirmationType(type: ConfirmationType): string {

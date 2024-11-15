@@ -130,8 +130,14 @@ export class PatchReqParam {
 }
 
 export class PatchReqBody {
+  @ApiProperty({ example: '123456' })
+  public readonly approval_nik: string;
+
   @ApiProperty({ example: true })
   public readonly approved: boolean;
+
+  @ApiProperty({ example: 'bukti tidak cukup' })
+  public readonly denied_description?: string;
 }
 
 export class PatchResBody {

@@ -63,12 +63,15 @@ export class PermitController extends BaseController {
       );
     }
 
+    if (!body.approval_nik)
+      throw new BadRequestException('approval_nik harus diisi');
+
     if (typeof body.approved !== 'boolean') {
       throw new BadRequestException(
         'approved harus berisi boolean true atau false',
       );
     }
 
-    return await this.service.handleUpdatePermit(id, body.approved);
+    return await this.service.handleUpdatePermit(id, body);
   }
 }

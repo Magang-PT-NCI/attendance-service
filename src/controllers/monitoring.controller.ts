@@ -65,9 +65,9 @@ export class MonitoringController extends BaseController {
     @Param() param: PatchReqParam,
     @Body() body: PatchReqBody,
   ): Promise<PatchResBody> {
-    this.validateUpdate(body.approved);
+    this.validateUpdate(body.approved, body.approval_nik);
     const id = this.getNumberId(`${param.id}`);
-    return await this.service.handleUpdateOvertime(id, body.approved);
+    return await this.service.handleUpdateOvertime(id, body);
   }
 
   @Patch('confirmation/:id')
@@ -76,12 +76,9 @@ export class MonitoringController extends BaseController {
     @Param() param: PatchReqParam,
     @Body() body: PatchReqBody,
   ): Promise<PatchResBody> {
-    this.validateUpdate(body.approved);
+    this.validateUpdate(body.approved, body.approval_nik);
     const id = this.getNumberId(`${param.id}`);
-    return await this.service.handleUpdateAttendanceConfirmation(
-      id,
-      body.approved,
-    );
+    return await this.service.handleUpdateAttendanceConfirmation(id, body);
   }
 
   private getNumberId(id: string): number {
@@ -91,11 +88,13 @@ export class MonitoringController extends BaseController {
     return result;
   }
 
-  private validateUpdate(approved: boolean) {
+  private validateUpdate(approved: boolean, nik: string) {
     this.logger.debug('request body: ', { approved });
     if (typeof approved !== 'boolean')
       throw new BadRequestException(
         'approved harus berisi nilai boolean yang valid!',
       );
+
+    if (!nik) throw new BadRequestException('approval_nik harus diisi');
   }
 }

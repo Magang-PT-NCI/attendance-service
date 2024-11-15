@@ -66,7 +66,7 @@ describe('patch overtime e2e test', () => {
     const result = await request(app.getHttpServer())
       .patch('/monitoring/overtime/0')
       .set('authorization', `bearer ${token}`)
-      .send({ approved: true })
+      .send({ approved: true, approval_nik: '001230045600708' })
       .expect(404);
 
     expect(result.body).toEqual({
@@ -80,7 +80,7 @@ describe('patch overtime e2e test', () => {
     const result = await request(app.getHttpServer())
       .patch(endpoint)
       .set('authorization', `bearer ${token}`)
-      .send({ approved: true })
+      .send({ approved: true, approval_nik: '001230045600708' })
       .expect(200);
 
     expect(result.body).toEqual({ id: overtimeId, approved: true });

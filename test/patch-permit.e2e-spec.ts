@@ -50,7 +50,7 @@ describe('patch permit e2e test', () => {
       .expect(400);
 
     expect(result.body).toEqual({
-      message: 'approved harus berisi boolean true atau false',
+      message: 'approval_nik harus diisi',
       error: 'Bad Request',
       statusCode: 400,
     });
@@ -60,7 +60,7 @@ describe('patch permit e2e test', () => {
     const result = await request(app.getHttpServer())
       .patch('/permit/0')
       .set('authorization', `bearer ${token}`)
-      .send({ approved: true })
+      .send({ approved: true, approval_nik: '001230045600708' })
       .expect(404);
 
     expect(result.body).toEqual({
@@ -74,7 +74,11 @@ describe('patch permit e2e test', () => {
     const result = await request(app.getHttpServer())
       .patch(endpoint)
       .set('authorization', `bearer ${token}`)
-      .send({ approved: false })
+      .send({
+        approved: false,
+        approval_nik: '001230045600708',
+        denied_description: 'lorem ipsum',
+      })
       .expect(200);
 
     expect(result.body).toEqual({ id: permitId, approved: false });

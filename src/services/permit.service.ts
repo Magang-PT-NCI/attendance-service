@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -10,7 +11,7 @@ import { getDate, getDateString } from '../utils/date.utils';
 import { uploadFile } from '../utils/upload.utils';
 import { BaseService } from './base.service';
 import { handleError } from '../utils/common.utils';
-import { PatchResBody } from '../dto/monitoring.dto';
+import { PatchReqBody, PatchResBody } from '../dto/monitoring.dto';
 
 @Injectable()
 export class PermitService extends BaseService {
@@ -76,8 +77,14 @@ export class PermitService extends BaseService {
 
   public async handleUpdatePermit(
     id: number,
-    approved: boolean,
+    body: PatchReqBody,
   ): Promise<PatchResBody> {
+    const {
+      approved,
+      approval_nik: approvalNik,
+      denied_description: deniedDescription,
+    } = body;
+
     try {
       const existingPermit = await this.prisma.permit.findUnique({
         where: { id },
@@ -87,9 +94,26 @@ export class PermitService extends BaseService {
       if (!existingPermit)
         throw new NotFoundException('data permit tidak ditemukan');
 
+      const coordinator = await this.prisma.employeeCache.findUnique({
+        where: { nik: approvalNik },
+        select: { nik: true },
+      });
+
+      if (!coordinator)
+        throw new NotFoundException('koordinator tidak ditemukan!');
+
+      const description = deniedDescription || undefined;
+      if (!approved && !description)
+        throw new BadRequestException('harus menyertakan alasan penolakan');
+
       const permit = await this.prisma.permit.update({
         where: { id },
-        data: { approved, checked: true },
+        data: {
+          approved,
+          checked: true,
+          approvalNik,
+          deniedDescription: description,
+        },
       });
 
       if (approved) {
