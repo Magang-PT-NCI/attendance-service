@@ -7,6 +7,7 @@ import {
   getApp,
   getToken,
 } from './helper';
+import { getDate } from '../src/utils/date.utils';
 
 describe('patch permit e2e test', () => {
   const date = '2023-02-03';
@@ -21,7 +22,7 @@ describe('patch permit e2e test', () => {
     app = await getApp();
     token = await getToken(nik, 'adityawijaya123');
 
-    await findAndDeleteData('permit', { nik, start_date: date });
+    await findAndDeleteData('permit', { nik, start_date: getDate(date) });
     changeDate(date, '06:05');
     const permit = await request(app.getHttpServer())
       .post('/permit')
@@ -49,7 +50,7 @@ describe('patch permit e2e test', () => {
       .expect(400);
 
     expect(result.body).toEqual({
-      message: 'approved harus berisi boolean true atau false',
+      message: 'approval_nik harus diisi',
       error: 'Bad Request',
       statusCode: 400,
     });
@@ -59,7 +60,7 @@ describe('patch permit e2e test', () => {
     const result = await request(app.getHttpServer())
       .patch('/permit/0')
       .set('authorization', `bearer ${token}`)
-      .send({ approved: true })
+      .send({ approved: true, approval_nik: '001230045600708' })
       .expect(404);
 
     expect(result.body).toEqual({
@@ -73,7 +74,11 @@ describe('patch permit e2e test', () => {
     const result = await request(app.getHttpServer())
       .patch(endpoint)
       .set('authorization', `bearer ${token}`)
-      .send({ approved: false })
+      .send({
+        approved: false,
+        approval_nik: '001230045600708',
+        denied_description: 'lorem ipsum',
+      })
       .expect(200);
 
     expect(result.body).toEqual({ id: permitId, approved: false });

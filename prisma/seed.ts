@@ -11,87 +11,114 @@ const prisma = new PrismaClient();
 const dayCount = process.env.DATE_COUNT ? parseInt(process.env.DATE_COUNT) : 25;
 
 const locations = {
-  bandung: '-6.914744,107.609810',
-  cimahi: '-6.920744,107.607810',
+  jakarta: '-6.2088,106.8456',
+  surabaya: '-7.2504,112.7688',
 };
 
 const employees: EmployeeGenerateItem[] = [
   {
     nik: '001230045600701',
     name: 'Aditya Wijaya Putra',
-    location: locations.bandung,
+    area: 'Surabaya',
+    location: locations.surabaya,
     date: new Date(date),
   },
   {
     nik: '001230045600702',
     name: 'Rina Andriani',
-    location: locations.bandung,
+    area: 'Surabaya',
+    location: locations.surabaya,
     date: new Date(date),
   },
   {
     nik: '001230045600703',
     name: 'Budi Santoso',
-    location: locations.cimahi,
+    area: 'Surabaya',
+    location: locations.surabaya,
     date: new Date(date),
   },
   {
     nik: '001230045600704',
     name: 'Maria Hadiyanti',
-    location: locations.bandung,
+    area: 'Surabaya',
+    location: locations.surabaya,
     date: new Date(date),
   },
   {
     nik: '001230045600705',
     name: 'Dewa Prasetyo',
-    location: locations.cimahi,
+    area: 'Surabaya',
+    location: locations.surabaya,
     date: new Date(date),
   },
   {
     nik: '001230045600706',
     name: 'Dini Kusuma Wardani',
-    location: locations.bandung,
+    area: 'Surabaya',
+    location: locations.surabaya,
     date: new Date(date),
   },
   {
     nik: '001230045600707',
     name: 'Arif Rahman Hakim',
-    location: locations.cimahi,
+    area: 'Surabaya',
+    location: locations.surabaya,
     date: new Date(date),
   },
   {
     nik: '001230045600709',
     name: 'Indra Gunawan',
-    location: locations.bandung,
+    area: 'Jakarta',
+    location: locations.jakarta,
     date: new Date(date),
   },
   {
     nik: '001230045600710',
     name: 'Siti Fatimah',
-    location: locations.bandung,
+    area: 'Jakarta',
+    location: locations.jakarta,
     date: new Date(date),
   },
   {
     nik: '001230045600711',
     name: 'Agus Supriadi',
-    location: locations.cimahi,
+    area: 'Jakarta',
+    location: locations.jakarta,
     date: new Date(date),
   },
   {
     nik: '001230045600712',
     name: 'Retno Maharani',
-    location: locations.cimahi,
+    area: 'Jakarta',
+    location: locations.jakarta,
     date: new Date(date),
   },
   {
     nik: '001230045600713',
     name: 'Eko Saputro',
-    location: locations.cimahi,
+    area: 'Jakarta',
+    location: locations.jakarta,
     date: new Date(date),
   },
   {
     nik: '001230045600714',
     name: 'Yuli Kartika Sari',
-    location: locations.cimahi,
+    area: 'Jakarta',
+    location: locations.jakarta,
+    date: new Date(date),
+  },
+  {
+    nik: '001230045600708',
+    name: 'Lestari Wulandari',
+    area: 'Surabaya',
+    location: locations.surabaya,
+    date: new Date(date),
+  },
+  {
+    nik: '001230045600715',
+    name: 'Joko Susanto',
+    area: 'Jakarta',
+    location: locations.jakarta,
     date: new Date(date),
   },
 ];
@@ -136,13 +163,14 @@ const createConfirmation = async (
       checked: false,
       approved: false,
       reason,
+      approvalNik: null,
     },
   });
 };
 
 const createUncheckedOvertime = async (attendance_id: number) => {
   const overtime = await prisma.overtime.create({
-    data: { approved: false, checked: false },
+    data: { approved: false, checked: false, approvalNik: null },
     select: { id: true },
   });
   await prisma.attendance.update({
@@ -167,6 +195,7 @@ const createLaterPermit = async (
       permission_letter: '1xsCxPCsNJfoG7FPgO6nYXH2KHCgTQ-B8',
       checked: false,
       approved: false,
+      approvalNik: null,
     },
   });
 };
@@ -174,7 +203,9 @@ const createLaterPermit = async (
 const main = async () => {
   await prisma.employeeCache.createMany({ data: employeeCacheData });
 
-  for (const employee of employees) {
+  for (const employee of employees.filter(
+    (e) => !e.nik.endsWith('08') && !e.nik.endsWith('15'),
+  )) {
     for (let i = 0; i < dayCount - 1; i++) {
       const rand = Math.random();
 

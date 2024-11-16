@@ -11,57 +11,78 @@ export class NotificationService extends BaseService {
   public async handleOnSiteNotification(
     nik: string,
   ): Promise<NotificationResBody[]> {
-    const name = await this.getEmployeeName(nik);
+    const coordinators: any = {};
+    const getCoordinator = async (nik: string) => {
+      if (!coordinators[nik]) {
+        const coordinator = await this.prisma.employeeCache.findUnique({
+          where: { nik },
+          select: { name: true },
+        });
+        coordinators[nik] = coordinator.name;
+      }
 
-    if (!name) {
-      throw new NotFoundException('Karyawan tidak ditemukan!');
-    }
-
-    const notificationBuilder = new NotificationBuilder(nik, name);
-    const current = getDate(getDateString(new Date()));
+      return coordinators[nik];
+    };
 
     try {
+      const employee = await this.prisma.employeeCache.findUnique({
+        where: { nik },
+        select: { name: true },
+      });
+      const name = employee?.name;
+
+      if (!name) {
+        throw new NotFoundException('Karyawan tidak ditemukan!');
+      }
+
+      const notificationBuilder = new NotificationBuilder(nik, name);
+      const current = getDate(getDateString(new Date()));
+
       const attendance = await this.prisma.attendance.findFirst({
         where: { nik, date: current },
         select: {
           id: true,
           status: true,
-          overtime: {
-            select: { approved: true, checked: true, created_at: true },
-          },
+          overtime: true,
           checkIn: { select: { time: true } },
         },
       });
 
       if (attendance) {
         const confirmations = await this.prisma.attendanceConfirmation.findMany(
-          {
-            where: { attendance_id: attendance.id },
-            select: {
-              approved: true,
-              checked: true,
-              created_at: true,
-              attachment: true,
-              type: true,
-              description: true,
-            },
-          },
+          { where: { attendance_id: attendance.id } },
         );
-        confirmations.forEach((confirmation) => {
-          const message =
-            `Konfirmasi kehadiran ${this.getConfirmationType(confirmation.type)} Anda hari ini ` +
-            `${this.getApprovalMessage(confirmation.approved, confirmation.checked)}.` +
-            `\nDeskripsi konfirmasi kehadiran:\n${confirmation.description}`;
+
+        for (const confirmation of confirmations) {
+          const {
+            approved,
+            type,
+            checked,
+            description,
+            created_at,
+            approvalNik,
+            deniedDescription,
+            attachment,
+          } = confirmation;
+
+          let message =
+            `Konfirmasi kehadiran ${this.getConfirmationType(type)} Anda hari ini ` +
+            `${this.getApprovalMessage(approved, checked)}` +
+            (checked && approvalNik
+              ? ` (${await getCoordinator(approvalNik)})`
+              : '');
+
+          if (checked && !approved)
+            message += ` karena alasan:\n"${deniedDescription}"`;
+          message += `\nDeskripsi konfirmasi kehadiran:\n${description}`;
 
           notificationBuilder
             .setMessage(message)
-            .setDate(getTimeString(confirmation.created_at))
-            .setFile(
-              getFileUrl(confirmation.attachment, 'confirmation', 'file'),
-            )
+            .setDateString(getTimeString(created_at))
+            .setFile(getFileUrl(attachment, 'confirmation', 'file'))
             .setPriority(2)
             .push();
-        });
+        }
 
         notificationBuilder.setPriority(3);
 
@@ -69,68 +90,97 @@ export class NotificationService extends BaseService {
         if (late) {
           notificationBuilder
             .setMessage(`Anda terlambat ${late} hari ini.`)
-            .setDate(getTimeString(attendance.checkIn.time, true))
+            .setDateString(getTimeString(attendance.checkIn.time, true))
             .push();
         } else if (attendance?.status === 'absent') {
           notificationBuilder
             .setMessage('Anda tidak masuk hari ini.')
-            .setDate('09:01')
+            .setDateString('09:01')
             .push();
         } else if (attendance?.status === 'permit') {
           notificationBuilder
             .setMessage('Izin Anda hari ini telah disetujui oleh Koordinator.')
-            .setDate(getDateString(current))
+            .setDateString(getDateString(current))
             .push();
         }
 
         if (attendance?.overtime) {
+          const {
+            approved,
+            checked,
+            created_at,
+            approvalNik,
+            deniedDescription,
+          } = attendance.overtime;
+
+          let message =
+            `Pengajuan lembur Anda hari ini ${this.getApprovalMessage(approved, checked)}` +
+            (checked && approvalNik
+              ? ` (${await getCoordinator(approvalNik)})`
+              : '');
+          if (checked && !approved)
+            message += ` karena alasan:\n"${deniedDescription}"`;
+
           notificationBuilder
-            .setMessage(
-              `Pengajuan lembur Anda hari ini ${this.getApprovalMessage(attendance.overtime.approved, attendance.overtime.checked)}.`,
-            )
-            .setDate(getTimeString(attendance.overtime.created_at))
+            .setMessage(message)
+            .setDateString(getTimeString(created_at))
             .setPriority(1)
             .push();
         }
       }
 
-      const permit = await this.prisma.permit.findFirst({
+      const permits = await this.prisma.permit.findMany({
         where: { nik, start_date: { gte: current } },
-        select: {
-          start_date: true,
-          duration: true,
-          approved: true,
-          checked: true,
-          created_at: true,
-          permission_letter: true,
-        },
+        orderBy: [{ start_date: 'desc' }],
       });
 
-      if (permit) {
+      for (const permit of permits) {
+        const {
+          start_date,
+          approved,
+          deniedDescription,
+          approvalNik,
+          duration,
+          checked,
+        } = permit;
+
+        let message =
+          `Pengajuan izin Anda untuk tanggal ${getDateString(start_date)} selama ${duration} hari ${this.getApprovalMessage(approved, checked)}` +
+          (checked && approvalNik
+            ? ` (${await getCoordinator(approvalNik)})`
+            : '');
+        if (checked && !approved)
+          message += ` karena alasan:\n"${deniedDescription}"`;
+
         notificationBuilder
-          .setMessage(
-            `Pengajuan izin Anda untuk tanggal ${getDateString(permit.start_date)} selama ${permit.duration} hari ${this.getApprovalMessage(permit.approved, permit.checked)}.`,
-          )
-          .setDate(getDateString(permit.created_at))
+          .setMessage(message)
+          .setDateString(getDateString(permit.created_at))
           .setFile(getFileUrl(permit.permission_letter, 'permit', 'file'))
           .setPriority(1)
           .push();
       }
+
+      return notificationBuilder.getNotifications();
     } catch (error) {
       handleError(error, this.logger);
     }
-
-    return notificationBuilder.getNotifications();
   }
 
-  public async handleCoordinatorNotification(): Promise<NotificationResBody[]> {
+  public async handleCoordinatorNotification(
+    nik: string,
+  ): Promise<NotificationResBody[]> {
     const notificationBuilder = new NotificationBuilder();
     const current = getDate(getDateString(new Date()));
 
     try {
+      const employee = await this.prisma.employeeCache.findUnique({
+        where: { nik },
+      });
+
       const attendances = await this.prisma.attendance.findMany({
         where: {
           date: current,
+          employee: { area: employee.area },
           OR: [
             { status: 'absent' },
             { status: 'presence' },
@@ -155,18 +205,21 @@ export class NotificationService extends BaseService {
         if (late)
           notificationBuilder
             .setMessage(`Terlambat ${late} hari ini.`)
-            .setDate(getTimeString(attendance.checkIn.time, true))
+            .setDate(attendance.checkIn.time)
+            .setDateString(getTimeString(attendance.checkIn.time, true))
             .push();
         else if (attendance?.status === 'absent')
           notificationBuilder
             .setMessage('Tidak masuk hari ini.')
-            .setDate('09:01')
+            .setDate(new Date('1970-01-01T09:01:00.000Z'))
+            .setDateString('09:01')
             .push();
 
         if (attendance?.overtime?.checked === false)
           notificationBuilder
             .setMessage('Mengajukan lembur hari ini.')
-            .setDate(getTimeString(attendance.overtime.created_at))
+            .setDate(attendance.overtime.created_at)
+            .setDateString(getTimeString(attendance.overtime.created_at))
             .setPriority(1)
             .setActionEndpoint(`/monitoring/overtime/${attendance.overtime.id}`)
             .push();
@@ -174,7 +227,10 @@ export class NotificationService extends BaseService {
 
       notificationBuilder.setPriority(2);
       const confirmations = await this.prisma.attendanceConfirmation.findMany({
-        where: { attendance: { date: current }, checked: false },
+        where: {
+          attendance: { date: current, employee: { area: employee.area } },
+          checked: false,
+        },
         include: {
           attendance: {
             select: {
@@ -218,7 +274,8 @@ export class NotificationService extends BaseService {
         notificationBuilder
           .setNik(confirmation.attendance.employee.nik)
           .setName(confirmation.attendance.employee.name)
-          .setDate(getTimeString(confirmation.created_at))
+          .setDate(confirmation.created_at)
+          .setDateString(getTimeString(confirmation.created_at))
           .setFile(getFileUrl(confirmation.attachment, 'confirmation', 'file'))
           .setMessage(message)
           .setActionEndpoint(`/monitoring/confirmation/${confirmation.id}`)
@@ -227,7 +284,11 @@ export class NotificationService extends BaseService {
 
       notificationBuilder.setPriority(3);
       const permits = await this.prisma.permit.findMany({
-        where: { start_date: { gt: current }, checked: false },
+        where: {
+          start_date: { gt: current },
+          checked: false,
+          employee: { area: employee.area },
+        },
         include: {
           employee: { select: { nik: true, name: true } },
         },
@@ -237,7 +298,8 @@ export class NotificationService extends BaseService {
         notificationBuilder
           .setNik(permit.employee.nik)
           .setName(permit.employee.name)
-          .setDate(getDateString(permit.created_at))
+          .setDate(permit.created_at)
+          .setDateString(getDateString(permit.created_at))
           .setFile(getFileUrl(permit.permission_letter, 'permit', 'file'))
           .setMessage(
             `Mengajukan izin pada ${getDateString(permit.start_date)} selama ${permit.duration} hari dengan alasan "${permit.reason}".`,
@@ -252,22 +314,10 @@ export class NotificationService extends BaseService {
     return notificationBuilder.getNotifications();
   }
 
-  private async getEmployeeName(nik: string): Promise<string> {
-    try {
-      const employee = await this.prisma.employeeCache.findUnique({
-        where: { nik },
-        select: { name: true },
-      });
-      return employee?.name;
-    } catch (error) {
-      handleError(error, this.logger);
-    }
-  }
-
   private getApprovalMessage(approved: boolean, checked: boolean): string {
-    const approvedMessage = approved ? 'telah' : 'tidak';
-    const message = !checked ? 'belum' : approvedMessage;
-    return `${message} disetujui oleh Koordinator`;
+    const approvedMessage = (approved ? 'telah' : 'TIDAK') + ' DISETUJUI';
+    const message = !checked ? 'belum diperiksa' : approvedMessage;
+    return `${message} oleh Koordinator`;
   }
 
   private getConfirmationType(type: ConfirmationType): string {

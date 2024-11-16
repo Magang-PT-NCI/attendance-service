@@ -86,7 +86,10 @@ describe('monitoring controller test', () => {
   describe('updateOvertime test', () => {
     it('should throw BadRequestException if approved is not a boolean', async () => {
       const param: PatchReqParam = { id: 1 };
-      const body: PatchReqBody = { approved: 'not_boolean' as any };
+      const body: PatchReqBody = {
+        approved: 'not_boolean' as any,
+        approval_nik: '123456',
+      };
 
       await expect(controller.updateOvertime(param, body)).rejects.toThrow(
         BadRequestException,
@@ -95,7 +98,7 @@ describe('monitoring controller test', () => {
 
     it('should throw BadRequestException if id is not a valid number', async () => {
       const param = { id: 'invalid_id' } as unknown as PatchReqParam;
-      const body: PatchReqBody = { approved: true };
+      const body: PatchReqBody = { approved: true, approval_nik: '123456' };
 
       await expect(controller.updateOvertime(param, body)).rejects.toThrow(
         BadRequestException,
@@ -104,12 +107,12 @@ describe('monitoring controller test', () => {
 
     it('should call handleUpdateOvertime with valid data', async () => {
       const param: PatchReqParam = { id: 1 };
-      const body: PatchReqBody = { approved: true };
+      const body: PatchReqBody = { approved: true, approval_nik: '123456' };
 
       await controller.updateOvertime(param, body);
       expect(monitoringService.handleUpdateOvertime).toHaveBeenCalledWith(
         1,
-        true,
+        body,
       );
     });
   });
@@ -117,7 +120,10 @@ describe('monitoring controller test', () => {
   describe('updateAttendanceConfirmation test', () => {
     it('should throw BadRequestException if approved is not a boolean', async () => {
       const param: PatchReqParam = { id: 1 };
-      const body: PatchReqBody = { approved: 'not_boolean' as any };
+      const body: PatchReqBody = {
+        approved: 'not_boolean' as any,
+        approval_nik: '123456',
+      };
 
       await expect(
         controller.updateAttendanceConfirmation(param, body),
@@ -128,7 +134,7 @@ describe('monitoring controller test', () => {
       const param = {
         id: 'invalid_id',
       } as unknown as PatchReqParam;
-      const body: PatchReqBody = { approved: true };
+      const body: PatchReqBody = { approved: true, approval_nik: '123456' };
 
       await expect(
         controller.updateAttendanceConfirmation(param, body),
@@ -137,12 +143,12 @@ describe('monitoring controller test', () => {
 
     it('should call handleUpdateAttendanceConfirmation with valid data', async () => {
       const param = { id: 1 };
-      const body: PatchReqBody = { approved: true };
+      const body: PatchReqBody = { approved: true, approval_nik: '123456' };
 
       await controller.updateAttendanceConfirmation(param, body);
       expect(
         monitoringService.handleUpdateAttendanceConfirmation,
-      ).toHaveBeenCalledWith(1, true);
+      ).toHaveBeenCalledWith(1, body);
     });
   });
 });

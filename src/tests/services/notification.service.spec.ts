@@ -10,12 +10,12 @@ jest.mock('../../services/prisma.service', () => ({
     attendance: { findFirst: jest.fn(), findMany: jest.fn() },
     attendanceConfirmation: { findMany: jest.fn() },
     employeeCache: { findUnique: jest.fn() },
-    permit: { findFirst: jest.fn(), findMany: jest.fn() },
+    permit: { findMany: jest.fn() },
   })),
 }));
 
 describe('NotificationService', () => {
-  const mockEmployee = { nik: '12345', name: 'John Doe' };
+  const mockEmployee = { nik: '12345', name: 'John Doe', area: 'Bandung' };
   const mockAttendance = {
     id: 1,
     status: 'presence',
@@ -59,6 +59,7 @@ describe('NotificationService', () => {
       (prisma.attendanceConfirmation.findMany as jest.Mock).mockResolvedValue(
         [],
       );
+      (prisma.permit.findMany as jest.Mock).mockResolvedValue([]);
 
       const notifications = await service.handleOnSiteNotification(
         mockEmployee.nik,
@@ -83,6 +84,7 @@ describe('NotificationService', () => {
       (prisma.attendanceConfirmation.findMany as jest.Mock).mockResolvedValue(
         [],
       );
+      (prisma.permit.findMany as jest.Mock).mockResolvedValue([]);
 
       const notifications = await service.handleOnSiteNotification(
         mockEmployee.nik,
@@ -107,10 +109,12 @@ describe('NotificationService', () => {
       (prisma.attendanceConfirmation.findMany as jest.Mock).mockResolvedValue(
         [],
       );
-      (prisma.permit.findFirst as jest.Mock).mockResolvedValue({
-        ...mockPermit,
-        approved: true,
-      });
+      (prisma.permit.findMany as jest.Mock).mockResolvedValue([
+        {
+          ...mockPermit,
+          approved: true,
+        },
+      ]);
 
       const notifications = await service.handleOnSiteNotification(
         mockEmployee.nik,
@@ -167,6 +171,8 @@ describe('NotificationService', () => {
 
   describe('handleCoordinatorNotification', () => {
     it('should return notifications for coordinator', async () => {
+      const mockEmployee = { name: 'ucup', nik: '12346', area: 'Bandung' };
+
       const mockAttendances = [
         {
           status: 'presence',
@@ -218,6 +224,9 @@ describe('NotificationService', () => {
         },
       ];
 
+      (prisma.employeeCache.findUnique as jest.Mock).mockResolvedValue(
+        mockEmployee,
+      );
       (prisma.attendance.findMany as jest.Mock).mockResolvedValue(
         mockAttendances,
       );
@@ -226,9 +235,9 @@ describe('NotificationService', () => {
       );
       (prisma.permit.findMany as jest.Mock).mockResolvedValue(mockPermits);
 
-      const notifications = await service.handleCoordinatorNotification();
-
-      console.log(notifications);
+      const notifications = await service.handleCoordinatorNotification(
+        mockEmployee.nik,
+      );
 
       expect(notifications).toContainEqual({
         nik: '12345',
@@ -253,9 +262,9 @@ describe('NotificationService', () => {
         new Error('Database error'),
       );
 
-      await expect(service.handleCoordinatorNotification()).rejects.toThrow(
-        InternalServerErrorException,
-      );
+      await expect(
+        service.handleCoordinatorNotification('12346'),
+      ).rejects.toThrow(InternalServerErrorException);
     });
   });
 });

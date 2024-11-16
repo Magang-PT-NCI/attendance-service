@@ -17,7 +17,7 @@ describe('NotificationBuilder', () => {
       .setNik('12345')
       .setName('John Doe')
       .setMessage('Attendance notification')
-      .setDate('2024-10-19')
+      .setDateString('2024-10-19')
       .setPriority(1)
       .push();
 
@@ -38,7 +38,7 @@ describe('NotificationBuilder', () => {
       .setNik('54321')
       .setName('Jane Doe')
       .setMessage('Permit notification')
-      .setDate('2024-10-19')
+      .setDateString('2024-10-19')
       .setPriority(1)
       .push();
 
@@ -59,7 +59,7 @@ describe('NotificationBuilder', () => {
       .setNik('67890')
       .setName('Bob Smith')
       .setMessage('Overtime notification')
-      .setDate('2024-10-19')
+      .setDateString('2024-10-19')
       .setPriority(1)
       .push();
 
@@ -80,11 +80,11 @@ describe('NotificationBuilder', () => {
       .setNik('12345')
       .setName('John Doe')
       .setMessage('Attendance notification')
-      .setDate('2024-10-19')
+      .setDateString('2024-10-19')
       .push();
 
     expect((builder as any).message).toBe('');
-    expect((builder as any).date).toBe('');
+    expect((builder as any).dateString).toBe('');
     expect((builder as any).file).toBe(null);
     expect((builder as any).action_endpoint).toBe(null);
   });
@@ -94,7 +94,7 @@ describe('NotificationBuilder', () => {
       .setNik('123')
       .setName('User A')
       .setMessage('Attendance')
-      .setDate('2024-10-19')
+      .setDateString('2024-10-19')
       .setPriority(3)
       .push();
 
@@ -102,7 +102,7 @@ describe('NotificationBuilder', () => {
       .setNik('456')
       .setName('User B')
       .setMessage('Permit')
-      .setDate('2024-10-19')
+      .setDateString('2024-10-19')
       .setPriority(2)
       .push();
 
@@ -110,7 +110,7 @@ describe('NotificationBuilder', () => {
       .setNik('789')
       .setName('User C')
       .setMessage('Overtime')
-      .setDate('2024-10-19')
+      .setDateString('2024-10-19')
       .setPriority(1)
       .push();
 

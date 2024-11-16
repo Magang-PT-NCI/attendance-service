@@ -9,6 +9,7 @@ import { PermitPostReqBody, PermitResBody } from '../../dto/permit.dto';
 import { getEmployee } from '../../utils/api.utils';
 import { uploadFile } from '../../utils/upload.utils';
 import { getDate, getDateString } from '../../utils/date.utils';
+import { PatchReqBody } from 'src/dto/monitoring.dto';
 
 jest.mock('../../utils/api.utils');
 jest.mock('../../utils/upload.utils');
@@ -20,6 +21,9 @@ jest.mock('../../services/prisma.service', () => ({
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+    },
+    employeeCache: {
+      findUnique: jest.fn().mockResolvedValue({ nik: '123456' }),
     },
   })),
 }));
@@ -137,18 +141,24 @@ describe('permit service test', () => {
     it('should throw NotFoundException if permit not found', async () => {
       (prisma.permit.findUnique as jest.Mock).mockResolvedValue(null);
 
-      await expect(service.handleUpdatePermit(1, true)).rejects.toThrow(
-        new NotFoundException('data permit tidak ditemukan'),
-      );
+      await expect(
+        service.handleUpdatePermit(1, {
+          approved: true,
+          approval_nik: '123456',
+        } as PatchReqBody),
+      ).rejects.toThrow(new NotFoundException('data permit tidak ditemukan'));
       expect(prisma.permit.findUnique).toHaveBeenCalled();
     });
 
     it('should handle prisma error', async () => {
       (prisma.permit.findUnique as jest.Mock).mockRejectedValue(new Error());
 
-      await expect(service.handleUpdatePermit(1, true)).rejects.toThrow(
-        new InternalServerErrorException(),
-      );
+      await expect(
+        service.handleUpdatePermit(1, {
+          approved: true,
+          approval_nik: '123456',
+        } as PatchReqBody),
+      ).rejects.toThrow(new InternalServerErrorException());
     });
 
     it('should handle not approved permit', async () => {
@@ -167,12 +177,21 @@ describe('permit service test', () => {
         checked: true,
       });
 
-      const result = await service.handleUpdatePermit(1, false);
+      const result = await service.handleUpdatePermit(1, {
+        approved: false,
+        approval_nik: '123456',
+        denied_description: 'lorem ipsum',
+      } as PatchReqBody);
 
       expect(result).toEqual({ id: permit.id, approved: false });
       expect(prisma.permit.update).toHaveBeenCalledWith({
         where: { id: permit.id },
-        data: { approved: false, checked: true },
+        data: {
+          approved: false,
+          checked: true,
+          approvalNik: '123456',
+          deniedDescription: 'lorem ipsum',
+        },
       });
     });
 
@@ -200,12 +219,15 @@ describe('permit service test', () => {
       (prisma.attendance.update as jest.Mock).mockImplementation(() => {});
       (prisma.attendance.create as jest.Mock).mockImplementation(() => {});
 
-      const result = await service.handleUpdatePermit(1, true);
+      const result = await service.handleUpdatePermit(1, {
+        approved: true,
+        approval_nik: '123456',
+      } as PatchReqBody);
 
       expect(result).toEqual({ id: permit.id, approved: true });
       expect(prisma.permit.update).toHaveBeenCalledWith({
         where: { id: permit.id },
-        data: { approved: true, checked: true },
+        data: { approved: true, checked: true, approvalNik: '123456' },
       });
       expect(prisma.attendance.update).toHaveBeenCalledWith({
         where: { id: 2 },

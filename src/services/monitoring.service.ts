@@ -1,9 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   PatchResBody,
   DashboardResBody,
   DashboardWeeklySummary,
   ReportResBody,
+  PatchReqBody,
 } from '../dto/monitoring.dto';
 import { DaySummary } from '../interfaces/monitoring.interfaces';
 import { getDate, getDateString } from '../utils/date.utils';
@@ -115,8 +121,14 @@ export class MonitoringService extends BaseService {
 
   public async handleUpdateOvertime(
     id: number,
-    approved: boolean,
+    body: PatchReqBody,
   ): Promise<PatchResBody> {
+    const {
+      approved,
+      approval_nik: approvalNik,
+      denied_description: deniedDescription,
+    } = body;
+
     try {
       const existingOvertime = await this.prisma.overtime.findUnique({
         where: { id },
@@ -126,9 +138,21 @@ export class MonitoringService extends BaseService {
       if (!existingOvertime)
         throw new NotFoundException('data lembur tidak ditemukan');
 
+      const coordinator = await this.prisma.employeeCache.findUnique({
+        where: { nik: approvalNik },
+        select: { nik: true },
+      });
+
+      if (!coordinator)
+        throw new NotFoundException('koordinator tidak ditemukan!');
+
+      const description = deniedDescription || undefined;
+      if (!approved && !description)
+        throw new BadRequestException('harus menyertakan alasan penolakan');
+
       return this.prisma.overtime.update({
         where: { id },
-        data: { approved, checked: true },
+        data: { approved, checked: true, deniedDescription: description },
         select: { id: true, approved: true },
       });
     } catch (error) {
@@ -138,8 +162,14 @@ export class MonitoringService extends BaseService {
 
   public async handleUpdateAttendanceConfirmation(
     id: number,
-    approved: boolean,
+    body: PatchReqBody,
   ): Promise<PatchResBody> {
+    const {
+      approved,
+      approval_nik: approvalNik,
+      denied_description: deniedDescription,
+    } = body;
+
     try {
       const confirmation = await this.prisma.attendanceConfirmation.findUnique({
         where: { id },
@@ -159,10 +189,22 @@ export class MonitoringService extends BaseService {
           'data konfirmasi kehadiran tidak ditemukan',
         );
 
+      const coordinator = await this.prisma.employeeCache.findUnique({
+        where: { nik: approvalNik },
+        select: { nik: true },
+      });
+
+      if (!coordinator)
+        throw new NotFoundException('koordinator tidak ditemukan!');
+
+      const description = deniedDescription || undefined;
+      if (!approved && !description)
+        throw new ConflictException('harus menyertakan alasan penolakan');
+
       if (!approved)
         return this.prisma.attendanceConfirmation.update({
           where: { id },
-          data: { approved, checked: true },
+          data: { approved, checked: true, deniedDescription: description },
           select: { id: true, approved: true },
         });
 
@@ -206,6 +248,7 @@ export class MonitoringService extends BaseService {
                 permission_letter: confirmation.attachment,
                 approved: true,
                 checked: true,
+                deniedDescription: description,
               },
               select: { id: true },
             });
@@ -227,7 +270,7 @@ export class MonitoringService extends BaseService {
 
         return prisma.attendanceConfirmation.update({
           where: { id },
-          data: { approved, checked: true },
+          data: { approved, checked: true, deniedDescription: description },
           select: { id: true, approved: true },
         });
       });

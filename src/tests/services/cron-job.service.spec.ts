@@ -21,7 +21,7 @@ describe('CronJobService', () => {
 
     jest
       .spyOn(prismaService.employeeCache, 'findMany')
-      .mockResolvedValue([{ nik: '123', name: 'ucup' }]);
+      .mockResolvedValue([{ nik: '123', name: 'ucup', area: 'Bandung' }]);
 
     const createManySpy = jest
       .spyOn(prismaService.attendance, 'createMany')

@@ -23,6 +23,6 @@ export class NotificationController extends BaseController {
     this.logger.debug('user data: ', { nik, role });
 
     if (role === 'OnSite') return this.service.handleOnSiteNotification(nik);
-    return this.service.handleCoordinatorNotification();
+    return this.service.handleCoordinatorNotification(nik);
   }
 }

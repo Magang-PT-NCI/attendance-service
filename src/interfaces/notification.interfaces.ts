@@ -2,7 +2,8 @@ export interface NotificationBuilderItem {
   nik: string;
   name: string;
   message: string;
-  date: string;
+  dateString: string;
+  date: Date;
   file: string;
   action_endpoint: string;
   priority: number;

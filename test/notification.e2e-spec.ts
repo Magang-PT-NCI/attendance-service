@@ -58,7 +58,7 @@ describe('notification e2e test', () => {
     expect(result.body).toContainEqual({
       nik,
       name: 'Aditya Wijaya Putra',
-      message: `Pengajuan izin Anda untuk tanggal ${getDateString(startDate)} selama 1 hari belum disetujui oleh Koordinator.`,
+      message: `Pengajuan izin Anda untuk tanggal ${getDateString(startDate)} selama 1 hari belum diperiksa oleh Koordinator`,
       date: getDateString(new Date()),
       file: `${APP_URL}/files/permit/${nik}_${date}.txt`,
       action_endpoint: null,
