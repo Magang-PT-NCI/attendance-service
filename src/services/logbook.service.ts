@@ -28,6 +28,7 @@ export class LogbookService extends BaseService {
           id: true,
           checkIn: { select: { time: true } },
           checkOut: { select: { time: true } },
+          overtime_id: true,
         },
       });
 
@@ -63,6 +64,12 @@ export class LogbookService extends BaseService {
       if (checkOutTime && endTime.getTime() > checkOutTime.getTime())
         throw new ConflictException(
           'end time tidak boleh melebihi waktu check out',
+        );
+
+      const maxCheckout = attendance.overtime_id ? '19:00' : '15:00';
+      if (endTime.getTime() > getDate(maxCheckout).getTime())
+        throw new ConflictException(
+          'end time tidak boleh melebihi waktu maksimal check out',
         );
 
       const logbook: Activity = await this.prisma.activity.create({
