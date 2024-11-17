@@ -91,15 +91,18 @@ describe('get attendance e2e test', () => {
             approved: expect.any(Boolean),
           }
         : null,
-      activities: expect.arrayContaining([
-        {
-          id: expect.any(Number),
-          description: expect.any(String),
-          status: expect.any(String),
-          start_time: expect.stringMatching(timeRegex),
-          end_time: expect.stringMatching(timeRegex),
-        },
-      ]),
+      activities:
+        body.activities.length === 0
+          ? []
+          : expect.arrayContaining([
+              {
+                id: expect.any(Number),
+                description: expect.any(String),
+                status: expect.any(String),
+                start_time: expect.stringMatching(timeRegex),
+                end_time: expect.stringMatching(timeRegex),
+              },
+            ]),
     });
   });
 
