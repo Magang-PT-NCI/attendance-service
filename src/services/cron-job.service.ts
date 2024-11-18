@@ -10,6 +10,9 @@ export class CronJobService extends BaseService {
   public constructor(prisma: PrismaService) {
     super(prisma);
     this.logger.info('cron job initialized');
+
+    const current = new Date();
+    if (current.getHours() >= 9) this.handleCron();
   }
 
   @Cron('1 9 * * *', { timeZone: 'Asia/Jakarta' })
@@ -31,6 +34,7 @@ export class CronJobService extends BaseService {
           attendances: {
             none: { date: currentDate },
           },
+          nik: { notIn: ['001230045600708', '001230045600715'] },
         },
       });
 

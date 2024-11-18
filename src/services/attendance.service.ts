@@ -50,7 +50,7 @@ export class AttendanceService extends BaseService {
     const { current, currentDateIso, currentTimeIso } = this.getCurrentDate();
 
     this.validateCheckInTime(current);
-    await this.checkExistingAttendance(nik, currentDateIso);
+    const attendance = await this.checkExistingAttendance(nik, currentDateIso);
 
     const filename = await uploadFile(photo, nik, type);
 
@@ -65,6 +65,23 @@ export class AttendanceService extends BaseService {
               photo: filename,
             },
           });
+
+          if (attendance) {
+            return prisma.attendance.update({
+              where: { id: attendance.id },
+              data: {
+                nik,
+                check_in_id: checkIn.id,
+                date: currentDateIso,
+                status: 'presence',
+              },
+              select: {
+                id: true,
+                checkIn: true,
+                checkOut: true,
+              },
+            });
+          }
 
           return prisma.attendance.create({
             data: {
@@ -94,12 +111,7 @@ export class AttendanceService extends BaseService {
     const { nik, location, type, photo } = data;
     const { current, currentDateIso, currentTimeIso } = this.getCurrentDate();
 
-    const attendance = await this.getAttendanceData(
-      nik,
-      currentDateIso,
-      true,
-      true,
-    );
+    const attendance = await this.getAttendanceData(nik, currentDateIso);
 
     if (!attendance?.checkIn)
       throw new ConflictException('tidak dapat check out sebelum check in');
@@ -165,12 +177,7 @@ export class AttendanceService extends BaseService {
     const employee = await getEmployee(nik);
     if (!employee) throw new NotFoundException('karyawan tidak ditemukan');
 
-    const attendance = await this.getAttendanceData(
-      nik,
-      currentDateIso,
-      true,
-      true,
-    );
+    const attendance = await this.getAttendanceData(nik, currentDateIso);
 
     if (!attendance?.checkIn)
       throw new ConflictException(
@@ -290,7 +297,6 @@ export class AttendanceService extends BaseService {
     nik: string,
     date: string,
     includeCheckIn: boolean = false,
-    includeOvertime: boolean = false,
   ): Promise<Attendance> {
     try {
       return await this.prisma.attendance.findFirst({
@@ -298,23 +304,23 @@ export class AttendanceService extends BaseService {
           nik,
           date,
         },
-        select: {
-          id: true,
-          check_out_id: true,
-          overtime_id: includeOvertime,
-          checkIn: includeCheckIn,
-          activities: true,
-        },
+        include: includeCheckIn ? { checkIn: true } : undefined,
       });
     } catch (error) {
       handleError(error, this.logger);
     }
   }
 
-  private async checkExistingAttendance(nik: string, date: string) {
-    if (await this.getAttendanceData(nik, date))
+  private async checkExistingAttendance(
+    nik: string,
+    date: string,
+  ): Promise<Attendance> {
+    const attendance = await this.getAttendanceData(nik, date);
+    if (attendance?.check_in_id || attendance?.permit_id)
       throw new ConflictException(
         'karyawan telah melakukan check in atau memiliki izin yang telah disetujui',
       );
+
+    return attendance;
   }
 }
