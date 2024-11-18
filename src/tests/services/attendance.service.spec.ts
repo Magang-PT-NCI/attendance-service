@@ -164,7 +164,9 @@ describe('attendance service test', () => {
     });
 
     it('should throw ConflictException when attendance data already exist', async () => {
-      (prisma.attendance.findFirst as jest.Mock).mockReturnValue({ id: 1 });
+      (prisma.attendance.findFirst as jest.Mock).mockResolvedValue({
+        check_in_id: 1,
+      });
       mockDate('06:30');
 
       await expect(service.handleCheckIn(attendanceData)).rejects.toThrow(

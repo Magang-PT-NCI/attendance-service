@@ -111,7 +111,7 @@ export class AttendanceService extends BaseService {
     const { nik, location, type, photo } = data;
     const { current, currentDateIso, currentTimeIso } = this.getCurrentDate();
 
-    const attendance = await this.getAttendanceData(nik, currentDateIso);
+    const attendance = await this.getAttendanceData(nik, currentDateIso, true);
 
     if (!attendance?.checkIn)
       throw new ConflictException('tidak dapat check out sebelum check in');
@@ -177,7 +177,7 @@ export class AttendanceService extends BaseService {
     const employee = await getEmployee(nik);
     if (!employee) throw new NotFoundException('karyawan tidak ditemukan');
 
-    const attendance = await this.getAttendanceData(nik, currentDateIso);
+    const attendance = await this.getAttendanceData(nik, currentDateIso, true);
 
     if (!attendance?.checkIn)
       throw new ConflictException(
@@ -304,7 +304,10 @@ export class AttendanceService extends BaseService {
           nik,
           date,
         },
-        include: includeCheckIn ? { checkIn: true } : undefined,
+        include: {
+          checkIn: includeCheckIn ? true : undefined,
+          activities: true,
+        },
       });
     } catch (error) {
       handleError(error, this.logger);
