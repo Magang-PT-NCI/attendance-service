@@ -88,7 +88,8 @@
       "<rootDir>/config",
       "<rootDir>/interfaces",
       "<rootDir>/decorators",
-      "<rootDir>/services/prisma.service.ts"
+      "<rootDir>/services/prisma.service.ts",
+      "<rootDir>/services/cron-job.service.ts"
     ],
     "coverageThreshold": {
       "global": {

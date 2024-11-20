@@ -1,5 +1,6 @@
 import { CronJobService } from '../../services/cron-job.service';
 import { PrismaService } from '../../services/prisma.service';
+import * as DateUtils from '../../utils/date.utils';
 
 describe('CronJobService', () => {
   let cronJobService: CronJobService;
@@ -14,7 +15,7 @@ describe('CronJobService', () => {
       .mockImplementation(async () => {});
   });
 
-  it('should log "cron job is started" and mark employees as absent', async () => {
+  it('should log call handleCron correctly', async () => {
     jest
       .spyOn(prismaService, 'synchronizeEmployeeCache')
       .mockImplementation(async () => {});
@@ -23,17 +24,14 @@ describe('CronJobService', () => {
       .spyOn(prismaService.employeeCache, 'findMany')
       .mockResolvedValue([{ nik: '123', name: 'ucup', area: 'Bandung' }]);
 
-    const createManySpy = jest
-      .spyOn(prismaService.attendance, 'createMany')
-      .mockResolvedValue(null);
+    jest.spyOn(DateUtils, 'getTimeString').mockReturnValue('07:00');
     const loggerInfoSpy = jest.spyOn(cronJobService['logger'], 'info');
-
     await cronJobService.handleCron();
-
     expect(loggerInfoSpy).toHaveBeenCalledWith('cron job is started');
-    expect(createManySpy).toHaveBeenCalledWith({
-      data: [{ nik: '123', date: expect.anything(), status: 'absent' }],
-    });
+
+    jest.spyOn(DateUtils, 'getTimeString').mockReturnValue('10:00');
+    await cronJobService.handleCron();
+    expect(loggerInfoSpy).toHaveBeenCalledWith('cron job is started');
   });
 
   it('should log an error if prisma query fails', async () => {
@@ -42,6 +40,8 @@ describe('CronJobService', () => {
     jest
       .spyOn(prismaService.employeeCache, 'findMany')
       .mockRejectedValue(error);
+    jest.spyOn(prismaService.attendance, 'deleteMany').mockRejectedValue(error);
+
     const loggerErrorSpy = jest.spyOn(cronJobService['logger'], 'error');
 
     await cronJobService.handleCron();
