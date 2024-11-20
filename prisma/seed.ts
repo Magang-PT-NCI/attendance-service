@@ -235,16 +235,22 @@ const main = async () => {
     }
   }
 
-  let id = await createAttendance(employees[6], '07:10', null);
+  let id = await createAttendance(employees[4], '07:10', null);
   await createConfirmation(id, 'check_in', 'saya lupa check in tepat waktu');
 
-  id = await createAttendance(employees[7], '06:53', null);
+  id = await createAttendance(employees[5], '06:53', null);
   await createUncheckedOvertime(id);
 
-  const permitDate = new Date(employees[8].date);
+  const permitDate = new Date(employees[6].date);
   permitDate.setDate(permitDate.getDate() + 3);
+  await createLaterPermit(employees[6].nik, 'cuti', permitDate, 2);
 
-  await createLaterPermit(employees[8].nik, 'cuti', permitDate, 2);
+  await createAttendance(employees[7], '06:20');
+  await createAttendance(employees[8], '06:57');
+  await createAttendance(employees[9]);
+  await createPermit(employees[10]);
+  await createAttendance(employees[11], '06:30');
+  await createAttendance(employees[12], '07:22');
 };
 
 main()

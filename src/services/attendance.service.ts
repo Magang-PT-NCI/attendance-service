@@ -123,6 +123,10 @@ export class AttendanceService extends BaseService {
       throw new ConflictException('harus mengisi logbook terlebih dahulu');
 
     // not overtime
+    if (current.getHours() < 14 && !attendance.overtime_id)
+      throw new ConflictException(
+        'tidak dapat melakukan check out sebelum pukul 14:00',
+      );
     if (current.getHours() > 15 && !attendance.overtime_id)
       throw new ConflictException(
         'tidak dapat melakukan check out setelah pukul 15:00',
@@ -218,6 +222,13 @@ export class AttendanceService extends BaseService {
         'confirmation',
       );
 
+      const attendance = await this.prisma.attendance.findUnique({
+        where: { id: data.attendance_id },
+      });
+
+      if (!attendance)
+        throw new NotFoundException('Data kehadiran tidak ditemukan!');
+
       const existingConfirmation =
         await this.prisma.attendanceConfirmation.findFirst({
           where: { attendance_id: data.attendance_id, checked: false },
@@ -227,6 +238,23 @@ export class AttendanceService extends BaseService {
       if (existingConfirmation)
         throw new ConflictException(
           'Anda masih memiliki konfirmasi yang belum diperiksa!',
+        );
+
+      const current = getDate(getTimeString(new Date(), true));
+
+      if (existingConfirmation)
+        throw new ConflictException(
+          'Anda masih memiliki konfirmasi yang belum diperiksa!',
+        );
+
+      if (!attendance.check_in_id && data.type === 'check_in')
+        throw new ConflictException(
+          'Anda tidak dapat melakukan konfirmasi check in!',
+        );
+
+      if (current.getHours() < 15 && data.type === 'check_out')
+        throw new ConflictException(
+          'Anda tidak dapat melakukan konfirmasi check out sebelum periode check out!',
         );
 
       return new AttendanceConfirmationResBody(
